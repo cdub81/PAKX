@@ -4,7 +4,7 @@ import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { addMember, approveJoinRequest, archiveVote as archiveVoteRequest, closeVote as closeVoteRequest, createAccount, createAlliance, createVote as createVoteRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, normalizeBaseUrl, rejectJoinRequest, removeMember, signIn, submitVote as submitVoteRequest, updateAllianceCode, updateMember, updateTaskForceSlot } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 
-const DEFAULT_BACKEND_URL = "http://localhost:4000";
+const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const ALL_TABS = ["myInfo", "dashboard", "taskForceA", "taskForceB", "players", "voting", "alliance"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
