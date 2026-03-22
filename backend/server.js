@@ -4,6 +4,7 @@ const { createStore } = require("./lib/store");
 const supabaseState = require("./lib/supabaseState");
 
 const PORT = Number(process.env.PORT) || 4000;
+const HOST = process.env.HOST || "0.0.0.0";
 let store = null;
 
 async function initializeStore() {
@@ -421,8 +422,8 @@ function createServer() {
 if (require.main === module) {
   initializeStore()
     .then(() => {
-      createServer().listen(PORT, () => {
-        console.log(`LWAdmin backend listening on http://localhost:${PORT}`);
+      createServer().listen(PORT, HOST, () => {
+        console.log(`LWAdmin backend listening on http://${HOST}:${PORT}`);
         if (supabaseState.isConfigured()) {
           console.log("Supabase persistence enabled.");
         }
