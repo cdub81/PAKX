@@ -222,7 +222,7 @@ module.exports = {
     {
       id: "alliance-pakx",
       name: "PAKX Alliance",
-      code: "PAKX2026",
+      code: "PAKX2023",
       players: players.filter((player) => player.name === "Cdub81"),
       taskForces
     }

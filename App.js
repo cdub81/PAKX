@@ -42,7 +42,7 @@ export default function App() {
   const [authUsername, setAuthUsername] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [setupMode, setSetupMode] = useState("join");
-  const [allianceCodeInput, setAllianceCodeInput] = useState("PAKX2026");
+  const [allianceCodeInput, setAllianceCodeInput] = useState("PAKX2023");
   const [allianceNameInput, setAllianceNameInput] = useState("");
   const [session, setSession] = useState({ backendUrl: "", token: "" });
   const [account, setAccount] = useState(null);
