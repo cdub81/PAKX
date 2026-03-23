@@ -36,6 +36,19 @@ The current app mirrors the workbook at [PAKX_Alliance_TeamList_with_Substitutes
 3. Open the app in an iPhone simulator, Android emulator, or the Expo Go app
 4. Start the backend API with `npm run backend`
 
+## EAS Builds
+
+This repo now includes [eas.json](C:\Users\Colby\OneDrive - accuracy1st\Documents\LWAdmin\eas.json) and mobile app identifiers in [app.json](C:\Users\Colby\OneDrive - accuracy1st\Documents\LWAdmin\app.json) so you can build test versions for iPhone and Android.
+
+Typical commands:
+
+1. `npm install -g eas-cli`
+2. `eas login`
+3. `eas build --platform android --profile preview`
+4. `eas build --platform ios --profile preview`
+
+The `preview` profile is set up for internal testing. The `production` profile is there for later store releases.
+
 ## Backend
 
 The first backend scaffold now lives in [backend/server.js](C:\Users\Colby\OneDrive - accuracy1st\Documents\LWAdmin\backend\server.js) with persistence helpers in [backend/lib/store.js](C:\Users\Colby\OneDrive - accuracy1st\Documents\LWAdmin\backend\lib\store.js). It supports alliance creation, join-by-code, session tokens, role-based permissions, leader-only member management, and leader-only task-force assignment updates.
