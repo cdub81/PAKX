@@ -13,6 +13,16 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ]
+    ],
     "assetBundlePatterns": [
       "**/*"
     ],
