@@ -216,3 +216,12 @@ export function archiveVote(baseUrl, token, voteId) {
     }
   });
 }
+
+export function deleteVote(baseUrl, token, voteId) {
+  return request(baseUrl, `/api/votes/${encodeURIComponent(voteId)}/delete`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}

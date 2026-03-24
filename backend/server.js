@@ -389,7 +389,7 @@ async function handleRequest(request, response) {
       return;
     }
 
-    const voteManageMatch = pathname.match(/^\/api\/votes\/([^/]+)\/(close|archive)$/);
+    const voteManageMatch = pathname.match(/^\/api\/votes\/([^/]+)\/(close|archive|delete)$/);
     if (voteManageMatch && request.method === "POST") {
       const context = requireLeader(request, response);
       if (!context) {
@@ -397,6 +397,10 @@ async function handleRequest(request, response) {
       }
       if (voteManageMatch[2] === "close") {
         sendJson(response, 200, store.closeVote(context.alliance.id, voteManageMatch[1]));
+        return;
+      }
+      if (voteManageMatch[2] === "delete") {
+        sendJson(response, 200, store.deleteVote(context.alliance.id, voteManageMatch[1]));
         return;
       }
       sendJson(response, 200, store.archiveVote(context.alliance.id, voteManageMatch[1]));

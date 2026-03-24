@@ -803,6 +803,20 @@ function createStore(config = {}) {
     return publicVote(vote, alliance.players);
   }
 
+  function deleteVote(allianceId, voteId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const voteIndex = alliance.votes.findIndex((entry) => entry.id === voteId);
+    if (voteIndex === -1) {
+      throw new Error("Vote not found.");
+    }
+    const [deletedVote] = alliance.votes.splice(voteIndex, 1);
+    commit();
+    return { ok: true, deletedVoteId: deletedVote.id };
+  }
+
   function reset() {
     state = createInitialStore();
     commit();
@@ -834,6 +848,7 @@ function createStore(config = {}) {
     submitVote,
     closeVote,
     archiveVote,
+    deleteVote,
     reset
   };
 }
