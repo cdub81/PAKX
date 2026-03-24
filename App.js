@@ -110,7 +110,7 @@ export default function App() {
     if (!session.token || !session.backendUrl || !alliance || activeTab === "players") return undefined;
     const intervalId = setInterval(() => {
       refresh().catch(() => {});
-    }, 15000);
+    }, 30000);
     return () => clearInterval(intervalId);
   }, [session.token, session.backendUrl, alliance, activeTab]);
 
