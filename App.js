@@ -106,6 +106,14 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !alliance || activeTab === "players") return undefined;
+    const intervalId = setInterval(() => {
+      refresh().catch(() => {});
+    }, 15000);
+    return () => clearInterval(intervalId);
+  }, [session.token, session.backendUrl, alliance, activeTab]);
+
   function signOut() {
     setSession({ backendUrl: "", token: "" });
     setAccount(null);
