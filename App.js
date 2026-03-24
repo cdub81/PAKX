@@ -36,6 +36,20 @@ function getLatestDesertStormVote(votes) {
   return (votes || []).find((vote) => vote.title === DESERT_STORM_VOTE_TITLE) || null;
 }
 
+function getAssignedPlayerNames(taskForces, currentSelection) {
+  const names = new Set();
+  for (const taskForce of Object.values(taskForces || {})) {
+    for (const squad of taskForce.squads || []) {
+      for (const slot of squad.slots || []) {
+        if (!slot.playerName) continue;
+        if (currentSelection && taskForce.key === currentSelection.taskForceKey && squad.id === currentSelection.squadId && slot.id === currentSelection.slotId) continue;
+        names.add(slot.playerName);
+      }
+    }
+  }
+  return names;
+}
+
 export default function App() {
   const [backendUrlInput, setBackendUrlInput] = useState(DEFAULT_BACKEND_URL);
   const [authMode, setAuthMode] = useState("");
@@ -76,9 +90,11 @@ export default function App() {
   const selectedTaskForce = activeTab === "taskForceB" ? taskForceB : taskForceA;
   const desertStormAssignment = useMemo(() => findAssignment(alliance?.taskForces || emptyTaskForces(), currentUser?.name), [alliance, currentUser]);
   const latestDesertStormVote = useMemo(() => getLatestDesertStormVote(votes), [votes]);
+  const assignedPlayerNames = useMemo(() => getAssignedPlayerNames(alliance?.taskForces || emptyTaskForces(), playerModal), [alliance, playerModal]);
   const filteredOptions = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    const roleFiltered = !playerModal || playerPickerMode === "all" ? options : options.filter((player) => {
+    const unassignedOptions = options.filter((player) => !assignedPlayerNames.has(player.name));
+    const roleFiltered = !playerModal || playerPickerMode === "all" ? unassignedOptions : unassignedOptions.filter((player) => {
       if (!latestDesertStormVote) return true;
       const response = latestDesertStormVote.responses?.find((entry) => entry.playerId === player.id);
       if (!response) return false;
@@ -86,7 +102,7 @@ export default function App() {
       return response.optionLabel === DESERT_STORM_PLAY_LABEL;
     });
     return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
-  }, [options, searchText, playerModal, playerPickerMode, latestDesertStormVote]);
+  }, [options, searchText, playerModal, playerPickerMode, latestDesertStormVote, assignedPlayerNames]);
   const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); return !q ? players : players.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); }, [players, memberSearchText]);
   const unvotedCount = useMemo(() => votes.filter((vote) => !vote.didVote).length, [votes]);
 
