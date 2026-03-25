@@ -73,6 +73,21 @@ function normalizeFeedbackEntry(value) {
   };
 }
 
+function normalizeCalendarEntry(value) {
+  return {
+    id: value.id || crypto.randomUUID(),
+    title: String(value.title || "").trim(),
+    description: String(value.description || "").trim(),
+    startsAt: value.startsAt || new Date().toISOString(),
+    endAt: value.endAt || null,
+    createdAt: value.createdAt || new Date().toISOString(),
+    createdByPlayerId: value.createdByPlayerId || "",
+    createdByName: value.createdByName || "",
+    leaderNotes: String(value.leaderNotes || "").trim(),
+    leaderOnly: Boolean(value.leaderOnly)
+  };
+}
+
 function getLayoutAssignedPlayerNames(layout) {
   const names = new Set();
   Object.values(layout?.taskForces || {}).forEach((taskForce) => {
@@ -179,7 +194,8 @@ function normalizeAlliance(alliance) {
     desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
     votes: Array.isArray(alliance.votes) ? alliance.votes.map(normalizeVote) : [],
     desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
-    feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : []
+    feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : [],
+    calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : []
   };
 }
 
@@ -263,11 +279,28 @@ function createStore(config = {}) {
     };
   }
 
+  function publicCalendarEntry(entry, viewerIsLeader = false) {
+    return {
+      id: entry.id,
+      title: entry.title,
+      description: entry.description,
+      startsAt: entry.startsAt,
+      endAt: entry.endAt,
+      createdAt: entry.createdAt,
+      createdByPlayerId: entry.createdByPlayerId,
+      createdByName: entry.createdByName,
+      leaderOnly: Boolean(entry.leaderOnly),
+      leaderNotes: viewerIsLeader ? String(entry.leaderNotes || "") : ""
+    };
+  }
+
   function publicAlliance(alliance, viewerPlayerId = "") {
     if (!alliance) {
       return null;
     }
 
+    const viewer = alliance.players.find((player) => player.id === viewerPlayerId);
+    const viewerIsLeader = Boolean(viewer && (viewer.rank === "R4" || viewer.rank === "R5"));
     return {
       id: alliance.id,
       name: alliance.name,
@@ -292,7 +325,10 @@ function createStore(config = {}) {
         createdAt: entry.createdAt,
         createdByPlayerId: entry.createdByPlayerId,
         createdByName: entry.createdByName
-      }))
+      })),
+      calendarEntries: (alliance.calendarEntries || [])
+        .filter((entry) => viewerIsLeader || !entry.leaderOnly)
+        .map((entry) => publicCalendarEntry(entry, viewerIsLeader))
     };
   }
 
@@ -812,6 +848,49 @@ function createStore(config = {}) {
     return clone(entry);
   }
 
+  function createCalendarEntry(allianceId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const title = String(payload?.title || "").trim();
+    const startsAt = String(payload?.startsAt || "").trim();
+    if (!title) {
+      throw new Error("title is required.");
+    }
+    if (!startsAt) {
+      throw new Error("startsAt is required.");
+    }
+    alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
+    const entry = normalizeCalendarEntry({
+      title,
+      description: payload.description || "",
+      startsAt,
+      endAt: payload.endAt || null,
+      createdByPlayerId: player.id,
+      createdByName: player.name,
+      leaderNotes: payload.leaderNotes || "",
+      leaderOnly: payload.leaderOnly
+    });
+    alliance.calendarEntries.unshift(entry);
+    commit();
+    return clone(entry);
+  }
+
+  function deleteCalendarEntry(allianceId, entryId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const index = (alliance.calendarEntries || []).findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new Error("Calendar entry not found.");
+    }
+    const [deletedEntry] = alliance.calendarEntries.splice(index, 1);
+    commit();
+    return { ok: true, deletedEntryId: deletedEntry.id };
+  }
+
   function lockInDesertStormLayout(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -1018,6 +1097,8 @@ function createStore(config = {}) {
     updateTaskForceSlot,
     resetTaskForcesForNewTeams,
     addFeedbackEntry,
+    createCalendarEntry,
+    deleteCalendarEntry,
     lockInDesertStormLayout,
     updateDesertStormLayoutResult,
     createVote,

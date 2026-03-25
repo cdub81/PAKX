@@ -214,6 +214,26 @@ export function addFeedback(baseUrl, token, message) {
   });
 }
 
+export function createCalendarEntry(baseUrl, token, payload) {
+  return request(baseUrl, "/api/calendar", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteCalendarEntry(baseUrl, token, entryId) {
+  return request(baseUrl, `/api/calendar/${encodeURIComponent(entryId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function getVotes(baseUrl, token) {
   return request(baseUrl, "/api/votes", {
     headers: {

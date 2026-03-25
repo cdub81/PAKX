@@ -297,6 +297,16 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/calendar") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, store.createCalendarEntry(context.alliance.id, context.player, body));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/votes") {
       const context = requireLeader(request, response);
       if (!context) {
@@ -456,6 +466,16 @@ async function handleRequest(request, response) {
         return;
       }
       sendJson(response, 200, store.updateDesertStormLayoutResult(context.alliance.id, desertStormLayoutMatch[1], body.result, body.notes));
+      return;
+    }
+
+    const calendarEntryMatch = pathname.match(/^\/api\/calendar\/([^/]+)$/);
+    if (calendarEntryMatch && request.method === "DELETE") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.deleteCalendarEntry(context.alliance.id, calendarEntryMatch[1]));
       return;
     }
 
