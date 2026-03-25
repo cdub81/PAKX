@@ -169,6 +169,28 @@ export function updateTaskForceSlot(baseUrl, token, payload) {
   });
 }
 
+export function lockInDesertStormLayout(baseUrl, token, payload = {}) {
+  return request(baseUrl, "/api/desert-storm/lock-in", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateDesertStormLayoutResult(baseUrl, token, layoutId, payload) {
+  return request(baseUrl, `/api/desert-storm-layouts/${encodeURIComponent(layoutId)}/result`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
 export function getVotes(baseUrl, token) {
   return request(baseUrl, "/api/votes", {
     headers: {

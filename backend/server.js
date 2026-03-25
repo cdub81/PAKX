@@ -161,7 +161,7 @@ async function handleRequest(request, response) {
       sendJson(response, 200, {
         account: store.publicAccount(context.account),
         alliance: store.publicAlliance(context.alliance, context.player?.id || ""),
-        player: context.player ? store.publicPlayer(context.player) : null,
+        player: context.player ? store.publicPlayer(context.player, context.alliance?.desertStormLayouts || []) : null,
         joinRequest: context.joinRequest ? store.publicJoinRequest(context.joinRequest) : null
       });
       return;
@@ -311,6 +311,16 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/desert-storm/lock-in") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, store.lockInDesertStormLayout(context.alliance.id, context.player, body));
+      return;
+    }
+
     const memberMatch = pathname.match(/^\/api\/members\/([^/]+)$/);
     if (memberMatch && request.method === "PATCH") {
       const context = requireAllianceMember(request, response);
@@ -404,6 +414,21 @@ async function handleRequest(request, response) {
         return;
       }
       sendJson(response, 200, store.archiveVote(context.alliance.id, voteManageMatch[1]));
+      return;
+    }
+
+    const desertStormLayoutMatch = pathname.match(/^\/api\/desert-storm-layouts\/([^/]+)\/result$/);
+    if (desertStormLayoutMatch && request.method === "PATCH") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.result) {
+        sendError(response, 400, "result is required.");
+        return;
+      }
+      sendJson(response, 200, store.updateDesertStormLayoutResult(context.alliance.id, desertStormLayoutMatch[1], body.result, body.notes));
       return;
     }
 
