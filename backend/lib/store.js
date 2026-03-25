@@ -933,6 +933,24 @@ function createStore(config = {}) {
     return publicVote(vote, alliance.players);
   }
 
+  function reopenVote(allianceId, voteId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const vote = alliance.votes.find((entry) => entry.id === voteId);
+    if (!vote) {
+      throw new Error("Vote not found.");
+    }
+    if (vote.status !== "closed") {
+      throw new Error("Only closed votes can be reopened.");
+    }
+    vote.status = "open";
+    vote.closedAt = null;
+    commit();
+    return publicVote(vote, alliance.players);
+  }
+
   function deleteVote(allianceId, voteId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -981,6 +999,7 @@ function createStore(config = {}) {
     submitVote,
     closeVote,
     archiveVote,
+    reopenVote,
     deleteVote,
     reset
   };
