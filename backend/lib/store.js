@@ -100,11 +100,12 @@ function buildDesertStormAppearances(player, layouts) {
 }
 
 function recalculateDesertStormStats(alliance) {
+  const totalLockedLayouts = Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.length : 0;
   alliance.players.forEach((player) => {
     const appearances = buildDesertStormAppearances(player, alliance.desertStormLayouts);
     player.desertStormStats = {
       playedCount: appearances.length,
-      missedCount: Number(player.desertStormStats?.missedCount) || 0
+      missedCount: Math.max(0, totalLockedLayouts - appearances.length)
     };
   });
 }

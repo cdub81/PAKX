@@ -9,7 +9,7 @@ import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/l
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const SESSION_STORAGE_KEY = "lwadmin-session";
 const LANGUAGE_STORAGE_KEY = "lwadmin-language";
-const ALL_TABS = ["myInfo", "desertStorm", "players", "feedback", "voting", "alliance"];
+const ALL_TABS = ["myInfo", "desertStorm", "players", "voting", "alliance", "feedback"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
 const DESERT_STORM_VOTE_TITLE = "Desert Storm Vote";
@@ -63,7 +63,7 @@ const TRANSLATIONS = {
     noMembersMatchVoteFilter: "No members match this Desert Storm vote filter.",
     tabMyInfo: "My Info",
     tabMembers: "Members",
-    tabAlliance: "Alliance",
+    tabAlliance: "Settings",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
     tabDSHistory: "DS History",
@@ -111,7 +111,7 @@ const TRANSLATIONS = {
     slotLabel: "Slot: {value}",
     notListedInTaskForces: "You are not currently listed in Task Force A or Task Force B.",
     desertStormRecord: "Desert Storm Record",
-    lockInsPlayed: "{count} lock-ins played",
+    lockInsPlayed: "{count} Desert Storm's Played",
     noLockedHistoryYet: "No locked Desert Storm history yet",
     appearancesWillShow: "Once leaders lock in a Desert Storm layout, your appearances will show here.",
     allianceVotingTitle: "Alliance Voting",
@@ -165,7 +165,7 @@ const TRANSLATIONS = {
     noMembersMatchVoteFilter: "디저트 스톰 투표 조건에 맞는 멤버가 없습니다.",
     tabMyInfo: "내 정보",
     tabMembers: "멤버",
-    tabAlliance: "얼라이언스",
+    tabAlliance: "설정",
     tabTaskForceA: "태스크포스 A",
     tabTaskForceB: "태스크포스 B",
     tabDSHistory: "DS 기록",
@@ -213,7 +213,7 @@ const TRANSLATIONS = {
     slotLabel: "슬롯: {value}",
     notListedInTaskForces: "현재 Task Force A 또는 Task Force B에 배정되어 있지 않습니다.",
     desertStormRecord: "디저트 스톰 기록",
-    lockInsPlayed: "{count}회 잠금 참여",
+    lockInsPlayed: "디저트 스톰 {count}회 플레이",
     noLockedHistoryYet: "아직 잠긴 디저트 스톰 기록이 없습니다",
     appearancesWillShow: "리더가 디저트 스톰 배치를 잠그면 여기에 참여 기록이 표시됩니다.",
     allianceVotingTitle: "얼라이언스 투표",
@@ -267,7 +267,7 @@ const TRANSLATIONS = {
     noMembersMatchVoteFilter: "No hay miembros que coincidan con ese filtro de voto de Desert Storm.",
     tabMyInfo: "Mi información",
     tabMembers: "Miembros",
-    tabAlliance: "Alianza",
+    tabAlliance: "Configuracion",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
     tabDSHistory: "Historial DS",
@@ -315,7 +315,7 @@ const TRANSLATIONS = {
     slotLabel: "Puesto: {value}",
     notListedInTaskForces: "No apareces actualmente en Task Force A ni Task Force B.",
     desertStormRecord: "Historial de Desert Storm",
-    lockInsPlayed: "{count} bloqueos jugados",
+    lockInsPlayed: "{count} Desert Storm jugados",
     noLockedHistoryYet: "Todavía no hay historial bloqueado de Desert Storm",
     appearancesWillShow: "Cuando los líderes bloqueen una alineación de Desert Storm, tus apariciones se mostrarán aquí.",
     allianceVotingTitle: "Votación de la alianza",
@@ -369,7 +369,7 @@ const TRANSLATIONS = {
     noMembersMatchVoteFilter: "Nenhum membro corresponde a esse filtro de voto do Desert Storm.",
     tabMyInfo: "Minhas informações",
     tabMembers: "Membros",
-    tabAlliance: "Aliança",
+    tabAlliance: "Configuracoes",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
     tabDSHistory: "Histórico DS",
@@ -417,7 +417,7 @@ const TRANSLATIONS = {
     slotLabel: "Posição: {value}",
     notListedInTaskForces: "Você não está listado atualmente na Task Force A ou Task Force B.",
     desertStormRecord: "Histórico do Desert Storm",
-    lockInsPlayed: "{count} formações travadas jogadas",
+    lockInsPlayed: "{count} Desert Storm jogados",
     noLockedHistoryYet: "Ainda não há histórico travado de Desert Storm",
     appearancesWillShow: "Quando os líderes travarem uma formação do Desert Storm, suas participações aparecerão aqui.",
     allianceVotingTitle: "Votação da aliança",
