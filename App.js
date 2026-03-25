@@ -112,7 +112,7 @@ export default function App() {
     return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
   }, [options, searchText, playerModal, playerPickerMode, latestDesertStormVote, assignedPlayerNames]);
   const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); return !q ? players : players.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); }, [players, memberSearchText]);
-  const unvotedCount = useMemo(() => votes.filter((vote) => !vote.didVote).length, [votes]);
+  const unvotedCount = useMemo(() => votes.filter((vote) => vote.status === "open" && !vote.didVote).length, [votes]);
 
   function clearSessionState(message = "") {
     const nextMessage = typeof message === "string" ? message : "";
