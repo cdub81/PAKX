@@ -21,7 +21,10 @@ async function request(baseUrl, path, options = {}) {
   const body = await response.json();
 
   if (!response.ok) {
-    throw new Error(body.error || "Request failed.");
+    const error = new Error(body.error || "Request failed.");
+    error.status = response.status;
+    error.body = body;
+    throw error;
   }
 
   return body;
