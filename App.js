@@ -115,6 +115,7 @@ export default function App() {
   const unvotedCount = useMemo(() => votes.filter((vote) => !vote.didVote).length, [votes]);
 
   function clearSessionState(message = "") {
+    const nextMessage = typeof message === "string" ? message : "";
     setSession({ backendUrl: "", token: "" });
     setAccount(null);
     setAlliance(null);
@@ -126,8 +127,8 @@ export default function App() {
     setAlliancePreview(null);
     setActiveTab("myInfo");
     setNewAllianceCode("");
-    if (message) {
-      setErrorMessage(message);
+    if (nextMessage) {
+      setErrorMessage(nextMessage);
     }
   }
 
@@ -142,8 +143,9 @@ export default function App() {
   }
 
   async function signOut(message = "") {
+    const nextMessage = typeof message === "string" ? message : "";
     await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-    clearSessionState(message);
+    clearSessionState(nextMessage);
   }
 
   async function handleRequestError(error) {
