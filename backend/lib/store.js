@@ -63,6 +63,16 @@ function normalizeDesertStormLayout(value) {
   };
 }
 
+function normalizeFeedbackEntry(value) {
+  return {
+    id: value.id || crypto.randomUUID(),
+    message: String(value.message || "").trim(),
+    createdAt: value.createdAt || new Date().toISOString(),
+    createdByPlayerId: value.createdByPlayerId || "",
+    createdByName: value.createdByName || ""
+  };
+}
+
 function getLayoutAssignedPlayerNames(layout) {
   const names = new Set();
   Object.values(layout?.taskForces || {}).forEach((taskForce) => {
@@ -166,7 +176,8 @@ function normalizeAlliance(alliance) {
     })),
     taskForces: alliance.taskForces,
     votes: Array.isArray(alliance.votes) ? alliance.votes.map(normalizeVote) : [],
-    desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : []
+    desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
+    feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : []
   };
 }
 
@@ -271,6 +282,13 @@ function createStore(config = {}) {
         result: layout.result,
         notes: layout.notes,
         taskForces: clone(layout.taskForces)
+      })),
+      feedbackEntries: (alliance.feedbackEntries || []).map((entry) => ({
+        id: entry.id,
+        message: entry.message,
+        createdAt: entry.createdAt,
+        createdByPlayerId: entry.createdByPlayerId,
+        createdByName: entry.createdByName
       }))
     };
   }
@@ -751,6 +769,26 @@ function createStore(config = {}) {
     return clone(taskForce);
   }
 
+  function addFeedbackEntry(allianceId, player, message) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const normalizedMessage = String(message || "").trim();
+    if (!normalizedMessage) {
+      throw new Error("message is required.");
+    }
+    alliance.feedbackEntries = Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries : [];
+    const entry = normalizeFeedbackEntry({
+      message: normalizedMessage,
+      createdByPlayerId: player.id,
+      createdByName: player.name
+    });
+    alliance.feedbackEntries.unshift(entry);
+    commit();
+    return clone(entry);
+  }
+
   function lockInDesertStormLayout(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -936,6 +974,7 @@ function createStore(config = {}) {
     updateMember,
     removeMember,
     updateTaskForceSlot,
+    addFeedbackEntry,
     lockInDesertStormLayout,
     updateDesertStormLayoutResult,
     createVote,

@@ -283,6 +283,20 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/feedback") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.message) {
+        sendError(response, 400, "message is required.");
+        return;
+      }
+      sendJson(response, 201, store.addFeedbackEntry(context.alliance.id, context.player, body.message));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/votes") {
       const context = requireLeader(request, response);
       if (!context) {

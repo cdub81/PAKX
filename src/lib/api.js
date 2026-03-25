@@ -191,6 +191,17 @@ export function updateDesertStormLayoutResult(baseUrl, token, layoutId, payload)
   });
 }
 
+export function addFeedback(baseUrl, token, message) {
+  return request(baseUrl, "/api/feedback", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ message })
+  });
+}
+
 export function getVotes(baseUrl, token) {
   return request(baseUrl, "/api/votes", {
     headers: {
