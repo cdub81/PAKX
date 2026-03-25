@@ -172,6 +172,15 @@ export function updateTaskForceSlot(baseUrl, token, payload) {
   });
 }
 
+export function resetTaskForces(baseUrl, token) {
+  return request(baseUrl, "/api/task-forces/reset", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function lockInDesertStormLayout(baseUrl, token, payload = {}) {
   return request(baseUrl, "/api/desert-storm/lock-in", {
     method: "POST",

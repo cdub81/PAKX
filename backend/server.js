@@ -325,6 +325,15 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/task-forces/reset") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, { taskForces: store.resetTaskForcesForNewTeams(context.alliance.id) });
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/desert-storm/lock-in") {
       const context = requireLeader(request, response);
       if (!context) {

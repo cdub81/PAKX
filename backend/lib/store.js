@@ -175,6 +175,7 @@ function normalizeAlliance(alliance) {
       desertStormStats: normalizeDesertStormStats(player.desertStormStats)
     })),
     taskForces: alliance.taskForces,
+    desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
     votes: Array.isArray(alliance.votes) ? alliance.votes.map(normalizeVote) : [],
     desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
     feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : []
@@ -272,6 +273,7 @@ function createStore(config = {}) {
       code: alliance.code,
       players: alliance.players.map((player) => publicPlayer(player, alliance.desertStormLayouts)),
       taskForces: alliance.taskForces,
+      desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
       votes: alliance.votes.map((vote) => publicVote(vote, alliance.players, viewerPlayerId)),
       desertStormLayouts: (alliance.desertStormLayouts || []).map((layout) => ({
         id: layout.id,
@@ -752,6 +754,9 @@ function createStore(config = {}) {
     if (!alliance) {
       throw new Error("Alliance not found.");
     }
+    if (alliance.desertStormSetupLocked) {
+      throw new Error("Create new teams before editing the Desert Storm setup again.");
+    }
     const taskForce = alliance.taskForces[taskForceKey];
     if (!taskForce) {
       throw new Error("Task force not found.");
@@ -767,6 +772,23 @@ function createStore(config = {}) {
     slot.playerName = playerName || "";
     commit();
     return clone(taskForce);
+  }
+
+  function resetTaskForcesForNewTeams(allianceId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    Object.values(alliance.taskForces || {}).forEach((taskForce) => {
+      (taskForce.squads || []).forEach((squad) => {
+        (squad.slots || []).forEach((slot) => {
+          slot.playerName = "";
+        });
+      });
+    });
+    alliance.desertStormSetupLocked = false;
+    commit();
+    return clone(alliance.taskForces);
   }
 
   function addFeedbackEntry(allianceId, player, message) {
@@ -807,6 +829,7 @@ function createStore(config = {}) {
     });
     alliance.desertStormLayouts = Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts : [];
     alliance.desertStormLayouts.unshift(layout);
+    alliance.desertStormSetupLocked = true;
     recalculateDesertStormStats(alliance);
     commit();
     return clone(layout);
@@ -992,6 +1015,7 @@ function createStore(config = {}) {
     updateMember,
     removeMember,
     updateTaskForceSlot,
+    resetTaskForcesForNewTeams,
     addFeedbackEntry,
     lockInDesertStormLayout,
     updateDesertStormLayoutResult,
