@@ -12,6 +12,17 @@ This file tracks notable app changes, backend changes, and store/test build push
 
 ## 2026-03-24
 
+### iPhone TestFlight Build 10
+
+- Built iPhone version `0.1.0 (10)` for TestFlight.
+- Includes the latest app changes up through the calendar feature and recent UI updates.
+- Submitted build `10` to Apple TestFlight on 2026-03-24.
+
+Status:
+- iPhone/TestFlight build `10` recorded on 2026-03-24
+- TestFlight submission recorded on 2026-03-24
+- Android equivalent not yet recorded for this release in this log
+
 ### Session Persistence And Auth Cleanup
 
 - Added persistent sign-in so users stay logged in after closing the app.
