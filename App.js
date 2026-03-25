@@ -7,6 +7,7 @@ import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/l
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const SESSION_STORAGE_KEY = "lwadmin-session";
+const LANGUAGE_STORAGE_KEY = "lwadmin-language";
 const ALL_TABS = ["myInfo", "dashboard", "taskForceA", "taskForceB", "players", "desertStormHistory", "feedback", "voting", "alliance"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
@@ -14,6 +15,318 @@ const DESERT_STORM_VOTE_TITLE = "Desert Storm Vote";
 const DESERT_STORM_PLAY_LABEL = "I want to play";
 const DESERT_STORM_SUB_LABEL = "I want to be a sub";
 const DESERT_STORM_CANT_PLAY_LABEL = "i cant play";
+const SUPPORTED_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "ko", label: "한국어" },
+  { code: "es", label: "Español" },
+  { code: "pt", label: "Português" }
+];
+const TRANSLATIONS = {
+  en: {
+    appTitle: "PAKX Alliance App",
+    authSignIn: "Sign In",
+    authCreateAccount: "Create Account",
+    username: "Username",
+    password: "Password",
+    welcome: "Welcome, {name}",
+    notInAlliance: "This account is not associated with an alliance yet.",
+    joinAlliance: "Join Alliance",
+    createAlliance: "Create Alliance",
+    allianceName: "Alliance name",
+    allianceCode: "Alliance code",
+    previewAlliance: "Preview Alliance",
+    foundAlliance: "Found: {name}",
+    signOut: "Sign Out",
+    joinRequestPending: "Join Request Pending",
+    pendingApproval: "Your request is waiting for an R4 or R5 to approve it.",
+    refreshStatus: "Refresh Status",
+    language: "Language",
+    signedInAs: "Signed in as {name} ({rank})",
+    playersWaiting: "{count} players are waiting for approval",
+    onePlayerWaiting: "1 player is waiting for approval",
+    tapReviewRequests: "Tap to review join requests in the Alliance tab.",
+    votesNeedResponse: "{count} alliance votes need your response",
+    oneVoteNeedsResponse: "1 alliance vote needs your response",
+    tapOpenVoting: "Tap to open the Voting tab.",
+    restoringSession: "Restoring your session...",
+    sessionExpired: "Your session expired. Please sign in again.",
+    choosePlayer: "Choose Player",
+    votedMembers: "Voted Members",
+    entireAlliance: "Entire Alliance",
+    showingAllAlliance: "Showing every member in the alliance for this slot.",
+    searchNameOrRank: "Search name or rank",
+    clearSelection: "Clear selection",
+    noPlayersMatchSearch: "No players match that search.",
+    noMembersMatchVoteFilter: "No members match this Desert Storm vote filter.",
+    tabMyInfo: "My Info",
+    tabMembers: "Members",
+    tabAlliance: "Alliance",
+    tabTaskForceA: "Task Force A",
+    tabTaskForceB: "Task Force B",
+    tabDSHistory: "DS History",
+    tabFeedback: "Feedback",
+    tabVoting: "Voting",
+    tabDashboard: "Dashboard",
+    feedbackTitle: "App Feedback",
+    feedbackHint: "Share comments, bugs, and recommended updates with the alliance.",
+    feedbackExample: "Example:\nI think the Desert Storm history tab should show power totals too.",
+    submitFeedback: "Submit Feedback",
+    allianceFeedback: "Alliance Feedback",
+    noFeedback: "No feedback has been submitted yet.",
+    feedbackFrom: "From {name} • {date}",
+    allianceTitle: "Alliance",
+    accountLabel: "Account: {value}",
+    allianceLabel: "Alliance: {value}",
+    codeLabel: "Code: {value}",
+    signedInAsPlayer: "Signed in as: {value}",
+    pendingJoinRequests: "Pending Join Requests",
+    noPendingRequests: "No pending join requests.",
+    requestedWithCode: "Requested with code {code}",
+    approve: "Approve",
+    reject: "Reject",
+    rotateCode: "Rotate Code",
+    updateCode: "Update Code",
+    addMember: "Add Member",
+    name: "Name",
+    rank: "Rank",
+    power: "Power",
+    memberOptions: "Member Options",
+    leaveAnyTime: "You can leave this alliance at any time.",
+    leaveAlliance: "Leave Alliance",
+    leaveAllianceTitle: "Leave Alliance",
+    leaveAllianceConfirm: "Are you sure you want to leave this alliance?",
+    cancel: "Cancel",
+    leave: "Leave"
+  },
+  ko: {
+    appTitle: "PAKX 얼라이언스 앱",
+    authSignIn: "로그인",
+    authCreateAccount: "계정 만들기",
+    username: "사용자 이름",
+    password: "비밀번호",
+    welcome: "{name}님, 환영합니다",
+    notInAlliance: "이 계정은 아직 얼라이언스에 연결되어 있지 않습니다.",
+    joinAlliance: "얼라이언스 가입",
+    createAlliance: "얼라이언스 생성",
+    allianceName: "얼라이언스 이름",
+    allianceCode: "얼라이언스 코드",
+    previewAlliance: "얼라이언스 미리보기",
+    foundAlliance: "찾음: {name}",
+    signOut: "로그아웃",
+    joinRequestPending: "가입 요청 대기 중",
+    pendingApproval: "R4 또는 R5의 승인을 기다리고 있습니다.",
+    refreshStatus: "상태 새로고침",
+    language: "언어",
+    signedInAs: "{name} ({rank})로 로그인됨",
+    playersWaiting: "{count}명의 플레이어가 승인 대기 중입니다",
+    onePlayerWaiting: "1명의 플레이어가 승인 대기 중입니다",
+    tapReviewRequests: "얼라이언스 탭에서 가입 요청을 확인하세요.",
+    votesNeedResponse: "{count}개의 투표에 응답이 필요합니다",
+    oneVoteNeedsResponse: "1개의 투표에 응답이 필요합니다",
+    tapOpenVoting: "투표 탭을 열려면 누르세요.",
+    restoringSession: "세션을 복원하는 중...",
+    sessionExpired: "세션이 만료되었습니다. 다시 로그인해 주세요.",
+    choosePlayer: "플레이어 선택",
+    votedMembers: "투표한 멤버",
+    entireAlliance: "전체 얼라이언스",
+    showingAllAlliance: "이 슬롯에 대해 얼라이언스 전체 멤버를 표시합니다.",
+    searchNameOrRank: "이름 또는 등급 검색",
+    clearSelection: "선택 해제",
+    noPlayersMatchSearch: "검색과 일치하는 플레이어가 없습니다.",
+    noMembersMatchVoteFilter: "디저트 스톰 투표 조건에 맞는 멤버가 없습니다.",
+    tabMyInfo: "내 정보",
+    tabMembers: "멤버",
+    tabAlliance: "얼라이언스",
+    tabTaskForceA: "태스크포스 A",
+    tabTaskForceB: "태스크포스 B",
+    tabDSHistory: "DS 기록",
+    tabFeedback: "피드백",
+    tabVoting: "투표",
+    tabDashboard: "대시보드",
+    feedbackTitle: "앱 피드백",
+    feedbackHint: "앱에 대한 의견, 버그, 업데이트 제안을 남겨주세요.",
+    feedbackExample: "예시:\n디저트 스톰 기록 탭에 전투력 합계도 표시되면 좋겠습니다.",
+    submitFeedback: "피드백 보내기",
+    allianceFeedback: "얼라이언스 피드백",
+    noFeedback: "아직 등록된 피드백이 없습니다.",
+    feedbackFrom: "{name} • {date}",
+    allianceTitle: "얼라이언스",
+    accountLabel: "계정: {value}",
+    allianceLabel: "얼라이언스: {value}",
+    codeLabel: "코드: {value}",
+    signedInAsPlayer: "로그인 플레이어: {value}",
+    pendingJoinRequests: "대기 중인 가입 요청",
+    noPendingRequests: "대기 중인 가입 요청이 없습니다.",
+    requestedWithCode: "요청 코드: {code}",
+    approve: "승인",
+    reject: "거절",
+    rotateCode: "코드 변경",
+    updateCode: "코드 업데이트",
+    addMember: "멤버 추가",
+    name: "이름",
+    rank: "등급",
+    power: "전투력",
+    memberOptions: "멤버 옵션",
+    leaveAnyTime: "언제든지 얼라이언스를 떠날 수 있습니다.",
+    leaveAlliance: "얼라이언스 탈퇴",
+    leaveAllianceTitle: "얼라이언스 탈퇴",
+    leaveAllianceConfirm: "정말 이 얼라이언스를 떠나시겠습니까?",
+    cancel: "취소",
+    leave: "탈퇴"
+  },
+  es: {
+    appTitle: "App de Alianza PAKX",
+    authSignIn: "Iniciar sesión",
+    authCreateAccount: "Crear cuenta",
+    username: "Usuario",
+    password: "Contraseña",
+    welcome: "Bienvenido, {name}",
+    notInAlliance: "Esta cuenta todavía no está asociada a una alianza.",
+    joinAlliance: "Unirse a alianza",
+    createAlliance: "Crear alianza",
+    allianceName: "Nombre de la alianza",
+    allianceCode: "Código de alianza",
+    previewAlliance: "Ver alianza",
+    foundAlliance: "Encontrada: {name}",
+    signOut: "Cerrar sesión",
+    joinRequestPending: "Solicitud de ingreso pendiente",
+    pendingApproval: "Tu solicitud está esperando la aprobación de un R4 o R5.",
+    refreshStatus: "Actualizar estado",
+    language: "Idioma",
+    signedInAs: "Sesión iniciada como {name} ({rank})",
+    playersWaiting: "{count} jugadores esperan aprobación",
+    onePlayerWaiting: "1 jugador espera aprobación",
+    tapReviewRequests: "Toca para revisar solicitudes en la pestaña Alianza.",
+    votesNeedResponse: "{count} votos de alianza requieren respuesta",
+    oneVoteNeedsResponse: "1 voto de alianza requiere respuesta",
+    tapOpenVoting: "Toca para abrir la pestaña Votación.",
+    restoringSession: "Restaurando tu sesión...",
+    sessionExpired: "Tu sesión expiró. Vuelve a iniciar sesión.",
+    choosePlayer: "Elegir jugador",
+    votedMembers: "Miembros que votaron",
+    entireAlliance: "Toda la alianza",
+    showingAllAlliance: "Mostrando todos los miembros de la alianza para este puesto.",
+    searchNameOrRank: "Buscar por nombre o rango",
+    clearSelection: "Quitar selección",
+    noPlayersMatchSearch: "No hay jugadores que coincidan con la búsqueda.",
+    noMembersMatchVoteFilter: "No hay miembros que coincidan con ese filtro de voto de Desert Storm.",
+    tabMyInfo: "Mi información",
+    tabMembers: "Miembros",
+    tabAlliance: "Alianza",
+    tabTaskForceA: "Task Force A",
+    tabTaskForceB: "Task Force B",
+    tabDSHistory: "Historial DS",
+    tabFeedback: "Comentarios",
+    tabVoting: "Votación",
+    tabDashboard: "Panel",
+    feedbackTitle: "Comentarios de la app",
+    feedbackHint: "Comparte comentarios, errores y mejoras recomendadas con la alianza.",
+    feedbackExample: "Ejemplo:\nCreo que el historial de Desert Storm debería mostrar también el poder total.",
+    submitFeedback: "Enviar comentario",
+    allianceFeedback: "Comentarios de la alianza",
+    noFeedback: "Todavía no hay comentarios.",
+    feedbackFrom: "De {name} • {date}",
+    allianceTitle: "Alianza",
+    accountLabel: "Cuenta: {value}",
+    allianceLabel: "Alianza: {value}",
+    codeLabel: "Código: {value}",
+    signedInAsPlayer: "Sesión iniciada como: {value}",
+    pendingJoinRequests: "Solicitudes pendientes",
+    noPendingRequests: "No hay solicitudes pendientes.",
+    requestedWithCode: "Solicitó con el código {code}",
+    approve: "Aprobar",
+    reject: "Rechazar",
+    rotateCode: "Cambiar código",
+    updateCode: "Actualizar código",
+    addMember: "Agregar miembro",
+    name: "Nombre",
+    rank: "Rango",
+    power: "Poder",
+    memberOptions: "Opciones de miembro",
+    leaveAnyTime: "Puedes salir de esta alianza en cualquier momento.",
+    leaveAlliance: "Salir de la alianza",
+    leaveAllianceTitle: "Salir de la alianza",
+    leaveAllianceConfirm: "¿Seguro que quieres salir de esta alianza?",
+    cancel: "Cancelar",
+    leave: "Salir"
+  },
+  pt: {
+    appTitle: "App da Aliança PAKX",
+    authSignIn: "Entrar",
+    authCreateAccount: "Criar conta",
+    username: "Usuário",
+    password: "Senha",
+    welcome: "Bem-vindo, {name}",
+    notInAlliance: "Esta conta ainda não está associada a uma aliança.",
+    joinAlliance: "Entrar na aliança",
+    createAlliance: "Criar aliança",
+    allianceName: "Nome da aliança",
+    allianceCode: "Código da aliança",
+    previewAlliance: "Ver aliança",
+    foundAlliance: "Encontrada: {name}",
+    signOut: "Sair",
+    joinRequestPending: "Pedido de entrada pendente",
+    pendingApproval: "Seu pedido está aguardando aprovação de um R4 ou R5.",
+    refreshStatus: "Atualizar status",
+    language: "Idioma",
+    signedInAs: "Conectado como {name} ({rank})",
+    playersWaiting: "{count} jogadores aguardando aprovação",
+    onePlayerWaiting: "1 jogador aguardando aprovação",
+    tapReviewRequests: "Toque para revisar pedidos na aba Aliança.",
+    votesNeedResponse: "{count} votações da aliança aguardam resposta",
+    oneVoteNeedsResponse: "1 votação da aliança aguarda resposta",
+    tapOpenVoting: "Toque para abrir a aba Votação.",
+    restoringSession: "Restaurando sua sessão...",
+    sessionExpired: "Sua sessão expirou. Entre novamente.",
+    choosePlayer: "Escolher jogador",
+    votedMembers: "Membros que votaram",
+    entireAlliance: "Aliança inteira",
+    showingAllAlliance: "Mostrando todos os membros da aliança para esta vaga.",
+    searchNameOrRank: "Buscar por nome ou patente",
+    clearSelection: "Limpar seleção",
+    noPlayersMatchSearch: "Nenhum jogador corresponde à busca.",
+    noMembersMatchVoteFilter: "Nenhum membro corresponde a esse filtro de voto do Desert Storm.",
+    tabMyInfo: "Minhas informações",
+    tabMembers: "Membros",
+    tabAlliance: "Aliança",
+    tabTaskForceA: "Task Force A",
+    tabTaskForceB: "Task Force B",
+    tabDSHistory: "Histórico DS",
+    tabFeedback: "Feedback",
+    tabVoting: "Votação",
+    tabDashboard: "Painel",
+    feedbackTitle: "Feedback do app",
+    feedbackHint: "Compartilhe comentários, bugs e melhorias sugeridas com a aliança.",
+    feedbackExample: "Exemplo:\nAcho que o histórico do Desert Storm deveria mostrar também o poder total.",
+    submitFeedback: "Enviar feedback",
+    allianceFeedback: "Feedback da aliança",
+    noFeedback: "Nenhum feedback foi enviado ainda.",
+    feedbackFrom: "De {name} • {date}",
+    allianceTitle: "Aliança",
+    accountLabel: "Conta: {value}",
+    allianceLabel: "Aliança: {value}",
+    codeLabel: "Código: {value}",
+    signedInAsPlayer: "Conectado como: {value}",
+    pendingJoinRequests: "Pedidos pendentes",
+    noPendingRequests: "Não há pedidos pendentes.",
+    requestedWithCode: "Solicitado com o código {code}",
+    approve: "Aprovar",
+    reject: "Rejeitar",
+    rotateCode: "Alterar código",
+    updateCode: "Atualizar código",
+    addMember: "Adicionar membro",
+    name: "Nome",
+    rank: "Patente",
+    power: "Poder",
+    memberOptions: "Opções do membro",
+    leaveAnyTime: "Você pode sair desta aliança a qualquer momento.",
+    leaveAlliance: "Sair da aliança",
+    leaveAllianceTitle: "Sair da aliança",
+    leaveAllianceConfirm: "Tem certeza de que deseja sair desta aliança?",
+    cancel: "Cancelar",
+    leave: "Sair"
+  }
+};
 
 function findAssignment(taskForces, playerName) {
   for (const tf of Object.values(taskForces || {})) for (const squad of tf.squads || []) for (const slot of squad.slots || []) if (slot.playerName === playerName) return { taskForceLabel: tf.label, squadLabel: squad.label, slotLabel: slot.label };
@@ -24,16 +337,24 @@ function parseVoteOptions(value) {
   return String(value || "").split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean);
 }
 
-function tabLabel(tab, leader, joinRequests, unvotedCount) {
-  if (tab === "myInfo") return "My Info";
-  if (tab === "players") return "Members";
-  if (tab === "alliance") return `Alliance${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
-  if (tab === "taskForceA") return "Task Force A";
-  if (tab === "taskForceB") return "Task Force B";
-  if (tab === "desertStormHistory") return "DS History";
-  if (tab === "feedback") return "Feedback";
-  if (tab === "voting") return `Voting${unvotedCount ? ` (${unvotedCount})` : ""}`;
-  return "Dashboard";
+function getTranslator(language) {
+  const locale = TRANSLATIONS[language] || TRANSLATIONS.en;
+  return (key, values = {}) => {
+    const template = locale[key] || TRANSLATIONS.en[key] || key;
+    return String(template).replace(/\{(\w+)\}/g, (_, token) => values[token] ?? "");
+  };
+}
+
+function tabLabel(tab, leader, joinRequests, unvotedCount, t) {
+  if (tab === "myInfo") return t("tabMyInfo");
+  if (tab === "players") return t("tabMembers");
+  if (tab === "alliance") return `${t("tabAlliance")}${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
+  if (tab === "taskForceA") return t("tabTaskForceA");
+  if (tab === "taskForceB") return t("tabTaskForceB");
+  if (tab === "desertStormHistory") return t("tabDSHistory");
+  if (tab === "feedback") return t("tabFeedback");
+  if (tab === "voting") return `${t("tabVoting")}${unvotedCount ? ` (${unvotedCount})` : ""}`;
+  return t("tabDashboard");
 }
 
 function getLatestDesertStormVote(votes) {
@@ -56,6 +377,7 @@ function getAssignedPlayerNames(taskForces, currentSelection) {
 
 export default function App() {
   const [backendUrlInput, setBackendUrlInput] = useState(DEFAULT_BACKEND_URL);
+  const [language, setLanguage] = useState("en");
   const [authMode, setAuthMode] = useState("");
   const [authUsername, setAuthUsername] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -84,6 +406,7 @@ export default function App() {
   const [newVoteOptionsText, setNewVoteOptionsText] = useState("");
   const [newFeedbackText, setNewFeedbackText] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
+  const t = useMemo(() => getTranslator(language), [language]);
 
   const players = alliance?.players || [];
   const votes = alliance?.votes || [];
@@ -142,6 +465,11 @@ export default function App() {
     await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
   }
 
+  async function changeLanguage(nextLanguage) {
+    setLanguage(nextLanguage);
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+  }
+
   async function signOut(message = "") {
     const nextMessage = typeof message === "string" ? message : "";
     await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
@@ -150,7 +478,7 @@ export default function App() {
 
   async function handleRequestError(error) {
     if (error?.status === 401) {
-      await signOut("Your session expired. Please sign in again.");
+      await signOut(t("sessionExpired"));
       return;
     }
     setErrorMessage(error.message || "Request failed.");
@@ -189,6 +517,10 @@ export default function App() {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
+        const storedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (storedLanguage && TRANSLATIONS[storedLanguage]) {
+          setLanguage(storedLanguage);
+        }
         if (!stored) return;
         const parsed = JSON.parse(stored);
         if (!(parsed?.token && parsed?.backendUrl)) return;
@@ -199,7 +531,7 @@ export default function App() {
       } catch (error) {
         if (!alive) return;
         await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
-        clearSessionState(error?.status === 401 ? "Your session expired. Please sign in again." : "");
+        clearSessionState(error?.status === 401 ? t("sessionExpired") : "");
       } finally {
         if (alive) setSessionReady(true);
       }
@@ -232,24 +564,28 @@ export default function App() {
     run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
   }
 
-  if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><View style={styles.loadingScreen}><ActivityIndicator color="#1f5c4d" size="large" /><Text style={styles.hint}>Restoring your session...</Text></View></SafeAreaView>;
+  if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><View style={styles.loadingScreen}><ActivityIndicator color="#1f5c4d" size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
 
-  if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
+  if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
 
-  if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => { const result = await joinAlliance(session.backendUrl, session.token, allianceCodeInput); setAccount(result.account); setJoinRequest(result.joinRequest); setAlliance(null); setCurrentUser(null); setAlliancePreview(result.alliance); setSetupMode("join"); })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
+  if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => { const result = await joinAlliance(session.backendUrl, session.token, allianceCodeInput); setAccount(result.account); setJoinRequest(result.joinRequest); setAlliance(null); setCurrentUser(null); setAlliancePreview(result.alliance); setSetupMode("join"); })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
 
-  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}><View style={styles.screen}><Text style={styles.title}>{alliance?.name}</Text><Text style={styles.hint}>Signed in as {account?.displayName} ({currentUser?.rank})</Text>{leader && joinRequests.length ? <Pressable style={styles.alertBanner} onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? "1 player is waiting for approval" : `${joinRequests.length} players are waiting for approval`}</Text><Text style={styles.alertBannerText}>Tap to review join requests in the Alliance tab.</Text></Pressable> : null}{unvotedCount ? <Pressable style={styles.voteBanner} onPress={() => setActiveTab("voting")}><Text style={styles.voteBannerTitle}>{unvotedCount === 1 ? "1 alliance vote needs your response" : `${unvotedCount} alliance votes need your response`}</Text><Text style={styles.voteBannerText}>Tap to open the Voting tab.</Text></Pressable> : null}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>{tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, unvotedCount)}</Text></Pressable>)}</ScrollView><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">{activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} votes={votes} onChangeField={saveMyInfo} /> : null}{activeTab === "dashboard" && leader ? <Dashboard dashboard={dashboard} /> : null}{(activeTab === "taskForceA" || activeTab === "taskForceB") ? <TaskForceView taskForce={selectedTaskForce} currentUser={currentUser} currentUserIsLeader={leader} onPickPlayer={(context) => leader && (setPlayerModal(context), setPlayerPickerMode("voted"), setSearchText(""))} /> : null}{activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} onChangeMemberSearchText={setMemberSearchText} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}{activeTab === "desertStormHistory" ? <DesertStormHistoryView layouts={desertStormLayouts} currentUserIsLeader={leader} onLockIn={() => run(async () => { await lockInDesertStormLayoutRequest(session.backendUrl, session.token, {}); await refresh(); })} onUpdateResult={(layoutId, result) => run(async () => { await updateDesertStormLayoutResultRequest(session.backendUrl, session.token, layoutId, { result }); await refresh(); })} /> : null}{activeTab === "feedback" ? <FeedbackView feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} /> : null}{activeTab === "voting" ? <VotingView votes={votes} currentUser={currentUser} currentUserIsLeader={leader} latestDesertStormVote={latestDesertStormVote} newVoteTitle={newVoteTitle} newVoteOptionsText={newVoteOptionsText} onChangeNewVoteTitle={setNewVoteTitle} onChangeNewVoteOptionsText={setNewVoteOptionsText} onCreateVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: newVoteTitle, options: parseVoteOptions(newVoteOptionsText) }); setNewVoteTitle(""); setNewVoteOptionsText(""); await refresh(); })} onCreateDesertStormVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: DESERT_STORM_VOTE_TITLE, options: [DESERT_STORM_PLAY_LABEL, DESERT_STORM_SUB_LABEL, DESERT_STORM_CANT_PLAY_LABEL] }); await refresh(); })} onSubmitVote={(voteId, optionId) => run(async () => { await submitVoteRequest(session.backendUrl, session.token, voteId, optionId); await refresh(); })} onCloseVote={(voteId) => run(async () => { await closeVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onArchiveVote={(voteId) => run(async () => { await archiveVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onDeleteVote={(voteId) => run(async () => { await deleteVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} /> : null}{activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} /> : null}</ScrollView></View></KeyboardAvoidingView><Modal visible={Boolean(playerModal)} animationType="slide" onRequestClose={() => setPlayerModal(null)}><SafeAreaView style={styles.safeArea}><KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}><View style={styles.screen}><Text style={styles.title}>Choose Player</Text>{playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>Voted Members</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>Entire Alliance</Text></Pressable></View> : null}{playerModal && latestDesertStormVote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "${DESERT_STORM_SUB_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.` : `Showing members who voted "${DESERT_STORM_PLAY_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.`}</Text> : null}{playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>Showing every member in the alliance for this slot.</Text> : null}<TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder="Search name or rank" /><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><Pressable style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>Clear selection</Text></Pressable>{filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}{!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && latestDesertStormVote ? "No members match this Desert Storm vote filter." : "No players match that search."}</Text> : null}</ScrollView></View></KeyboardAvoidingView></SafeAreaView></Modal></SafeAreaView>;
+  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}><View style={styles.screen}><Text style={styles.title}>{alliance?.name}</Text><Text style={styles.hint}>{t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })}</Text>{leader && joinRequests.length ? <Pressable style={styles.alertBanner} onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></Pressable> : null}{unvotedCount ? <Pressable style={styles.voteBanner} onPress={() => setActiveTab("voting")}><Text style={styles.voteBannerTitle}>{unvotedCount === 1 ? t("oneVoteNeedsResponse") : t("votesNeedResponse", { count: unvotedCount })}</Text><Text style={styles.voteBannerText}>{t("tapOpenVoting")}</Text></Pressable> : null}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>{tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, unvotedCount, t)}</Text></Pressable>)}</ScrollView><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">{activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} votes={votes} onChangeField={saveMyInfo} /> : null}{activeTab === "dashboard" && leader ? <Dashboard dashboard={dashboard} /> : null}{(activeTab === "taskForceA" || activeTab === "taskForceB") ? <TaskForceView taskForce={selectedTaskForce} currentUser={currentUser} currentUserIsLeader={leader} onPickPlayer={(context) => leader && (setPlayerModal(context), setPlayerPickerMode("voted"), setSearchText(""))} /> : null}{activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} onChangeMemberSearchText={setMemberSearchText} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}{activeTab === "desertStormHistory" ? <DesertStormHistoryView layouts={desertStormLayouts} currentUserIsLeader={leader} onLockIn={() => run(async () => { await lockInDesertStormLayoutRequest(session.backendUrl, session.token, {}); await refresh(); })} onUpdateResult={(layoutId, result) => run(async () => { await updateDesertStormLayoutResultRequest(session.backendUrl, session.token, layoutId, { result }); await refresh(); })} /> : null}{activeTab === "feedback" ? <FeedbackView feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} t={t} /> : null}{activeTab === "voting" ? <VotingView votes={votes} currentUser={currentUser} currentUserIsLeader={leader} latestDesertStormVote={latestDesertStormVote} newVoteTitle={newVoteTitle} newVoteOptionsText={newVoteOptionsText} onChangeNewVoteTitle={setNewVoteTitle} onChangeNewVoteOptionsText={setNewVoteOptionsText} onCreateVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: newVoteTitle, options: parseVoteOptions(newVoteOptionsText) }); setNewVoteTitle(""); setNewVoteOptionsText(""); await refresh(); })} onCreateDesertStormVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: DESERT_STORM_VOTE_TITLE, options: [DESERT_STORM_PLAY_LABEL, DESERT_STORM_SUB_LABEL, DESERT_STORM_CANT_PLAY_LABEL] }); await refresh(); })} onSubmitVote={(voteId, optionId) => run(async () => { await submitVoteRequest(session.backendUrl, session.token, voteId, optionId); await refresh(); })} onCloseVote={(voteId) => run(async () => { await closeVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onArchiveVote={(voteId) => run(async () => { await archiveVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onDeleteVote={(voteId) => run(async () => { await deleteVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} /> : null}{activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} /> : null}</ScrollView></View></KeyboardAvoidingView><Modal visible={Boolean(playerModal)} animationType="slide" onRequestClose={() => setPlayerModal(null)}><SafeAreaView style={styles.safeArea}><KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}><View style={styles.screen}><Text style={styles.title}>{t("choosePlayer")}</Text>{playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}{playerModal && latestDesertStormVote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "${DESERT_STORM_SUB_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.` : `Showing members who voted "${DESERT_STORM_PLAY_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.`}</Text> : null}{playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}<TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} /><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><Pressable style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>{filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}{!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && latestDesertStormVote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}</ScrollView></View></KeyboardAvoidingView></SafeAreaView></Modal></SafeAreaView>;
+}
+
+function LanguageSelector({ language, onChangeLanguage, t }) {
+  return <View style={styles.section}><Text style={styles.sectionTitle}>{t("language")}</Text><View style={styles.languageRow}>{SUPPORTED_LANGUAGES.map((entry) => <Pressable key={entry.code} style={[styles.languageButton, language === entry.code && styles.languageButtonActive]} onPress={() => onChangeLanguage(entry.code)}><Text style={[styles.languageButtonText, language === entry.code && styles.languageButtonTextActive]}>{entry.label}</Text></Pressable>)}</View></View>;
 }
 
 function AuthScreen(props) {
-  const { authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, onSignIn, onCreate } = props;
-  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>PAKX Alliance App</Text><Text style={styles.hint}>Sign in or create your app account first.</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setAuthMode("signIn")}><Text style={styles.buttonText}>Sign In</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setAuthMode("create")}><Text style={styles.secondaryButtonText}>Create Account</Text></Pressable></View>{authMode ? <View style={styles.card}><Text style={styles.cardTitle}>{authMode === "signIn" ? "Sign In" : "Create Account"}</Text><TextInput value={authUsername} onChangeText={setAuthUsername} style={styles.input} placeholder="Username" autoCapitalize="none" /><TextInput value={authPassword} onChangeText={setAuthPassword} style={styles.input} placeholder="Password" secureTextEntry /><Pressable style={styles.button} onPress={authMode === "signIn" ? onSignIn : onCreate}><Text style={styles.buttonText}>{authMode === "signIn" ? "Sign In" : "Create Account"}</Text></Pressable></View> : null}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
+  const { authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, onSignIn, onCreate, language, onChangeLanguage, t } = props;
+  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>{t("appTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setAuthMode("signIn")}><Text style={styles.buttonText}>{t("authSignIn")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setAuthMode("create")}><Text style={styles.secondaryButtonText}>{t("authCreateAccount")}</Text></Pressable></View>{authMode ? <View style={styles.card}><Text style={styles.cardTitle}>{authMode === "signIn" ? t("authSignIn") : t("authCreateAccount")}</Text><TextInput value={authUsername} onChangeText={setAuthUsername} style={styles.input} placeholder={t("username")} autoCapitalize="none" /><TextInput value={authPassword} onChangeText={setAuthPassword} style={styles.input} placeholder={t("password")} secureTextEntry /><Pressable style={styles.button} onPress={authMode === "signIn" ? onSignIn : onCreate}><Text style={styles.buttonText}>{authMode === "signIn" ? t("authSignIn") : t("authCreateAccount")}</Text></Pressable></View> : null}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
 }
 
 function AllianceSetupScreen(props) {
-  const { account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, onPreview, onJoin, onCreateAlliance, onRefreshStatus, onSignOut } = props;
+  const { account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, onPreview, onJoin, onCreateAlliance, onRefreshStatus, onSignOut, language, onChangeLanguage, t } = props;
   const mode = setupMode === "create" ? "create" : "join";
-  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>Welcome, {account?.displayName}</Text>{joinRequest ? <View style={styles.card}><Text style={styles.cardTitle}>Join Request Pending</Text><Text style={styles.line}>Alliance code: {joinRequest.allianceCode}</Text><Text style={styles.line}>Your request is waiting for an R4 or R5 to approve it.</Text><Pressable style={styles.button} onPress={onRefreshStatus}><Text style={styles.buttonText}>Refresh Status</Text></Pressable></View> : <><Text style={styles.hint}>This account is not associated with an alliance yet.</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setSetupMode("join")}><Text style={styles.buttonText}>Join Alliance</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setSetupMode("create")}><Text style={styles.secondaryButtonText}>Create Alliance</Text></Pressable></View><View style={styles.card}><Text style={styles.cardTitle}>{mode === "create" ? "Create Alliance" : "Join Alliance"}</Text>{mode === "create" ? <TextInput value={allianceNameInput} onChangeText={setAllianceNameInput} style={styles.input} placeholder="Alliance name" /> : null}<TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" autoCapitalize="characters" />{mode === "join" ? <><Pressable style={styles.secondaryButton} onPress={onPreview}><Text style={styles.secondaryButtonText}>Preview Alliance</Text></Pressable>{alliancePreview ? <Text style={styles.line}>Found: {alliancePreview.name}</Text> : null}<Pressable style={styles.button} onPress={onJoin}><Text style={styles.buttonText}>Join Alliance</Text></Pressable></> : <Pressable style={styles.button} onPress={onCreateAlliance}><Text style={styles.buttonText}>Create Alliance</Text></Pressable>}</View></>}{<Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>Sign Out</Text></Pressable>}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
+  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>{t("welcome", { name: account?.displayName })}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} />{joinRequest ? <View style={styles.card}><Text style={styles.cardTitle}>{t("joinRequestPending")}</Text><Text style={styles.line}>{t("codeLabel", { value: joinRequest.allianceCode })}</Text><Text style={styles.line}>{t("pendingApproval")}</Text><Pressable style={styles.button} onPress={onRefreshStatus}><Text style={styles.buttonText}>{t("refreshStatus")}</Text></Pressable></View> : <><Text style={styles.hint}>{t("notInAlliance")}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setSetupMode("join")}><Text style={styles.buttonText}>{t("joinAlliance")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setSetupMode("create")}><Text style={styles.secondaryButtonText}>{t("createAlliance")}</Text></Pressable></View><View style={styles.card}><Text style={styles.cardTitle}>{mode === "create" ? t("createAlliance") : t("joinAlliance")}</Text>{mode === "create" ? <TextInput value={allianceNameInput} onChangeText={setAllianceNameInput} style={styles.input} placeholder={t("allianceName")} /> : null}<TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder={t("allianceCode")} autoCapitalize="characters" />{mode === "join" ? <><Pressable style={styles.secondaryButton} onPress={onPreview}><Text style={styles.secondaryButtonText}>{t("previewAlliance")}</Text></Pressable>{alliancePreview ? <Text style={styles.line}>{t("foundAlliance", { name: alliancePreview.name })}</Text> : null}<Pressable style={styles.button} onPress={onJoin}><Text style={styles.buttonText}>{t("joinAlliance")}</Text></Pressable></> : <Pressable style={styles.button} onPress={onCreateAlliance}><Text style={styles.buttonText}>{t("createAlliance")}</Text></Pressable>}</View></>}{<Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
 }
 
 function Dashboard({ dashboard }) { return <View style={styles.dashboardShell}><Text style={styles.cardTitle}>Leader Dashboard</Text><View style={styles.metricGrid}><View style={styles.dashboardMetricA}><Text style={styles.metricLabel}>Task Force A</Text><Text style={styles.metricPanelValue}>{dashboard.taskForceA.totalPower.toFixed(2)}M</Text></View><View style={styles.dashboardMetricB}><Text style={styles.metricLabel}>Task Force B</Text><Text style={styles.metricPanelValue}>{dashboard.taskForceB.totalPower.toFixed(2)}M</Text></View></View><View style={styles.dashboardCompare}><Text style={styles.metricLabel}>Difference vs Task Force A</Text><Text style={styles.dashboardCompareValue}>{dashboard.differenceVsA.toFixed(2)}M</Text></View></View>; }
@@ -257,8 +593,8 @@ function MyInfoView({ currentUser, desertStormAssignment, votes, onChangeField }
 function TaskForceView({ taskForce, currentUser, currentUserIsLeader, onPickPlayer }) { return <View style={styles.card}><Text style={styles.cardTitle}>{taskForce.label}</Text>{taskForce.squads.map((squad) => <View key={squad.id} style={styles.section}><Text style={styles.sectionTitle}>{squad.label} - {squad.totalPower.toFixed(2)}M</Text>{squad.slots.map((slot) => <Pressable key={slot.id} style={[styles.pick, slot.isDuplicate && styles.dangerBox, currentUser?.name && slot.playerName === currentUser.name && styles.selectedPlayerBox]} disabled={!currentUserIsLeader} onPress={() => onPickPlayer({ taskForceKey: taskForce.key, taskForceLabel: taskForce.label, squadId: squad.id, squadLabel: squad.label, slotId: slot.id, slotLabel: slot.label, memberType: slot.memberType })}><Text style={[styles.pickText, currentUser?.name && slot.playerName === currentUser.name && styles.selectedPlayerText]}>{slot.label}: {slot.playerName || "Open"} ({slot.overallPower.toFixed(2)}M)</Text>{currentUser?.name && slot.playerName === currentUser.name ? <Text style={styles.selectedPlayerHint}>Selected for Desert Storm</Text> : null}</Pressable>)}</View>)}</View>; }
 function MembersView({ players, memberSearchText, onChangeMemberSearchText, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) { const [drafts, setDrafts] = useState({}); useEffect(() => { setDrafts(Object.fromEntries(players.map((player) => [player.id, { name: player.name, rank: player.rank, overallPower: String(player.overallPower), squad1: String(player.squadPowers?.squad1 ?? 0), squad2: String(player.squadPowers?.squad2 ?? 0), squad3: String(player.squadPowers?.squad3 ?? 0), squad4: String(player.squadPowers?.squad4 ?? 0) }]))); }, [players]); return <View style={styles.card}><Text style={styles.cardTitle}>Members</Text><TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />{players.map((player) => { const canEdit = currentUserIsLeader || currentUser?.id === player.id; const canEditRank = currentUserIsLeader; const s = player.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 }; const ds = player.desertStormStats || { playedCount: 0, missedCount: 0 }; const draft = drafts[player.id] || { name: player.name, rank: player.rank, overallPower: String(player.overallPower), squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) }; return <View key={player.id} style={styles.section}><Text style={styles.sectionTitle}>{player.name} ({player.rank})</Text><Text style={styles.line}>Total Base Power: {Number(player.overallPower || 0).toFixed(2)}M</Text><Text style={styles.line}>Total Squad Power: {Number(player.totalSquadPower || 0).toFixed(2)}M</Text><Text style={styles.line}>Desert Storm Played: {ds.playedCount}</Text><Text style={styles.line}>Desert Storm Missed: {ds.missedCount}</Text><TextInput value={draft.name} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: v } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={currentUserIsLeader} style={[styles.input, !currentUserIsLeader && styles.disabled]} /><View style={styles.row}><TextInput value={draft.rank} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, rank: v.toUpperCase() } }))} onEndEditing={() => onChangeField(player.id, "rank", draft.rank)} onBlur={() => onChangeField(player.id, "rank", draft.rank)} editable={canEditRank} style={[styles.input, styles.half, !canEditRank && styles.disabled]} /><TextInput value={draft.overallPower} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, overallPower: v } }))} onEndEditing={() => onChangeField(player.id, "overallPower", draft.overallPower)} onBlur={() => onChangeField(player.id, "overallPower", draft.overallPower)} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" /></View><View style={styles.row}><TextInput value={draft.squad1} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad1: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" /><TextInput value={draft.squad2} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad2: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" /></View><View style={styles.row}><TextInput value={draft.squad3} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad3: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" /><TextInput value={draft.squad4} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad4: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" /></View>{currentUserIsLeader && currentUser?.id !== player.id ? <Pressable style={styles.dangerButton} onPress={() => onRemovePlayer(player.id)}><Text style={styles.dangerButtonText}>Remove</Text></Pressable> : null}</View>; })}{!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}</View>; }
 function DesertStormHistoryView({ layouts, currentUserIsLeader, onLockIn, onUpdateResult }) { return <View style={styles.card}><Text style={styles.cardTitle}>Desert Storm History</Text><Text style={styles.hint}>Locked layouts preserve each week’s positions and result.</Text>{currentUserIsLeader ? <View style={styles.section}><Pressable style={styles.button} onPress={onLockIn}><Text style={styles.buttonText}>Lock In Current Desert Storm Layout</Text></Pressable></View> : null}{layouts.length ? layouts.map((layout) => <View key={layout.id} style={styles.voteCard}><Text style={styles.sectionTitle}>{layout.title}</Text><Text style={styles.hint}>Locked {layout.lockedInAt.slice(0, 10)} by {layout.lockedByName || "Leader"} • {layout.result}</Text>{currentUserIsLeader ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, layout.result === "pending" && styles.modeButtonActive]} onPress={() => onUpdateResult(layout.id, "pending")}><Text style={[styles.secondaryButtonText, layout.result === "pending" && styles.modeButtonTextActive]}>Pending</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, layout.result === "win" && styles.modeButtonActive]} onPress={() => onUpdateResult(layout.id, "win")}><Text style={[styles.secondaryButtonText, layout.result === "win" && styles.modeButtonTextActive]}>Win</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, layout.result === "loss" && styles.modeButtonActive]} onPress={() => onUpdateResult(layout.id, "loss")}><Text style={[styles.secondaryButtonText, layout.result === "loss" && styles.modeButtonTextActive]}>Loss</Text></Pressable></View> : null}{Object.values(layout.taskForces || {}).map((taskForce) => <View key={taskForce.key} style={styles.section}><Text style={styles.sectionTitle}>{taskForce.label}</Text>{(taskForce.squads || []).map((squad) => <View key={squad.id} style={styles.squadCard}><Text style={styles.squadLabel}>{squad.label}</Text>{(squad.slots || []).map((slot) => <Text key={slot.id} style={styles.line}>{slot.label}: {slot.playerName || "Open"}</Text>)}</View>)}</View>)}</View>) : <Text style={styles.hint}>No Desert Storm layouts have been locked in yet.</Text>}</View>; }
-function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackText, onSubmitFeedback }) { return <View style={styles.card}><Text style={styles.cardTitle}>App Feedback</Text><Text style={styles.hint}>Share comments, bugs, and recommended updates with the alliance.</Text><View style={styles.section}><TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={"Example:\nI think the Desert Storm history tab should show power totals too."} multiline /><Pressable style={styles.button} onPress={onSubmitFeedback}><Text style={styles.buttonText}>Submit Feedback</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>Alliance Feedback</Text>{feedbackEntries.length ? feedbackEntries.map((entry) => <View key={entry.id} style={styles.voteCard}><Text style={styles.line}>{entry.message}</Text><Text style={styles.hint}>From {entry.createdByName || "Member"} • {String(entry.createdAt).slice(0, 10)}</Text></View>) : <Text style={styles.hint}>No feedback has been submitted yet.</Text>}</View></View>; }
+function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackText, onSubmitFeedback, t }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("feedbackTitle")}</Text><Text style={styles.hint}>{t("feedbackHint")}</Text><View style={styles.section}><TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={t("feedbackExample")} multiline /><Pressable style={styles.button} onPress={onSubmitFeedback}><Text style={styles.buttonText}>{t("submitFeedback")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("allianceFeedback")}</Text>{feedbackEntries.length ? feedbackEntries.map((entry) => <View key={entry.id} style={styles.voteCard}><Text style={styles.line}>{entry.message}</Text><Text style={styles.hint}>{t("feedbackFrom", { name: entry.createdByName || "Member", date: String(entry.createdAt).slice(0, 10) })}</Text></View>) : <Text style={styles.hint}>{t("noFeedback")}</Text>}</View></View>; }
 function VotingView({ votes, currentUser, currentUserIsLeader, latestDesertStormVote, newVoteTitle, newVoteOptionsText, onChangeNewVoteTitle, onChangeNewVoteOptionsText, onCreateVote, onCreateDesertStormVote, onSubmitVote, onCloseVote, onArchiveVote, onDeleteVote }) { const openVotes = votes.filter((vote) => vote.status === "open"); const closedVotes = votes.filter((vote) => vote.status === "closed" || vote.status === "archived"); return <View style={styles.card}><Text style={styles.cardTitle}>Alliance Voting</Text><Text style={styles.hint}>Leaders can create votes. Every member can open the vote and respond.</Text>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>Desert Storm Vote</Text><Text style={styles.hint}>{latestDesertStormVote ? `Latest Desert Storm vote has ${latestDesertStormVote.totalVotes}/${latestDesertStormVote.eligibleVoters} responses.` : "Push the standard weekly Desert Storm vote to the alliance."}</Text><Pressable style={styles.button} onPress={onCreateDesertStormVote}><Text style={styles.buttonText}>Push Desert Storm Vote</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>Create Vote</Text><TextInput value={newVoteTitle} onChangeText={onChangeNewVoteTitle} style={styles.input} placeholder="Vote title" /><TextInput value={newVoteOptionsText} onChangeText={onChangeNewVoteOptionsText} style={[styles.input, styles.textArea]} placeholder={"One option per line\nAttack early\nAttack late"} multiline /><Pressable style={styles.button} onPress={onCreateVote}><Text style={styles.buttonText}>Push Vote To Alliance</Text></Pressable></View></> : null}<View style={styles.section}><Text style={styles.sectionTitle}>Open Votes</Text>{openVotes.length ? openVotes.map((vote) => <View key={vote.id} style={styles.voteCard}><Text style={styles.sectionTitle}>{vote.title}</Text><Text style={styles.hint}>Created by {vote.createdByName} • {vote.totalVotes}/{vote.eligibleVoters} voted • Open</Text>{vote.options.map((option) => <View key={option.id} style={styles.voteOptionWrap}><Pressable style={[styles.voteOption, vote.selectedOptionId === option.id && styles.voteOptionSelected]} onPress={() => onSubmitVote(vote.id, option.id)}><View style={styles.voteOptionHeader}><Text style={[styles.pickText, vote.selectedOptionId === option.id && styles.selectedPlayerText]}>{option.label}</Text><Text style={styles.voteCount}>{option.votes}</Text></View>{vote.selectedOptionId === option.id ? <Text style={styles.selectedPlayerHint}>Your current vote</Text> : null}</Pressable>{vote.responses?.filter((response) => response.optionId === option.id).length ? <Text style={styles.voteResponseList}>{vote.responses.filter((response) => response.optionId === option.id).map((response) => response.playerName).join(", ")}</Text> : <Text style={styles.hint}>No members selected this option yet.</Text>}</View>)}{currentUserIsLeader ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(vote.id)}><Text style={styles.secondaryButtonText}>Close</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDeleteVote(vote.id)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable></View> : null}<Text style={styles.line}>{vote.didVote ? "You have voted." : "You have not voted yet."}</Text></View>) : <Text style={styles.hint}>No open votes right now.</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>Closed Vote Folder</Text>{closedVotes.length ? closedVotes.map((vote) => <View key={vote.id} style={styles.voteCard}><Text style={styles.sectionTitle}>{vote.title}</Text><Text style={styles.hint}>{vote.status === "archived" ? "Archived" : "Closed"} • {vote.totalVotes}/{vote.eligibleVoters} voted</Text>{vote.options.map((option) => <View key={option.id} style={styles.voteOptionWrap}><View style={styles.voteOption}><View style={styles.voteOptionHeader}><Text style={styles.pickText}>{option.label}</Text><Text style={styles.voteCount}>{option.votes}</Text></View>{vote.selectedOptionId === option.id ? <Text style={styles.selectedPlayerHint}>Your final vote</Text> : null}</View>{vote.responses?.filter((response) => response.optionId === option.id).length ? <Text style={styles.voteResponseList}>{vote.responses.filter((response) => response.optionId === option.id).map((response) => response.playerName).join(", ")}</Text> : <Text style={styles.hint}>No members selected this option.</Text>}</View>)}{currentUserIsLeader ? <View style={styles.row}>{vote.status !== "archived" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onArchiveVote(vote.id)}><Text style={styles.secondaryButtonText}>Archive</Text></Pressable> : <View style={styles.half} />}<Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDeleteVote(vote.id)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable></View> : null}<Text style={styles.line}>{vote.didVote ? "You voted in this closed vote." : "You did not vote in this closed vote."}</Text></View>) : <Text style={styles.hint}>No closed or archived votes yet.</Text>}</View>{currentUser ? <View style={styles.inlineSummary}><Text style={styles.line}>{votes.filter((vote) => vote.didVote).length} of {votes.length} votes completed for {currentUser.name}</Text></View> : null}</View>; }
-function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut }) { return <View style={styles.card}><Text style={styles.cardTitle}>Alliance</Text><Text style={styles.line}>Account: {account?.username}</Text><Text style={styles.line}>Alliance: {alliance?.name}</Text><Text style={styles.line}>Code: {alliance?.code}</Text><Text style={styles.line}>Signed in as: {currentUser?.name}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>Sign Out</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>Pending Join Requests</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>Requested with code {req.allianceCode}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>Approve</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>Reject</Text></Pressable></View></View>) : <Text style={styles.hint}>No pending join requests.</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>Rotate Code</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>Update Code</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>Add Member</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder="Name" /><View style={styles.row}><TextInput value={newMemberRank} onChangeText={onChangeNewMemberRank} style={[styles.input, styles.half]} placeholder="Rank" /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder="Power" keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>Add Member</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>Member Options</Text><Text style={styles.hint}>You can leave this alliance at any time.</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert("Leave Alliance", "Are you sure you want to leave this alliance?", [{ text: "Cancel", style: "cancel" }, { text: "Leave", style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>Leave Alliance</Text></Pressable></View>}</View>; }
+function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("allianceTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><Text style={styles.line}>{t("accountLabel", { value: account?.username })}</Text><Text style={styles.line}>{t("allianceLabel", { value: alliance?.name })}</Text><Text style={styles.line}>{t("codeLabel", { value: alliance?.code })}</Text><Text style={styles.line}>{t("signedInAsPlayer", { value: currentUser?.name })}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>{t("pendingJoinRequests")}</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>{t("approve")}</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable></View></View>) : <Text style={styles.hint}>{t("noPendingRequests")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("rotateCode")}</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>{t("updateCode")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("addMember")}</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} /><View style={styles.row}><TextInput value={newMemberRank} onChangeText={onChangeNewMemberRank} style={[styles.input, styles.half]} placeholder={t("rank")} /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>{t("addMember")}</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>{t("memberOptions")}</Text><Text style={styles.hint}>{t("leaveAnyTime")}</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable></View>}</View>; }
 
-const styles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: "#f3efe3" }, keyboardShell: { flex: 1 }, loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 }, screen: { flex: 1, padding: 18, gap: 12 }, title: { fontSize: 28, fontWeight: "700", color: "#1f2a1f" }, hint: { fontSize: 14, color: "#566156" }, line: { color: "#435043", fontSize: 15 }, error: { color: "#8b241f", fontWeight: "700" }, alertBanner: { backgroundColor: "#f2dfc2", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#d9ba84", gap: 4 }, alertBannerTitle: { fontSize: 16, fontWeight: "700", color: "#5d3f11" }, alertBannerText: { fontSize: 14, color: "#72542b" }, voteBanner: { backgroundColor: "#dde9f3", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#b6cade", gap: 4 }, voteBannerTitle: { fontSize: 16, fontWeight: "700", color: "#244a68" }, voteBannerText: { fontSize: 14, color: "#40627d" }, card: { backgroundColor: "#fbf7ee", borderRadius: 18, padding: 16, gap: 10, borderWidth: 1, borderColor: "#e2d8c5" }, cardTitle: { fontSize: 22, fontWeight: "700", color: "#1f2a1f" }, input: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, color: "#243025" }, textArea: { minHeight: 96, textAlignVertical: "top" }, button: { backgroundColor: "#1f5c4d", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, buttonText: { color: "#f7f4ee", fontWeight: "700" }, secondaryButton: { backgroundColor: "#efe5d2", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, secondaryButtonText: { color: "#544636", fontWeight: "700" }, modeButtonActive: { backgroundColor: "#1f5c4d", borderWidth: 1, borderColor: "#1f5c4d" }, modeButtonTextActive: { color: "#f7f4ee" }, dangerButton: { backgroundColor: "#7f221d", borderRadius: 12, paddingVertical: 10, alignItems: "center" }, dangerButtonText: { color: "#fff5f4", fontWeight: "700" }, row: { flexDirection: "row", gap: 10 }, half: { flex: 1 }, tabs: { flexGrow: 0, minHeight: 52 }, tab: { backgroundColor: "#f5ead8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: "#ccb99a", shadowColor: "#3d3124", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, tabActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, tabText: { color: "#3f3429", fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" }, tabTextActive: { color: "#f8f5ef" }, content: { flexGrow: 1, gap: 12, paddingBottom: 96 }, section: { gap: 8, marginTop: 8 }, sectionTitle: { fontSize: 16, fontWeight: "700", color: "#213126" }, disabled: { opacity: 0.55 }, pick: { backgroundColor: "#f3eee1", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, pickText: { color: "#243025", fontWeight: "600" }, selectedPlayerBox: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e", borderWidth: 2 }, selectedPlayerText: { color: "#17352b" }, selectedPlayerHint: { color: "#2a6d52", fontSize: 12, fontWeight: "700", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 }, dangerBox: { borderColor: "#be3e36", backgroundColor: "#f9e1de" }, dashboardShell: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 14, borderWidth: 1, borderColor: "#e2d8c5" }, metricGrid: { flexDirection: "row", gap: 10 }, dashboardMetricA: { flex: 1, backgroundColor: "#dbe9e1", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#c7d9cf" }, dashboardMetricB: { flex: 1, backgroundColor: "#efe4cf", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#deceb2" }, metricLabel: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#587262", marginBottom: 8 }, metricPanelValue: { fontSize: 24, fontWeight: "700", color: "#17352b" }, dashboardCompare: { backgroundColor: "#1f5c4d", borderRadius: 18, padding: 16, gap: 6 }, dashboardCompareValue: { fontSize: 28, fontWeight: "700", color: "#f7f4ee" }, profileCard: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 16, borderWidth: 1, borderColor: "#e2d8c5" }, profileHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }, profileEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, color: "#7a6a55", marginBottom: 6 }, profileRank: { fontSize: 15, color: "#5b665a", marginTop: 4 }, rankBadge: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }, rankBadgeText: { color: "#f7f4ee", fontWeight: "700" }, metricPanel: { flex: 1, backgroundColor: "#e8f1ea", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#cfe0d5" }, statusCard: { borderRadius: 18, padding: 16, gap: 6, borderWidth: 1 }, statusCardActive: { backgroundColor: "#dff0e5", borderColor: "#9cc8ad" }, statusCardInactive: { backgroundColor: "#f2ecdf", borderColor: "#ddd0b9" }, statusEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: "#5f6d60" }, statusTitle: { fontSize: 22, fontWeight: "700", color: "#1b3327" }, statusLine: { fontSize: 15, color: "#435043" }, voteStatusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }, votePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "700" }, votePillDone: { backgroundColor: "#d8ecdf", color: "#24523e" }, votePillPending: { backgroundColor: "#f0e3c8", color: "#6b4f20" }, squadCard: { flex: 1, backgroundColor: "#f4efe4", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#e0d4be", gap: 8 }, squadLabel: { fontSize: 13, fontWeight: "700", color: "#5b665a", textTransform: "uppercase", letterSpacing: 0.7 }, voteCard: { backgroundColor: "#f5efe3", borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: "#e0d4be" }, voteOptionWrap: { gap: 4 }, voteOption: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, voteOptionSelected: { borderColor: "#4f8a6e", backgroundColor: "#dff0e5" }, voteOptionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }, voteCount: { fontSize: 14, fontWeight: "700", color: "#5b665a" }, voteResponseList: { fontSize: 13, color: "#5c6558", lineHeight: 18 }, inlineSummary: { marginTop: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#e2d8c5" } });
+const styles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: "#f3efe3" }, keyboardShell: { flex: 1 }, loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 }, screen: { flex: 1, padding: 18, gap: 12 }, title: { fontSize: 28, fontWeight: "700", color: "#1f2a1f" }, hint: { fontSize: 14, color: "#566156" }, line: { color: "#435043", fontSize: 15 }, error: { color: "#8b241f", fontWeight: "700" }, alertBanner: { backgroundColor: "#f2dfc2", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#d9ba84", gap: 4 }, alertBannerTitle: { fontSize: 16, fontWeight: "700", color: "#5d3f11" }, alertBannerText: { fontSize: 14, color: "#72542b" }, voteBanner: { backgroundColor: "#dde9f3", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#b6cade", gap: 4 }, voteBannerTitle: { fontSize: 16, fontWeight: "700", color: "#244a68" }, voteBannerText: { fontSize: 14, color: "#40627d" }, card: { backgroundColor: "#fbf7ee", borderRadius: 18, padding: 16, gap: 10, borderWidth: 1, borderColor: "#e2d8c5" }, cardTitle: { fontSize: 22, fontWeight: "700", color: "#1f2a1f" }, input: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, color: "#243025" }, textArea: { minHeight: 96, textAlignVertical: "top" }, button: { backgroundColor: "#1f5c4d", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, buttonText: { color: "#f7f4ee", fontWeight: "700" }, secondaryButton: { backgroundColor: "#efe5d2", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, secondaryButtonText: { color: "#544636", fontWeight: "700" }, modeButtonActive: { backgroundColor: "#1f5c4d", borderWidth: 1, borderColor: "#1f5c4d" }, modeButtonTextActive: { color: "#f7f4ee" }, dangerButton: { backgroundColor: "#7f221d", borderRadius: 12, paddingVertical: 10, alignItems: "center" }, dangerButtonText: { color: "#fff5f4", fontWeight: "700" }, row: { flexDirection: "row", gap: 10 }, languageRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, languageButton: { backgroundColor: "#efe5d2", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "#d8c6a6" }, languageButtonActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, languageButtonText: { color: "#544636", fontWeight: "700" }, languageButtonTextActive: { color: "#f7f4ee" }, half: { flex: 1 }, tabs: { flexGrow: 0, minHeight: 52 }, tab: { backgroundColor: "#f5ead8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: "#ccb99a", shadowColor: "#3d3124", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, tabActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, tabText: { color: "#3f3429", fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" }, tabTextActive: { color: "#f8f5ef" }, content: { flexGrow: 1, gap: 12, paddingBottom: 96 }, section: { gap: 8, marginTop: 8 }, sectionTitle: { fontSize: 16, fontWeight: "700", color: "#213126" }, disabled: { opacity: 0.55 }, pick: { backgroundColor: "#f3eee1", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, pickText: { color: "#243025", fontWeight: "600" }, selectedPlayerBox: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e", borderWidth: 2 }, selectedPlayerText: { color: "#17352b" }, selectedPlayerHint: { color: "#2a6d52", fontSize: 12, fontWeight: "700", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 }, dangerBox: { borderColor: "#be3e36", backgroundColor: "#f9e1de" }, dashboardShell: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 14, borderWidth: 1, borderColor: "#e2d8c5" }, metricGrid: { flexDirection: "row", gap: 10 }, dashboardMetricA: { flex: 1, backgroundColor: "#dbe9e1", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#c7d9cf" }, dashboardMetricB: { flex: 1, backgroundColor: "#efe4cf", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#deceb2" }, metricLabel: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#587262", marginBottom: 8 }, metricPanelValue: { fontSize: 24, fontWeight: "700", color: "#17352b" }, dashboardCompare: { backgroundColor: "#1f5c4d", borderRadius: 18, padding: 16, gap: 6 }, dashboardCompareValue: { fontSize: 28, fontWeight: "700", color: "#f7f4ee" }, profileCard: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 16, borderWidth: 1, borderColor: "#e2d8c5" }, profileHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }, profileEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, color: "#7a6a55", marginBottom: 6 }, profileRank: { fontSize: 15, color: "#5b665a", marginTop: 4 }, rankBadge: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }, rankBadgeText: { color: "#f7f4ee", fontWeight: "700" }, metricPanel: { flex: 1, backgroundColor: "#e8f1ea", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#cfe0d5" }, statusCard: { borderRadius: 18, padding: 16, gap: 6, borderWidth: 1 }, statusCardActive: { backgroundColor: "#dff0e5", borderColor: "#9cc8ad" }, statusCardInactive: { backgroundColor: "#f2ecdf", borderColor: "#ddd0b9" }, statusEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: "#5f6d60" }, statusTitle: { fontSize: 22, fontWeight: "700", color: "#1b3327" }, statusLine: { fontSize: 15, color: "#435043" }, voteStatusRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }, votePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "700" }, votePillDone: { backgroundColor: "#d8ecdf", color: "#24523e" }, votePillPending: { backgroundColor: "#f0e3c8", color: "#6b4f20" }, squadCard: { flex: 1, backgroundColor: "#f4efe4", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#e0d4be", gap: 8 }, squadLabel: { fontSize: 13, fontWeight: "700", color: "#5b665a", textTransform: "uppercase", letterSpacing: 0.7 }, voteCard: { backgroundColor: "#f5efe3", borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: "#e0d4be" }, voteOptionWrap: { gap: 4 }, voteOption: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, voteOptionSelected: { borderColor: "#4f8a6e", backgroundColor: "#dff0e5" }, voteOptionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }, voteCount: { fontSize: 14, fontWeight: "700", color: "#5b665a" }, voteResponseList: { fontSize: 13, color: "#5c6558", lineHeight: 18 }, inlineSummary: { marginTop: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#e2d8c5" } });
