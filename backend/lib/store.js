@@ -262,22 +262,20 @@ function buildDesertStormEventAppearances(player, events) {
     .filter((event) => event.status === "archived")
     .flatMap((event) => {
       const publishedTaskForces = event.publishedTaskForces || {};
-      const records = [];
-      Object.values(publishedTaskForces).forEach((taskForce) => {
-        (taskForce.squads || []).forEach((squad) => {
-          (squad.slots || []).forEach((slot) => {
-            if (slot.playerName !== player.name) return;
-            const taskForceResult = event.result?.[taskForce.key]?.outcome || "pending";
-            records.push({
-              id: `${event.id}-${taskForce.key}-${slot.id}`,
+      for (const taskForce of Object.values(publishedTaskForces)) {
+        for (const squad of taskForce.squads || []) {
+          for (const slot of squad.slots || []) {
+            if (slot.playerName !== player.name) continue;
+            return [{
+              id: `${event.id}-${taskForce.key}`,
               title: event.title,
               lockedInAt: event.archivedAt || event.endedAt || event.publishedAt || event.createdAt,
-              result: taskForceResult
-            });
-          });
-        });
-      });
-      return records;
+              result: event.result?.[taskForce.key]?.outcome || "pending"
+            }];
+          }
+        }
+      }
+      return [];
     })
     .sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)));
 }

@@ -1136,8 +1136,9 @@ function DesertStormView({ section, onChangeSection, currentUser, currentUserIsL
         {currentUserIsLeader ? <Text style={styles.voteResponseList}>{(voteCounts[option.id] || []).length ? voteCounts[option.id].map((response) => response.playerName).join(", ") : "No responses yet."}</Text> : null}
       </View>)}
       {currentUserIsLeader ? <View style={styles.row}>
-        {activeEvent.vote?.status === "open" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Close Vote</Text></Pressable> : <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onOpenVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>{activeEvent.vote?.openedAt ? "Reopen Vote" : "Open Vote"}</Text></Pressable>}
-        {activeEvent.vote?.status === "closed" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onReopenVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Reopen Vote</Text></Pressable> : null}
+        {activeEvent.vote?.status === "open"
+          ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Close Vote</Text></Pressable>
+          : <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => (activeEvent.vote?.openedAt ? onReopenVote(activeEvent.id) : onOpenVote(activeEvent.id))}><Text style={styles.secondaryButtonText}>{activeEvent.vote?.openedAt ? "Reopen Vote" : "Open Vote"}</Text></Pressable>}
       </View> : null}
     </View> : null}
 
