@@ -3,7 +3,7 @@
     "name": "PAKX Alliance App",
     "slug": "pakx-alliance-app",
     "version": "0.1.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "platforms": [
       "ios",
       "android"
