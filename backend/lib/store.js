@@ -74,6 +74,17 @@ function normalizeFeedbackEntry(value) {
     message: String(value.message || "").trim(),
     createdAt: value.createdAt || new Date().toISOString(),
     createdByPlayerId: value.createdByPlayerId || "",
+    createdByName: value.createdByName || "",
+    comments: Array.isArray(value.comments) ? value.comments.map(normalizeFeedbackComment) : []
+  };
+}
+
+function normalizeFeedbackComment(value) {
+  return {
+    id: value.id || crypto.randomUUID(),
+    message: String(value.message || "").trim(),
+    createdAt: value.createdAt || new Date().toISOString(),
+    createdByPlayerId: value.createdByPlayerId || "",
     createdByName: value.createdByName || ""
   };
 }
@@ -438,7 +449,14 @@ function createStore(config = {}) {
         message: entry.message,
         createdAt: entry.createdAt,
         createdByPlayerId: entry.createdByPlayerId,
-        createdByName: entry.createdByName
+        createdByName: entry.createdByName,
+        comments: (entry.comments || []).map((comment) => ({
+          id: comment.id,
+          message: comment.message,
+          createdAt: comment.createdAt,
+          createdByPlayerId: comment.createdByPlayerId,
+          createdByName: comment.createdByName
+        }))
       })),
       calendarEntries: (alliance.calendarEntries || [])
         .filter((entry) => viewerIsLeader || !entry.leaderOnly)
@@ -980,6 +998,31 @@ function createStore(config = {}) {
     return clone(entry);
   }
 
+  function addFeedbackComment(allianceId, feedbackEntryId, player, message) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const normalizedMessage = String(message || "").trim();
+    if (!normalizedMessage) {
+      throw new Error("message is required.");
+    }
+    alliance.feedbackEntries = Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries : [];
+    const entry = alliance.feedbackEntries.find((candidate) => candidate.id === feedbackEntryId);
+    if (!entry) {
+      throw new Error("Feedback entry not found.");
+    }
+    entry.comments = Array.isArray(entry.comments) ? entry.comments : [];
+    const comment = normalizeFeedbackComment({
+      message: normalizedMessage,
+      createdByPlayerId: player.id,
+      createdByName: player.name
+    });
+    entry.comments.push(comment);
+    commit();
+    return clone(comment);
+  }
+
   function createCalendarEntry(allianceId, player, payload) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -1386,6 +1429,7 @@ function createStore(config = {}) {
     updateTaskForceSlot,
     resetTaskForcesForNewTeams,
     addFeedbackEntry,
+    addFeedbackComment,
     createCalendarEntry,
     deleteCalendarEntry,
     listZombieSiegeEventsForAlliance,

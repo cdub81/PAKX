@@ -306,6 +306,21 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && /^\/api\/feedback\/[^/]+\/comments$/.test(pathname)) {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const feedbackEntryId = decodeURIComponent(pathname.split("/")[3] || "");
+      const body = await readJson(request);
+      if (!body.message) {
+        sendError(response, 400, "message is required.");
+        return;
+      }
+      sendJson(response, 201, store.addFeedbackComment(context.alliance.id, feedbackEntryId, context.player, body.message));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/calendar") {
       const context = requireLeader(request, response);
       if (!context) {

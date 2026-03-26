@@ -214,6 +214,17 @@ export function addFeedback(baseUrl, token, message) {
   });
 }
 
+export function addFeedbackComment(baseUrl, token, feedbackEntryId, message) {
+  return request(baseUrl, `/api/feedback/${encodeURIComponent(feedbackEntryId)}/comments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ message })
+  });
+}
+
 export function createCalendarEntry(baseUrl, token, payload) {
   return request(baseUrl, "/api/calendar", {
     method: "POST",
