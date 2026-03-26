@@ -30,6 +30,8 @@
     "ios": {
       "bundleIdentifier": "com.cdub81.pakxallianceapp",
       "buildNumber": "1",
+      "supportsTablet": true,
+      "requireFullScreen": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
