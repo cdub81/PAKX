@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { addFeedback as addFeedbackRequest, addMember, approveJoinRequest, archiveVote as archiveVoteRequest, closeVote as closeVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createVote as createVoteRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteVote as deleteVoteRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, lockInDesertStormLayout as lockInDesertStormLayoutRequest, normalizeBaseUrl, publishZombieSiegePlan as publishZombieSiegePlanRequest, rejectJoinRequest, removeMember, reopenVote as reopenVoteRequest, resetTaskForces as resetTaskForcesRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitVote as submitVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateDesertStormLayoutResult as updateDesertStormLayoutResultRequest, updateMember, updateTaskForceSlot, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
@@ -551,6 +551,7 @@ export default function App() {
   const [memberSortMode, setMemberSortMode] = useState("rankDesc");
   const [memberRankFilter, setMemberRankFilter] = useState("all");
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberRank, setNewMemberRank] = useState("R1");
@@ -755,6 +756,19 @@ export default function App() {
     run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
   }
 
+  async function handlePullToRefresh() {
+    if (!session.token || !alliance) return;
+    try {
+      setRefreshing(true);
+      setErrorMessage("");
+      await refresh();
+    } catch (error) {
+      await handleRequestError(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><View style={styles.loadingScreen}><ActivityIndicator color="#1f5c4d" size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
 
   if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
@@ -776,7 +790,7 @@ export default function App() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
             {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, unvotedCount, t)}</Text></Pressable>)}
           </ScrollView>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor="#1f5c4d" colors={["#1f5c4d"]} />}>
             {activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} votes={votes} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} t={t} /> : null}
             {activeTab === "desertStorm" ? <DesertStormView section={desertStormSection} onChangeSection={setDesertStormSection} taskForce={selectedTaskForce} layouts={desertStormLayouts} currentUser={currentUser} currentUserIsLeader={leader} isLocked={desertStormLocked} onPickPlayer={(context) => leader && !desertStormLocked && (setPlayerModal(context), setPlayerPickerMode("voted"), setSearchText(""))} onCreateNewTeams={() => run(async () => { await resetTaskForcesRequest(session.backendUrl, session.token); setDesertStormSection("taskForceA"); await refresh(); })} onLockIn={() => run(async () => { await lockInDesertStormLayoutRequest(session.backendUrl, session.token, {}); await refresh(); })} onUpdateResult={(layoutId, result) => run(async () => { await updateDesertStormLayoutResultRequest(session.backendUrl, session.token, layoutId, { result }); await refresh(); })} /> : null}
             {activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
