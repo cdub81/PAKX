@@ -44,6 +44,10 @@ function totalSquadPower(squadPowers) {
   return squadPowers.squad1 + squadPowers.squad2 + squadPowers.squad3 + squadPowers.squad4;
 }
 
+function isLeaderRank(rank) {
+  return rank === "R5" || rank === "R4";
+}
+
 function normalizeDesertStormStats(value) {
   return {
     playedCount: Number(value?.playedCount) || 0,
@@ -1075,7 +1079,7 @@ function createStore(config = {}) {
       }));
     }
     commit();
-    return publicZombieSiegeEvent(event, alliance, player.id, isLeader(player.rank));
+    return publicZombieSiegeEvent(event, alliance, player.id, isLeaderRank(player.rank));
   }
 
   function runZombieSiegePlan(allianceId, eventId, player) {
