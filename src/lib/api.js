@@ -243,13 +243,22 @@ export function getZombieSiegeEvents(baseUrl, token) {
 }
 
 export function createZombieSiegeEvent(baseUrl, token, payload) {
+  const normalizeDateTime = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toISOString();
+  };
   return request(baseUrl, "/api/zombie-siege/events", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      ...payload,
+      startAt: normalizeDateTime(payload?.startAt),
+      endAt: normalizeDateTime(payload?.endAt),
+      voteClosesAt: normalizeDateTime(payload?.voteClosesAt)
+    })
   });
 }
 
