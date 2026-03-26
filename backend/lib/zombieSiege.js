@@ -14,8 +14,7 @@ function normalizeResponseStatus(value, voteClosed) {
 }
 
 function buildAvailabilityMap(event, players, now = new Date()) {
-  const voteClosesAt = parseDateValue(event.voteClosesAt, now);
-  const voteClosed = now >= voteClosesAt;
+  const voteClosed = event.status === "archived";
   const responseMap = new Map((event.availabilityResponses || []).map((entry) => [entry.playerId, entry]));
   const waveReviewMap = new Map((event.waveOneReview || []).map((entry) => [entry.playerId, entry]));
   return players.map((player) => {

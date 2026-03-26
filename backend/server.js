@@ -518,6 +518,16 @@ async function handleRequest(request, response) {
       return;
     }
 
+    const zombieEndMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/end$/);
+    if (zombieEndMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.endZombieSiegeEvent(context.alliance.id, zombieEndMatch[1], context.player));
+      return;
+    }
+
     const zombieWaveOneMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/wave-one-review$/);
     if (zombieWaveOneMatch && request.method === "POST") {
       const context = requireLeader(request, response);

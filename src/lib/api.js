@@ -300,6 +300,15 @@ export function discardZombieSiegeDraft(baseUrl, token, eventId) {
   });
 }
 
+export function endZombieSiegeEvent(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/end`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function updateZombieSiegeWaveOneReview(baseUrl, token, eventId, reviews) {
   return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/wave-one-review`, {
     method: "POST",

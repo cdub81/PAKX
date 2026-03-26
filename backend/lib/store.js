@@ -1027,17 +1027,16 @@ function createStore(config = {}) {
     const title = String(payload?.title || "").trim();
     const startAt = String(payload?.startAt || "").trim();
     const endAt = String(payload?.endAt || "").trim();
-    const voteClosesAt = String(payload?.voteClosesAt || startAt).trim();
     const wave20Threshold = Number(payload?.wave20Threshold);
-    if (!title || !startAt || !endAt || !voteClosesAt || !Number.isFinite(wave20Threshold)) {
-      throw new Error("title, startAt, endAt, voteClosesAt, and wave20Threshold are required.");
+    if (!title || !startAt || !endAt || !Number.isFinite(wave20Threshold)) {
+      throw new Error("title, startAt, endAt, and wave20Threshold are required.");
     }
     alliance.zombieSiegeEvents = Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents : [];
     const event = normalizeZombieSiegeEvent({
       title,
       startAt,
       endAt,
-      voteClosesAt,
+      voteClosesAt: "",
       wave20Threshold,
       status: "voting",
       createdByPlayerId: player.id,
@@ -1060,9 +1059,8 @@ function createStore(config = {}) {
     if (!["online", "offline"].includes(status)) {
       throw new Error("status must be online or offline.");
     }
-    const closesAt = new Date(event.voteClosesAt);
-    if (!Number.isNaN(closesAt.getTime()) && new Date() > closesAt) {
-      throw new Error("Voting window has closed.");
+    if (event.status === "archived") {
+      throw new Error("This event has ended.");
     }
     const existing = (event.availabilityResponses || []).find((entry) => entry.playerId === player.id);
     if (existing) {
@@ -1134,6 +1132,21 @@ function createStore(config = {}) {
     }
     event.draftPlan = null;
     event.draftPlanUpdatedAt = null;
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function endZombieSiegeEvent(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    event.status = "archived";
+    event.endedAt = new Date().toISOString();
     commit();
     return publicZombieSiegeEvent(event, alliance, player.id, true);
   }
@@ -1378,6 +1391,7 @@ function createStore(config = {}) {
     publishZombieSiegePlan,
     discardZombieSiegeDraft,
     updateZombieSiegeWaveOneReview,
+    endZombieSiegeEvent,
     lockInDesertStormLayout,
     updateDesertStormLayoutResult,
     createVote,
