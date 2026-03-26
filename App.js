@@ -912,6 +912,17 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
     setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => players.some((player) => player.id === playerId))));
   }, [players]);
 
+  function handleRemoveMember(player) {
+    Alert.alert(
+      "Remove Member",
+      `Are you sure you want to remove ${player.name} from the alliance?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
+      ]
+    );
+  }
+
   return <View style={styles.card}>
     <Text style={styles.cardTitle}>Members</Text>
     <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />
@@ -964,7 +975,7 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
             <Pressable style={[styles.secondaryButton, styles.half, isEditing && styles.modeButtonActive]} onPress={() => setEditingMemberIds((current) => ({ ...current, [player.id]: !current[player.id] }))}>
               <Text style={[styles.secondaryButtonText, isEditing && styles.modeButtonTextActive]}>{isEditing ? "Done Editing" : "Edit"}</Text>
             </Pressable>
-            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRemovePlayer(player.id)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
+            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemoveMember(player)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
           </View> : null}
           <View style={styles.section}>
             <Text style={styles.memberSectionLabel}>Player Info</Text>
