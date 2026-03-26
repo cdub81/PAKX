@@ -888,6 +888,7 @@ function DesertStormView({ section, onChangeSection, taskForce, layouts, current
 function MembersView({ players, memberSearchText, memberSortMode, memberRankFilter, onChangeMemberSearchText, onChangeMemberSortMode, onChangeMemberRankFilter, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) {
   const [drafts, setDrafts] = useState({});
   const [expandedMemberId, setExpandedMemberId] = useState("");
+  const [editingMemberIds, setEditingMemberIds] = useState({});
 
   useEffect(() => {
     setDrafts(Object.fromEntries(players.map((player) => [player.id, {
@@ -907,6 +908,10 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
     }
   }, [expandedMemberId, players]);
 
+  useEffect(() => {
+    setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => players.some((player) => player.id === playerId))));
+  }, [players]);
+
   return <View style={styles.card}>
     <Text style={styles.cardTitle}>Members</Text>
     <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />
@@ -919,8 +924,9 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
       {["R5", "R4", "R3", "R2", "R1"].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank}</Text></Pressable>)}
     </View>
     {players.map((player) => {
-      const canEdit = currentUserIsLeader || currentUser?.id === player.id;
-      const canEditRank = currentUserIsLeader;
+      const isEditing = !!editingMemberIds[player.id];
+      const canEdit = currentUserIsLeader && isEditing;
+      const canEditRank = currentUserIsLeader && isEditing;
       const s = player.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
       const ds = player.desertStormStats || { playedCount: 0, missedCount: 0 };
       const draft = drafts[player.id] || {
@@ -954,9 +960,15 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
             <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Played</Text><Text style={styles.memberStatValue}>{ds.playedCount}</Text></View>
             <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Missed</Text><Text style={styles.memberStatValue}>{ds.missedCount}</Text></View>
           </View>
+          {currentUserIsLeader ? <View style={styles.row}>
+            <Pressable style={[styles.secondaryButton, styles.half, isEditing && styles.modeButtonActive]} onPress={() => setEditingMemberIds((current) => ({ ...current, [player.id]: !current[player.id] }))}>
+              <Text style={[styles.secondaryButtonText, isEditing && styles.modeButtonTextActive]}>{isEditing ? "Done Editing" : "Edit"}</Text>
+            </Pressable>
+            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRemovePlayer(player.id)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
+          </View> : null}
           <View style={styles.section}>
             <Text style={styles.memberSectionLabel}>Player Info</Text>
-            <TextInput value={draft.name} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: v } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={currentUserIsLeader} style={[styles.input, !currentUserIsLeader && styles.disabled]} />
+            <TextInput value={draft.name} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: v } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} />
           </View>
           <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
           <View style={styles.row}>
@@ -977,7 +989,6 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
               <TextInput value={draft.squad4} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad4: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
             </View>
           </View>
-          {currentUserIsLeader && currentUser?.id !== player.id ? <Pressable style={styles.dangerButton} onPress={() => onRemovePlayer(player.id)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
         </> : null}
       </View>;
     })}
