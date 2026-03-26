@@ -234,6 +234,74 @@ export function deleteCalendarEntry(baseUrl, token, entryId) {
   });
 }
 
+export function getZombieSiegeEvents(baseUrl, token) {
+  return request(baseUrl, "/api/zombie-siege/events", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function createZombieSiegeEvent(baseUrl, token, payload) {
+  return request(baseUrl, "/api/zombie-siege/events", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function submitZombieSiegeAvailability(baseUrl, token, eventId, status) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/availability`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ status })
+  });
+}
+
+export function runZombieSiegePlan(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/run-plan`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function publishZombieSiegePlan(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/publish-plan`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function discardZombieSiegeDraft(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/discard-draft`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function updateZombieSiegeWaveOneReview(baseUrl, token, eventId, reviews) {
+  return request(baseUrl, `/api/zombie-siege/events/${encodeURIComponent(eventId)}/wave-one-review`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ reviews })
+  });
+}
+
 export function getVotes(baseUrl, token) {
   return request(baseUrl, "/api/votes", {
     headers: {

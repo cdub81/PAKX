@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const seed = require("../data/seed");
+const { buildAvailabilityMap, runZombieSiegePlanner } = require("./zombieSiege");
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
@@ -85,6 +86,53 @@ function normalizeCalendarEntry(value) {
     createdByName: value.createdByName || "",
     leaderNotes: String(value.leaderNotes || "").trim(),
     leaderOnly: Boolean(value.leaderOnly)
+  };
+}
+
+function normalizeZombieSiegePlan(value) {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  return clone(value);
+}
+
+function normalizeZombieSiegeResponse(value) {
+  return {
+    playerId: value.playerId || "",
+    playerName: value.playerName || "",
+    status: value.status || "no_response",
+    updatedAt: value.updatedAt || new Date().toISOString()
+  };
+}
+
+function normalizeZombieSiegeWaveReview(value) {
+  return {
+    playerId: value.playerId || "",
+    playerName: value.playerName || "",
+    wallStatus: value.wallStatus || "unknown",
+    updatedAt: value.updatedAt || new Date().toISOString()
+  };
+}
+
+function normalizeZombieSiegeEvent(value) {
+  return {
+    id: value.id || crypto.randomUUID(),
+    title: String(value.title || "").trim() || "Zombie Siege Event",
+    startAt: String(value.startAt || ""),
+    endAt: String(value.endAt || ""),
+    voteClosesAt: String(value.voteClosesAt || value.startAt || ""),
+    wave20Threshold: Number(value.wave20Threshold) || 0,
+    status: value.status || "voting",
+    createdAt: value.createdAt || new Date().toISOString(),
+    createdByPlayerId: value.createdByPlayerId || "",
+    createdByName: value.createdByName || "",
+    availabilityResponses: Array.isArray(value.availabilityResponses) ? value.availabilityResponses.map(normalizeZombieSiegeResponse) : [],
+    waveOneReview: Array.isArray(value.waveOneReview) ? value.waveOneReview.map(normalizeZombieSiegeWaveReview) : [],
+    draftPlan: normalizeZombieSiegePlan(value.draftPlan),
+    publishedPlan: normalizeZombieSiegePlan(value.publishedPlan),
+    draftPlanUpdatedAt: value.draftPlanUpdatedAt || null,
+    publishedAt: value.publishedAt || null,
+    version: Number(value.version) || 1
   };
 }
 
@@ -195,7 +243,8 @@ function normalizeAlliance(alliance) {
     votes: Array.isArray(alliance.votes) ? alliance.votes.map(normalizeVote) : [],
     desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
     feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : [],
-    calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : []
+    calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : [],
+    zombieSiegeEvents: Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents.map(normalizeZombieSiegeEvent) : []
   };
 }
 
@@ -294,6 +343,67 @@ function createStore(config = {}) {
     };
   }
 
+  function buildZombieSiegeInstruction(assignment) {
+    if (!assignment) {
+      return [];
+    }
+    const instructions = [];
+    assignment.keepHomeSquads.forEach((squad) => {
+      instructions.push(`Keep ${squad.squadKey.replace("squad", "Squad ")} at home`);
+    });
+    assignment.outgoingGarrisons.forEach((squad) => {
+      instructions.push(`Send ${squad.squadKey.replace("squad", "Squad ")} to ${squad.targetPlayerName}`);
+    });
+    if (!instructions.length) {
+      instructions.push("No assignment yet");
+    }
+    return instructions;
+  }
+
+  function publicZombieSiegeEvent(event, alliance, viewerPlayerId = "", viewerIsLeader = false) {
+    const assignment = event.publishedPlan?.assignments?.find((entry) => entry.playerId === viewerPlayerId) || null;
+    const response = (event.availabilityResponses || []).find((entry) => entry.playerId === viewerPlayerId) || null;
+    const now = new Date();
+    const availability = buildAvailabilityMap(event, alliance.players, now).find((entry) => entry.playerId === viewerPlayerId) || null;
+    const base = {
+      id: event.id,
+      title: event.title,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      voteClosesAt: event.voteClosesAt,
+      wave20Threshold: event.wave20Threshold,
+      status: event.status,
+      createdAt: event.createdAt,
+      createdByPlayerId: event.createdByPlayerId,
+      createdByName: event.createdByName,
+      version: event.version,
+      myAvailabilityStatus: availability?.availabilityStatus || response?.status || "no_response",
+      myWallStatus: availability?.wallStatus || "unknown",
+      myAssignment: assignment ? {
+        ...assignment,
+        instructions: buildZombieSiegeInstruction(assignment)
+      } : null,
+      publishedPlanSummary: event.publishedPlan ? {
+        projectedSurvivors: event.publishedPlan.projectedSurvivors,
+        projectedOnlineSurvivors: event.publishedPlan.projectedOnlineSurvivors,
+        projectedOfflineSurvivors: event.publishedPlan.projectedOfflineSurvivors,
+        summary: event.publishedPlan.summary || {}
+      } : null
+    };
+
+    if (!viewerIsLeader) {
+      return base;
+    }
+
+    return {
+      ...base,
+      availabilityResponses: clone(event.availabilityResponses || []),
+      waveOneReview: clone(event.waveOneReview || []),
+      draftPlan: event.draftPlan ? clone(event.draftPlan) : null,
+      publishedPlan: event.publishedPlan ? clone(event.publishedPlan) : null
+    };
+  }
+
   function publicAlliance(alliance, viewerPlayerId = "") {
     if (!alliance) {
       return null;
@@ -328,7 +438,9 @@ function createStore(config = {}) {
       })),
       calendarEntries: (alliance.calendarEntries || [])
         .filter((entry) => viewerIsLeader || !entry.leaderOnly)
-        .map((entry) => publicCalendarEntry(entry, viewerIsLeader))
+        .map((entry) => publicCalendarEntry(entry, viewerIsLeader)),
+      zombieSiegeEvents: (alliance.zombieSiegeEvents || [])
+        .map((event) => publicZombieSiegeEvent(event, alliance, viewerPlayerId, viewerIsLeader))
     };
   }
 
@@ -397,6 +509,22 @@ function createStore(config = {}) {
 
   function findAllianceById(id) {
     return state.alliances.find((alliance) => alliance.id === id);
+  }
+
+  function listZombieSiegeEventsForAlliance(allianceId, viewerPlayerId = "") {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const viewer = alliance.players.find((player) => player.id === viewerPlayerId);
+    const viewerIsLeader = Boolean(viewer && (viewer.rank === "R4" || viewer.rank === "R5"));
+    return (alliance.zombieSiegeEvents || [])
+      .map((event) => publicZombieSiegeEvent(event, alliance, viewerPlayerId, viewerIsLeader))
+      .sort((a, b) => String(b.startAt || b.createdAt).localeCompare(String(a.startAt || a.createdAt)));
+  }
+
+  function findZombieSiegeEvent(alliance, eventId) {
+    return (alliance.zombieSiegeEvents || []).find((event) => event.id === eventId);
   }
 
   function isPlayerAssignedToDesertStorm(alliance, playerName) {
@@ -891,6 +1019,150 @@ function createStore(config = {}) {
     return { ok: true, deletedEntryId: deletedEntry.id };
   }
 
+  function createZombieSiegeEvent(allianceId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const title = String(payload?.title || "").trim();
+    const startAt = String(payload?.startAt || "").trim();
+    const endAt = String(payload?.endAt || "").trim();
+    const voteClosesAt = String(payload?.voteClosesAt || startAt).trim();
+    const wave20Threshold = Number(payload?.wave20Threshold);
+    if (!title || !startAt || !endAt || !voteClosesAt || !Number.isFinite(wave20Threshold)) {
+      throw new Error("title, startAt, endAt, voteClosesAt, and wave20Threshold are required.");
+    }
+    alliance.zombieSiegeEvents = Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents : [];
+    const event = normalizeZombieSiegeEvent({
+      title,
+      startAt,
+      endAt,
+      voteClosesAt,
+      wave20Threshold,
+      status: "voting",
+      createdByPlayerId: player.id,
+      createdByName: player.name
+    });
+    alliance.zombieSiegeEvents.unshift(event);
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function submitZombieSiegeAvailability(allianceId, eventId, player, status) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    if (!["online", "offline"].includes(status)) {
+      throw new Error("status must be online or offline.");
+    }
+    const closesAt = new Date(event.voteClosesAt);
+    if (!Number.isNaN(closesAt.getTime()) && new Date() > closesAt) {
+      throw new Error("Voting window has closed.");
+    }
+    const existing = (event.availabilityResponses || []).find((entry) => entry.playerId === player.id);
+    if (existing) {
+      existing.status = status;
+      existing.updatedAt = new Date().toISOString();
+      existing.playerName = player.name;
+    } else {
+      event.availabilityResponses.push(normalizeZombieSiegeResponse({
+        playerId: player.id,
+        playerName: player.name,
+        status
+      }));
+    }
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, isLeader(player.rank));
+  }
+
+  function runZombieSiegePlan(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    const plan = runZombieSiegePlanner({
+      players: alliance.players.map((entry) => publicPlayer(entry, alliance.desertStormLayouts)),
+      event,
+      previousPublishedPlan: event.publishedPlan
+    });
+    event.draftPlan = plan;
+    event.draftPlanUpdatedAt = new Date().toISOString();
+    if (event.status === "voting") {
+      event.status = "planned";
+    }
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function publishZombieSiegePlan(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    if (!event.draftPlan) {
+      throw new Error("No draft plan is available to publish.");
+    }
+    event.publishedPlan = clone(event.draftPlan);
+    event.publishedAt = new Date().toISOString();
+    event.version = Number(event.version || 1) + 1;
+    event.status = "active";
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function discardZombieSiegeDraft(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    event.draftPlan = null;
+    event.draftPlanUpdatedAt = null;
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function updateZombieSiegeWaveOneReview(allianceId, eventId, player, reviews) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const event = findZombieSiegeEvent(alliance, eventId);
+    if (!event) {
+      throw new Error("Zombie Siege event not found.");
+    }
+    if (!Array.isArray(reviews)) {
+      throw new Error("reviews must be an array.");
+    }
+    const allowed = new Set(["unknown", "had_wall", "no_wall"]);
+    event.waveOneReview = reviews
+      .map((review) => ({
+        playerId: String(review.playerId || ""),
+        playerName: String(review.playerName || alliance.players.find((entry) => entry.id === review.playerId)?.name || ""),
+        wallStatus: String(review.wallStatus || "unknown")
+      }))
+      .filter((review) => review.playerId && allowed.has(review.wallStatus))
+      .map((review) => normalizeZombieSiegeWaveReview(review));
+    commit();
+    return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
   function lockInDesertStormLayout(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -1099,6 +1371,13 @@ function createStore(config = {}) {
     addFeedbackEntry,
     createCalendarEntry,
     deleteCalendarEntry,
+    listZombieSiegeEventsForAlliance,
+    createZombieSiegeEvent,
+    submitZombieSiegeAvailability,
+    runZombieSiegePlan,
+    publishZombieSiegePlan,
+    discardZombieSiegeDraft,
+    updateZombieSiegeWaveOneReview,
     lockInDesertStormLayout,
     updateDesertStormLayoutResult,
     createVote,

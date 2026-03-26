@@ -247,6 +247,15 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "GET" && pathname === "/api/zombie-siege/events") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, { events: store.listZombieSiegeEventsForAlliance(context.alliance.id, context.player.id) });
+      return;
+    }
+
     if (request.method === "GET" && pathname === "/api/join-requests") {
       const context = requireLeader(request, response);
       if (!context) {
@@ -304,6 +313,16 @@ async function handleRequest(request, response) {
       }
       const body = await readJson(request);
       sendJson(response, 201, store.createCalendarEntry(context.alliance.id, context.player, body));
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/zombie-siege/events") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, store.createZombieSiegeEvent(context.alliance.id, context.player, body));
       return;
     }
 
@@ -451,6 +470,62 @@ async function handleRequest(request, response) {
         return;
       }
       sendJson(response, 200, store.archiveVote(context.alliance.id, voteManageMatch[1]));
+      return;
+    }
+
+    const zombieAvailabilityMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/availability$/);
+    if (zombieAvailabilityMatch && request.method === "POST") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.status) {
+        sendError(response, 400, "status is required.");
+        return;
+      }
+      sendJson(response, 200, store.submitZombieSiegeAvailability(context.alliance.id, zombieAvailabilityMatch[1], context.player, body.status));
+      return;
+    }
+
+    const zombieRunPlanMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/run-plan$/);
+    if (zombieRunPlanMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.runZombieSiegePlan(context.alliance.id, zombieRunPlanMatch[1], context.player));
+      return;
+    }
+
+    const zombiePublishMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/publish-plan$/);
+    if (zombiePublishMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.publishZombieSiegePlan(context.alliance.id, zombiePublishMatch[1], context.player));
+      return;
+    }
+
+    const zombieDiscardMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/discard-draft$/);
+    if (zombieDiscardMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.discardZombieSiegeDraft(context.alliance.id, zombieDiscardMatch[1], context.player));
+      return;
+    }
+
+    const zombieWaveOneMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/wave-one-review$/);
+    if (zombieWaveOneMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 200, store.updateZombieSiegeWaveOneReview(context.alliance.id, zombieWaveOneMatch[1], context.player, body.reviews));
       return;
     }
 
