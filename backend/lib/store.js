@@ -68,6 +68,86 @@ function normalizeDesertStormLayout(value) {
   };
 }
 
+function cloneSeedTaskForces() {
+  return {
+    taskForceA: clone(seed.alliances[0].taskForces.taskForceA),
+    taskForceB: clone(seed.alliances[0].taskForces.taskForceB)
+  };
+}
+
+function clearTaskForceAssignments(taskForces) {
+  Object.values(taskForces || {}).forEach((taskForce) => {
+    (taskForce.squads || []).forEach((squad) => {
+      (squad.slots || []).forEach((slot) => {
+        slot.playerName = "";
+      });
+    });
+  });
+  return taskForces;
+}
+
+function createEmptyTaskForces() {
+  return clearTaskForceAssignments(cloneSeedTaskForces());
+}
+
+function normalizeDesertStormEventVote(value) {
+  return {
+    status: value?.status || "closed",
+    openedAt: value?.openedAt || null,
+    closedAt: value?.closedAt || null,
+    options: Array.isArray(value?.options) && value.options.length
+      ? value.options.map((option) => ({
+          id: option.id || crypto.randomUUID(),
+          label: String(option.label || "").trim()
+        })).filter((option) => option.label)
+      : [
+          { id: "play", label: "Play" },
+          { id: "sub", label: "Sub" },
+          { id: "cant_play", label: "Can't Play" }
+        ],
+    responses: Array.isArray(value?.responses)
+      ? value.responses.map((response) => ({
+          playerId: response.playerId || "",
+          playerName: response.playerName || "",
+          optionId: response.optionId || "",
+          createdAt: response.createdAt || new Date().toISOString()
+        }))
+      : []
+  };
+}
+
+function normalizeDesertStormEventResult(value, taskForceLabel) {
+  return {
+    outcome: value?.outcome || "pending",
+    notes: String(value?.notes || ""),
+    label: taskForceLabel
+  };
+}
+
+function normalizeDesertStormEvent(value) {
+  const draftTaskForces = clone(value?.draftTaskForces || createEmptyTaskForces());
+  const publishedTaskForces = value?.publishedTaskForces ? clone(value.publishedTaskForces) : null;
+  return {
+    id: value?.id || crypto.randomUUID(),
+    title: String(value?.title || "").trim() || "Desert Storm Event",
+    status: value?.status || "draft",
+    createdAt: value?.createdAt || new Date().toISOString(),
+    createdByPlayerId: value?.createdByPlayerId || "",
+    createdByName: value?.createdByName || "",
+    vote: normalizeDesertStormEventVote(value?.vote),
+    draftTaskForces,
+    publishedTaskForces,
+    publishedAt: value?.publishedAt || null,
+    archivedAt: value?.archivedAt || null,
+    endedAt: value?.endedAt || null,
+    version: Number(value?.version) || 1,
+    result: {
+      taskForceA: normalizeDesertStormEventResult(value?.result?.taskForceA, "Task Force A"),
+      taskForceB: normalizeDesertStormEventResult(value?.result?.taskForceB, "Task Force B")
+    }
+  };
+}
+
 function normalizeFeedbackEntry(value) {
   return {
     id: value.id || crypto.randomUUID(),
@@ -177,13 +257,41 @@ function buildDesertStormAppearances(player, layouts) {
     .sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)));
 }
 
+function buildDesertStormEventAppearances(player, events) {
+  return (events || [])
+    .filter((event) => event.status === "archived")
+    .flatMap((event) => {
+      const publishedTaskForces = event.publishedTaskForces || {};
+      const records = [];
+      Object.values(publishedTaskForces).forEach((taskForce) => {
+        (taskForce.squads || []).forEach((squad) => {
+          (squad.slots || []).forEach((slot) => {
+            if (slot.playerName !== player.name) return;
+            const taskForceResult = event.result?.[taskForce.key]?.outcome || "pending";
+            records.push({
+              id: `${event.id}-${taskForce.key}-${slot.id}`,
+              title: event.title,
+              lockedInAt: event.archivedAt || event.endedAt || event.publishedAt || event.createdAt,
+              result: taskForceResult
+            });
+          });
+        });
+      });
+      return records;
+    })
+    .sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)));
+}
+
 function recalculateDesertStormStats(alliance) {
   const totalLockedLayouts = Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.length : 0;
+  const totalArchivedEvents = Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents.filter((event) => event.status === "archived").length : 0;
   alliance.players.forEach((player) => {
-    const appearances = buildDesertStormAppearances(player, alliance.desertStormLayouts);
+    const legacyAppearances = buildDesertStormAppearances(player, alliance.desertStormLayouts);
+    const eventAppearances = buildDesertStormEventAppearances(player, alliance.desertStormEvents);
+    const appearances = [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)));
     player.desertStormStats = {
       playedCount: appearances.length,
-      missedCount: Math.max(0, totalLockedLayouts - appearances.length)
+      missedCount: Math.max(0, totalLockedLayouts + totalArchivedEvents - appearances.length)
     };
   });
 }
@@ -257,6 +365,7 @@ function normalizeAlliance(alliance) {
     desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
     votes: Array.isArray(alliance.votes) ? alliance.votes.map(normalizeVote) : [],
     desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
+    desertStormEvents: Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents.map(normalizeDesertStormEvent) : [],
     feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : [],
     calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : [],
     zombieSiegeEvents: Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents.map(normalizeZombieSiegeEvent) : []
@@ -329,8 +438,10 @@ function createStore(config = {}) {
     }
   }
 
-  function publicPlayer(player, layouts = []) {
+  function publicPlayer(player, layouts = [], desertStormEvents = []) {
     const squadPowers = normalizeSquadPowers(player.squadPowers);
+    const legacyAppearances = buildDesertStormAppearances(player, layouts);
+    const eventAppearances = buildDesertStormEventAppearances(player, desertStormEvents);
     return {
       id: player.id,
       name: player.name,
@@ -339,7 +450,7 @@ function createStore(config = {}) {
       squadPowers,
       totalSquadPower: totalSquadPower(squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
-      desertStormAppearances: buildDesertStormAppearances(player, layouts)
+      desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
     };
   }
 
@@ -430,7 +541,7 @@ function createStore(config = {}) {
       id: alliance.id,
       name: alliance.name,
       code: alliance.code,
-      players: alliance.players.map((player) => publicPlayer(player, alliance.desertStormLayouts)),
+      players: alliance.players.map((player) => publicPlayer(player, alliance.desertStormLayouts, alliance.desertStormEvents)),
       taskForces: alliance.taskForces,
       desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
       votes: alliance.votes.map((vote) => publicVote(vote, alliance.players, viewerPlayerId)),
@@ -461,6 +572,9 @@ function createStore(config = {}) {
       calendarEntries: (alliance.calendarEntries || [])
         .filter((entry) => viewerIsLeader || !entry.leaderOnly)
         .map((entry) => publicCalendarEntry(entry, viewerIsLeader)),
+      desertStormEvents: (alliance.desertStormEvents || [])
+        .map((event) => publicDesertStormEvent(event, alliance, viewerPlayerId, viewerIsLeader))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))),
       zombieSiegeEvents: (alliance.zombieSiegeEvents || [])
         .map((event) => publicZombieSiegeEvent(event, alliance, viewerPlayerId, viewerIsLeader))
     };
@@ -525,6 +639,91 @@ function createStore(config = {}) {
     };
   }
 
+  function publicDesertStormVote(vote, players, viewerPlayerId = "", viewerIsLeader = false) {
+    const playerMap = Object.fromEntries(players.map((player) => [player.id, player]));
+    const response = (vote.responses || []).find((entry) => entry.playerId === viewerPlayerId) || null;
+    const base = {
+      status: vote.status,
+      openedAt: vote.openedAt,
+      closedAt: vote.closedAt,
+      options: (vote.options || []).map((option) => ({
+        id: option.id,
+        label: option.label,
+        votes: (vote.responses || []).filter((responseEntry) => responseEntry.optionId === option.id).length
+      })),
+      totalVotes: (vote.responses || []).length,
+      eligibleVoters: players.length,
+      didVote: Boolean(response),
+      selectedOptionId: response?.optionId || null,
+      votedAt: response?.createdAt || null
+    };
+    if (!viewerIsLeader) {
+      return base;
+    }
+    return {
+      ...base,
+      responses: (vote.responses || []).map((entry) => ({
+        playerId: entry.playerId,
+        playerName: entry.playerName || playerMap[entry.playerId]?.name || "",
+        optionId: entry.optionId,
+        optionLabel: (vote.options || []).find((option) => option.id === entry.optionId)?.label || "",
+        createdAt: entry.createdAt
+      }))
+    };
+  }
+
+  function findAssignmentInTaskForces(taskForces, playerName) {
+    for (const taskForce of Object.values(taskForces || {})) {
+      for (const squad of taskForce.squads || []) {
+        for (const slot of squad.slots || []) {
+          if (slot.playerName === playerName) {
+            return {
+              taskForceKey: taskForce.key,
+              taskForceLabel: taskForce.label,
+              squadId: squad.id,
+              squadLabel: squad.label,
+              slotId: slot.id,
+              slotLabel: slot.label
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function publicDesertStormEvent(event, alliance, viewerPlayerId = "", viewerIsLeader = false) {
+    const publishedAssignment = event.publishedTaskForces ? findAssignmentInTaskForces(event.publishedTaskForces, alliance.players.find((player) => player.id === viewerPlayerId)?.name) : null;
+    const base = {
+      id: event.id,
+      title: event.title,
+      status: event.status,
+      createdAt: event.createdAt,
+      createdByPlayerId: event.createdByPlayerId,
+      createdByName: event.createdByName,
+      publishedAt: event.publishedAt,
+      endedAt: event.endedAt,
+      archivedAt: event.archivedAt,
+      version: event.version,
+      vote: publicDesertStormVote(event.vote, alliance.players, viewerPlayerId, viewerIsLeader),
+      result: clone(event.result),
+      myAssignment: publishedAssignment
+    };
+
+    if (!viewerIsLeader) {
+      return {
+        ...base,
+        publishedTaskForces: event.publishedTaskForces ? clone(event.publishedTaskForces) : null
+      };
+    }
+
+    return {
+      ...base,
+      draftTaskForces: clone(event.draftTaskForces),
+      publishedTaskForces: event.publishedTaskForces ? clone(event.publishedTaskForces) : null
+    };
+  }
+
   function findAllianceByCode(code) {
     return state.alliances.find((alliance) => alliance.code === String(code).trim().toUpperCase());
   }
@@ -547,6 +746,22 @@ function createStore(config = {}) {
 
   function findZombieSiegeEvent(alliance, eventId) {
     return (alliance.zombieSiegeEvents || []).find((event) => event.id === eventId);
+  }
+
+  function listDesertStormEventsForAlliance(allianceId, viewerPlayerId = "") {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const viewer = alliance.players.find((player) => player.id === viewerPlayerId);
+    const viewerIsLeader = Boolean(viewer && isLeaderRank(viewer.rank));
+    return (alliance.desertStormEvents || [])
+      .map((event) => publicDesertStormEvent(event, alliance, viewerPlayerId, viewerIsLeader))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+
+  function findDesertStormEvent(alliance, eventId) {
+    return (alliance.desertStormEvents || []).find((event) => event.id === eventId);
   }
 
   function isPlayerAssignedToDesertStorm(alliance, playerName) {
@@ -786,6 +1001,13 @@ function createStore(config = {}) {
     alliance.votes.forEach((vote) => {
       vote.responses = vote.responses.filter((response) => response.playerId !== player.id);
     });
+    (alliance.desertStormEvents || []).forEach((event) => {
+      event.vote.responses = (event.vote.responses || []).filter((response) => response.playerId !== player.id);
+      clearPlayerFromTaskForces(event.draftTaskForces, player.name);
+      if (event.publishedTaskForces) {
+        clearPlayerFromTaskForces(event.publishedTaskForces, player.name);
+      }
+    });
 
     account.allianceId = null;
     account.playerId = null;
@@ -815,21 +1037,10 @@ function createStore(config = {}) {
       name: name.trim(),
       code: String(code).trim().toUpperCase(),
       players: [leader],
-      taskForces: {
-        taskForceA: clone(seed.alliances[0].taskForces.taskForceA),
-        taskForceB: clone(seed.alliances[0].taskForces.taskForceB)
-      },
-      votes: []
+      taskForces: createEmptyTaskForces(),
+      votes: [],
+      desertStormEvents: []
     };
-
-    // clear seeded names in copied template
-    Object.values(alliance.taskForces).forEach((taskForce) => {
-      (taskForce.squads || []).forEach((squad) => {
-        (squad.slots || []).forEach((slot) => {
-          slot.playerName = "";
-        });
-      });
-    });
 
     state.alliances.push(alliance);
     account.allianceId = alliance.id;
@@ -924,6 +1135,13 @@ function createStore(config = {}) {
     alliance.votes.forEach((vote) => {
       vote.responses = vote.responses.filter((response) => response.playerId !== memberId);
     });
+    (alliance.desertStormEvents || []).forEach((event) => {
+      event.vote.responses = (event.vote.responses || []).filter((response) => response.playerId !== memberId);
+      clearPlayerFromTaskForces(event.draftTaskForces, member.name);
+      if (event.publishedTaskForces) {
+        clearPlayerFromTaskForces(event.publishedTaskForces, member.name);
+      }
+    });
 
     state.accounts.forEach((account) => {
       if (account.playerId === memberId) {
@@ -932,6 +1150,7 @@ function createStore(config = {}) {
       }
     });
 
+    recalculateDesertStormStats(alliance);
     commit();
     return publicPlayer(member);
   }
@@ -1135,7 +1354,7 @@ function createStore(config = {}) {
       throw new Error("Zombie Siege event not found.");
     }
     const plan = runZombieSiegePlanner({
-      players: alliance.players.map((entry) => publicPlayer(entry, alliance.desertStormLayouts)),
+      players: alliance.players.map((entry) => publicPlayer(entry, alliance.desertStormLayouts, alliance.desertStormEvents)),
       event,
       previousPublishedPlan: event.publishedPlan
     });
@@ -1221,6 +1440,212 @@ function createStore(config = {}) {
       .map((review) => normalizeZombieSiegeWaveReview(review));
     commit();
     return publicZombieSiegeEvent(event, alliance, player.id, true);
+  }
+
+  function createDesertStormEvent(allianceId, player, payload = {}) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    alliance.desertStormEvents = Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents : [];
+    const title = String(payload.title || "").trim() || `Desert Storm ${new Date().toISOString().slice(0, 10)}`;
+    const event = normalizeDesertStormEvent({
+      title,
+      status: "draft",
+      createdByPlayerId: player.id,
+      createdByName: player.name,
+      vote: { status: "closed" },
+      draftTaskForces: createEmptyTaskForces(),
+      publishedTaskForces: null
+    });
+    alliance.desertStormEvents.unshift(event);
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function setDesertStormVoteState(allianceId, eventId, player, status) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    const now = new Date().toISOString();
+    if (status === "open") {
+      event.vote.status = "open";
+      event.vote.openedAt = event.vote.openedAt || now;
+      event.vote.closedAt = null;
+      if (event.status === "draft" || event.status === "voting_closed") {
+        event.status = "voting_open";
+      }
+    } else {
+      event.vote.status = "closed";
+      event.vote.closedAt = now;
+      if (event.status === "voting_open") {
+        event.status = "voting_closed";
+      }
+    }
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function submitDesertStormVote(allianceId, eventId, player, optionId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    if (event.vote.status !== "open") {
+      throw new Error("Desert Storm voting is closed.");
+    }
+    const option = (event.vote.options || []).find((entry) => entry.id === optionId);
+    if (!option) {
+      throw new Error("Vote option not found.");
+    }
+    const existing = (event.vote.responses || []).find((entry) => entry.playerId === player.id);
+    if (existing) {
+      existing.optionId = optionId;
+      existing.createdAt = new Date().toISOString();
+      existing.playerName = player.name;
+    } else {
+      event.vote.responses.push({
+        playerId: player.id,
+        playerName: player.name,
+        optionId,
+        createdAt: new Date().toISOString()
+      });
+    }
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, isLeaderRank(player.rank));
+  }
+
+  function getTaskForceSlot(taskForces, taskForceKey, squadId, slotId) {
+    const taskForce = taskForces?.[taskForceKey];
+    if (!taskForce) throw new Error("Task force not found.");
+    const squad = (taskForce.squads || []).find((entry) => entry.id === squadId);
+    if (!squad) throw new Error("Squad not found.");
+    const slot = (squad.slots || []).find((entry) => entry.id === slotId);
+    if (!slot) throw new Error("Slot not found.");
+    return { taskForce, squad, slot };
+  }
+
+  function clearPlayerFromTaskForces(taskForces, playerName, ignore = null) {
+    Object.values(taskForces || {}).forEach((taskForce) => {
+      (taskForce.squads || []).forEach((squad) => {
+        (squad.slots || []).forEach((slot) => {
+          if (slot.playerName !== playerName) return;
+          if (ignore && ignore.taskForceKey === taskForce.key && ignore.squadId === squad.id && ignore.slotId === slot.id) return;
+          slot.playerName = "";
+        });
+      });
+    });
+  }
+
+  function updateDesertStormEventSlot(allianceId, eventId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    if (event.status === "completed" || event.status === "archived") {
+      throw new Error("This Desert Storm event can no longer be edited.");
+    }
+    const target = getTaskForceSlot(event.draftTaskForces, payload.taskForceKey, payload.squadId, payload.slotId);
+    const normalizedPlayerName = String(payload.playerName || "");
+    if (normalizedPlayerName) {
+      clearPlayerFromTaskForces(event.draftTaskForces, normalizedPlayerName, {
+        taskForceKey: payload.taskForceKey,
+        squadId: payload.squadId,
+        slotId: payload.slotId
+      });
+    }
+    target.slot.playerName = normalizedPlayerName;
+    if (event.status === "published") {
+      event.status = "editing";
+    }
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function moveDesertStormEventPlayer(allianceId, eventId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    if (event.status === "completed" || event.status === "archived") {
+      throw new Error("This Desert Storm event can no longer be edited.");
+    }
+    if (payload.sourceTaskForceKey === payload.taskForceKey && payload.sourceSquadId === payload.squadId && payload.sourceSlotId === payload.slotId) {
+      throw new Error("Source and target slot must be different.");
+    }
+    const source = getTaskForceSlot(event.draftTaskForces, payload.sourceTaskForceKey, payload.sourceSquadId, payload.sourceSlotId);
+    const target = getTaskForceSlot(event.draftTaskForces, payload.taskForceKey, payload.squadId, payload.slotId);
+    const sourcePlayerName = source.slot.playerName || "";
+    const targetPlayerName = target.slot.playerName || "";
+    if (!sourcePlayerName) {
+      throw new Error("Source slot is empty.");
+    }
+    source.slot.playerName = targetPlayerName;
+    target.slot.playerName = sourcePlayerName;
+    if (event.status === "published") {
+      event.status = "editing";
+    }
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function publishDesertStormEvent(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    event.publishedTaskForces = clone(event.draftTaskForces);
+    event.publishedAt = new Date().toISOString();
+    event.version = Number(event.version || 1) + 1;
+    event.status = "published";
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function beginDesertStormEditing(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event.publishedTaskForces) {
+      throw new Error("Publish teams before editing them.");
+    }
+    event.draftTaskForces = clone(event.publishedTaskForces);
+    event.status = "editing";
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function saveDesertStormEventResults(allianceId, eventId, player, payload = {}) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    const normalizeOutcome = (value) => value === "won" || value === "lost" ? value : "pending";
+    event.result.taskForceA.outcome = normalizeOutcome(payload?.taskForceA?.outcome);
+    event.result.taskForceA.notes = String(payload?.taskForceA?.notes || "");
+    event.result.taskForceB.outcome = normalizeOutcome(payload?.taskForceB?.outcome);
+    event.result.taskForceB.notes = String(payload?.taskForceB?.notes || "");
+    event.endedAt = new Date().toISOString();
+    event.status = "completed";
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
+  }
+
+  function archiveDesertStormEvent(allianceId, eventId, player) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) throw new Error("Alliance not found.");
+    const event = findDesertStormEvent(alliance, eventId);
+    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event.publishedTaskForces) {
+      throw new Error("Publish teams before archiving this event.");
+    }
+    event.archivedAt = new Date().toISOString();
+    event.status = "archived";
+    recalculateDesertStormStats(alliance);
+    commit();
+    return publicDesertStormEvent(event, alliance, player.id, true);
   }
 
   function lockInDesertStormLayout(allianceId, player, payload = {}) {
@@ -1428,6 +1853,16 @@ function createStore(config = {}) {
     removeMember,
     updateTaskForceSlot,
     resetTaskForcesForNewTeams,
+    listDesertStormEventsForAlliance,
+    createDesertStormEvent,
+    submitDesertStormVote,
+    setDesertStormVoteState,
+    updateDesertStormEventSlot,
+    moveDesertStormEventPlayer,
+    publishDesertStormEvent,
+    beginDesertStormEditing,
+    saveDesertStormEventResults,
+    archiveDesertStormEvent,
     addFeedbackEntry,
     addFeedbackComment,
     createCalendarEntry,

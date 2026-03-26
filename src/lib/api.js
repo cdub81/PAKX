@@ -203,6 +203,123 @@ export function updateDesertStormLayoutResult(baseUrl, token, layoutId, payload)
   });
 }
 
+export function getDesertStormEvents(baseUrl, token) {
+  return request(baseUrl, "/api/desert-storm/events", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function createDesertStormEvent(baseUrl, token, payload) {
+  return request(baseUrl, "/api/desert-storm/events", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function submitDesertStormVote(baseUrl, token, eventId, optionId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/vote/respond`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ optionId })
+  });
+}
+
+export function openDesertStormVote(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/vote/open`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function closeDesertStormVote(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/vote/close`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function reopenDesertStormVote(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/vote/reopen`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function updateDesertStormEventSlot(baseUrl, token, eventId, payload) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/slot`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function moveDesertStormEventPlayer(baseUrl, token, eventId, payload) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/move`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function publishDesertStormEvent(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/publish`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function beginDesertStormEditing(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/edit`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function endDesertStormEvent(baseUrl, token, eventId, payload) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/end`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function archiveDesertStormEvent(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}/archive`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function addFeedback(baseUrl, token, message) {
   return request(baseUrl, "/api/feedback", {
     method: "POST",

@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveVote as archiveVoteRequest, closeVote as closeVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createVote as createVoteRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteVote as deleteVoteRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, lockInDesertStormLayout as lockInDesertStormLayoutRequest, normalizeBaseUrl, publishZombieSiegePlan as publishZombieSiegePlanRequest, rejectJoinRequest, removeMember, reopenVote as reopenVoteRequest, resetTaskForces as resetTaskForcesRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitVote as submitVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateDesertStormLayoutResult as updateDesertStormLayoutResultRequest, updateMember, updateTaskForceSlot, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
+import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, archiveVote as archiveVoteRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, closeVote as closeVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createVote as createVoteRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteVote as deleteVoteRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, reopenVote as reopenVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitVote as submitVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
@@ -12,10 +12,6 @@ const LANGUAGE_STORAGE_KEY = "lwadmin-language";
 const ALL_TABS = ["myInfo", "desertStorm", "players", "voting", "calendar", "zombieSiege", "alliance", "feedback"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
-const DESERT_STORM_VOTE_TITLE = "Desert Storm Vote";
-const DESERT_STORM_PLAY_LABEL = "I want to play";
-const DESERT_STORM_SUB_LABEL = "I want to be a sub";
-const DESERT_STORM_CANT_PLAY_LABEL = "i cant play";
 const APP_VERSION = Constants.expoConfig?.version || "0.1.0";
 const APP_BUILD = Constants.nativeBuildVersion || (Platform.OS === "ios" ? String(Constants.expoConfig?.ios?.buildNumber || "") : String(Constants.expoConfig?.android?.versionCode || ""));
 const RANK_OPTIONS = ["R5", "R4", "R3", "R2", "R1"];
@@ -466,10 +462,6 @@ function tabLabel(tab, leader, joinRequests, unvotedCount, t) {
   return t("tabDashboard");
 }
 
-function getLatestDesertStormVote(votes) {
-  return (votes || []).find((vote) => vote.title === DESERT_STORM_VOTE_TITLE) || null;
-}
-
 function getAssignedPlayerNames(taskForces, currentSelection) {
   const names = new Set();
   for (const taskForce of Object.values(taskForces || {})) {
@@ -482,6 +474,30 @@ function getAssignedPlayerNames(taskForces, currentSelection) {
     }
   }
   return names;
+}
+
+function findCurrentDesertStormEvent(events) {
+  return (events || []).find((event) => event.status !== "archived") || null;
+}
+
+function getDesertStormVoteOptionLabel(optionId) {
+  if (optionId === "play") return "Play";
+  if (optionId === "sub") return "Sub";
+  if (optionId === "cant_play") return "Can't Play";
+  return optionId;
+}
+
+function getDesertStormStatusLabel(status) {
+  if (status === "draft") return "Draft";
+  if (status === "voting_open") return "Voting Open";
+  if (status === "voting_closed") return "Voting Closed";
+  if (status === "published") return "Published";
+  if (status === "editing") return "Editing";
+  if (status === "completed") return "Completed";
+  if (status === "archived") return "Archived";
+  if (status === "won") return "Won";
+  if (status === "lost") return "Lost";
+  return status;
 }
 
 function startOfLocalDay(value = new Date()) {
@@ -567,7 +583,10 @@ export default function App() {
   const [newVoteOptionsText, setNewVoteOptionsText] = useState("");
   const [newFeedbackText, setNewFeedbackText] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
-  const [desertStormSection, setDesertStormSection] = useState("taskForceA");
+  const [selectedDesertStormEventId, setSelectedDesertStormEventId] = useState("");
+  const [desertStormSection, setDesertStormSection] = useState("vote");
+  const [newDesertStormEventTitle, setNewDesertStormEventTitle] = useState("");
+  const [desertStormMoveSource, setDesertStormMoveSource] = useState(null);
   const [selectedZombieSiegeEventId, setSelectedZombieSiegeEventId] = useState("");
   const [newZombieSiegeTitle, setNewZombieSiegeTitle] = useState("");
   const [newZombieSiegeStartAt, setNewZombieSiegeStartAt] = useState(formatLocalDateTimeInput(new Date()));
@@ -579,20 +598,27 @@ export default function App() {
   const players = alliance?.players || [];
   const votes = alliance?.votes || [];
   const calendarEntries = alliance?.calendarEntries || [];
-  const desertStormLayouts = alliance?.desertStormLayouts || [];
+  const desertStormEvents = alliance?.desertStormEvents || [];
   const feedbackEntries = alliance?.feedbackEntries || [];
   const zombieSiegeEvents = alliance?.zombieSiegeEvents || [];
   const leader = currentUser ? isLeader(currentUser.rank) : false;
   const tabs = leader ? ALL_TABS : ALL_TABS.filter((tab) => tab !== "players");
   const options = useMemo(() => createPlayerOptions(players), [players]);
-  const dashboard = useMemo(() => buildDashboard(alliance?.taskForces || emptyTaskForces(), options), [alliance, options]);
-  const taskForceA = useMemo(() => buildTaskForceView(alliance?.taskForces?.taskForceA || emptyTaskForces().taskForceA, "Task Force A", options, dashboard.duplicatePlayers), [alliance, options, dashboard.duplicatePlayers]);
-  const taskForceB = useMemo(() => buildTaskForceView(alliance?.taskForces?.taskForceB || emptyTaskForces().taskForceB, "Task Force B", options, dashboard.duplicatePlayers), [alliance, options, dashboard.duplicatePlayers]);
+  const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
+  const archivedDesertStormEvents = useMemo(() => desertStormEvents.filter((event) => event.status === "archived"), [desertStormEvents]);
+  const selectedDesertStormEvent = useMemo(() => {
+    if (!desertStormEvents.length) return null;
+    return desertStormEvents.find((event) => event.id === selectedDesertStormEventId) || activeDesertStormEvent || desertStormEvents[0];
+  }, [desertStormEvents, selectedDesertStormEventId, activeDesertStormEvent]);
+  const desertStormLeaderTaskForces = selectedDesertStormEvent?.draftTaskForces || emptyTaskForces();
+  const desertStormMemberTaskForces = selectedDesertStormEvent?.publishedTaskForces || emptyTaskForces();
+  const desertStormVisibleTaskForces = leader ? desertStormLeaderTaskForces : desertStormMemberTaskForces;
+  const desertStormDashboard = useMemo(() => buildDashboard(desertStormVisibleTaskForces, options), [desertStormVisibleTaskForces, options]);
+  const taskForceA = useMemo(() => buildTaskForceView(desertStormVisibleTaskForces.taskForceA || emptyTaskForces().taskForceA, "Task Force A", options, desertStormDashboard.duplicatePlayers), [desertStormVisibleTaskForces, options, desertStormDashboard.duplicatePlayers]);
+  const taskForceB = useMemo(() => buildTaskForceView(desertStormVisibleTaskForces.taskForceB || emptyTaskForces().taskForceB, "Task Force B", options, desertStormDashboard.duplicatePlayers), [desertStormVisibleTaskForces, options, desertStormDashboard.duplicatePlayers]);
   const selectedTaskForce = desertStormSection === "taskForceB" ? taskForceB : taskForceA;
-  const desertStormAssignment = useMemo(() => findAssignment(alliance?.taskForces || emptyTaskForces(), currentUser?.name), [alliance, currentUser]);
-  const latestDesertStormVote = useMemo(() => getLatestDesertStormVote(votes), [votes]);
-  const assignedPlayerNames = useMemo(() => getAssignedPlayerNames(alliance?.taskForces || emptyTaskForces(), playerModal), [alliance, playerModal]);
-  const desertStormLocked = Boolean(alliance?.desertStormSetupLocked);
+  const desertStormAssignment = useMemo(() => activeDesertStormEvent?.myAssignment || null, [activeDesertStormEvent]);
+  const assignedPlayerNames = useMemo(() => getAssignedPlayerNames(desertStormLeaderTaskForces, playerModal), [desertStormLeaderTaskForces, playerModal]);
   const selectedZombieSiegeEvent = useMemo(() => {
     if (!zombieSiegeEvents.length) return null;
     return zombieSiegeEvents.find((event) => event.id === selectedZombieSiegeEventId) || zombieSiegeEvents[0];
@@ -601,14 +627,13 @@ export default function App() {
     const q = searchText.trim().toLowerCase();
     const unassignedOptions = options.filter((player) => !assignedPlayerNames.has(player.name));
     const roleFiltered = !playerModal || playerPickerMode === "all" ? unassignedOptions : unassignedOptions.filter((player) => {
-      if (!latestDesertStormVote) return true;
-      const response = latestDesertStormVote.responses?.find((entry) => entry.playerId === player.id);
+      const response = selectedDesertStormEvent?.vote?.responses?.find((entry) => entry.playerId === player.id);
       if (!response) return false;
-      if (playerModal.memberType === "Sub") return response.optionLabel === DESERT_STORM_SUB_LABEL;
-      return response.optionLabel === DESERT_STORM_PLAY_LABEL;
+      if (playerModal.memberType === "Sub") return response.optionId === "sub";
+      return response.optionId === "play";
     });
     return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
-  }, [options, searchText, playerModal, playerPickerMode, latestDesertStormVote, assignedPlayerNames]);
+  }, [options, searchText, playerModal, playerPickerMode, selectedDesertStormEvent, assignedPlayerNames]);
   const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); const rankWeight = { R5: 5, R4: 4, R3: 3, R2: 2, R1: 1 }; const rankFilteredPlayers = memberRankFilter === "all" ? players : players.filter((p) => p.rank === memberRankFilter); const matchingPlayers = !q ? rankFilteredPlayers : rankFilteredPlayers.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); return [...matchingPlayers].sort((a, b) => memberSortMode === "name" ? a.name.localeCompare(b.name) : (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0) || a.name.localeCompare(b.name)); }, [players, memberSearchText, memberSortMode, memberRankFilter]);
   const unvotedCount = useMemo(() => votes.filter((vote) => vote.status === "open" && !vote.didVote).length, [votes]);
   const todayCalendarEntries = useMemo(() => {
@@ -734,6 +759,22 @@ export default function App() {
   }, [session.token, session.backendUrl, alliance, activeTab]);
 
   useEffect(() => {
+    if (!desertStormEvents.length) {
+      setSelectedDesertStormEventId("");
+      setDesertStormSection("vote");
+      setDesertStormMoveSource(null);
+      return;
+    }
+    if (!selectedDesertStormEventId || !desertStormEvents.some((event) => event.id === selectedDesertStormEventId)) {
+      setSelectedDesertStormEventId(activeDesertStormEvent?.id || desertStormEvents[0].id);
+    }
+  }, [desertStormEvents, selectedDesertStormEventId, activeDesertStormEvent]);
+
+  useEffect(() => {
+    setDesertStormMoveSource(null);
+  }, [selectedDesertStormEventId]);
+
+  useEffect(() => {
     if (!zombieSiegeEvents.length) {
       setSelectedZombieSiegeEventId("");
       return;
@@ -769,6 +810,67 @@ export default function App() {
     }
   }
 
+  const handleCreateDesertStormEvent = () => run(async () => {
+    const created = await createDesertStormEventRequest(session.backendUrl, session.token, { title: newDesertStormEventTitle });
+    setSelectedDesertStormEventId(created.id);
+    setNewDesertStormEventTitle("");
+    setDesertStormSection("vote");
+    await refresh();
+  });
+
+  const handleDesertStormVote = (eventId, optionId) => run(async () => {
+    await submitDesertStormVoteRequest(session.backendUrl, session.token, eventId, optionId);
+    await refresh();
+  });
+
+  const handleDesertStormVoteState = (eventId, nextState) => run(async () => {
+    if (nextState === "open") {
+      await openDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    } else if (nextState === "closed") {
+      await closeDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    } else {
+      await reopenDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    }
+    await refresh();
+  });
+
+  const handleDesertStormPublish = (eventId) => run(async () => {
+    await publishDesertStormEventRequest(session.backendUrl, session.token, eventId);
+    await refresh();
+  });
+
+  const handleDesertStormEdit = (eventId) => run(async () => {
+    await beginDesertStormEditingRequest(session.backendUrl, session.token, eventId);
+    await refresh();
+  });
+
+  const handleDesertStormEnd = (eventId, result) => run(async () => {
+    await endDesertStormEventRequest(session.backendUrl, session.token, eventId, result);
+    await refresh();
+  });
+
+  const handleDesertStormArchive = (eventId) => run(async () => {
+    await archiveDesertStormEventRequest(session.backendUrl, session.token, eventId);
+    setSelectedDesertStormEventId("");
+    setDesertStormSection("vote");
+    setDesertStormMoveSource(null);
+    await refresh();
+  });
+
+  const handleDesertStormMove = (target) => run(async () => {
+    if (!selectedDesertStormEvent || !desertStormMoveSource) return;
+    await moveDesertStormEventPlayerRequest(session.backendUrl, session.token, selectedDesertStormEvent.id, {
+      sourceTaskForceKey: desertStormMoveSource.taskForceKey,
+      sourceSquadId: desertStormMoveSource.squadId,
+      sourceSlotId: desertStormMoveSource.slotId,
+      taskForceKey: target.taskForceKey,
+      squadId: target.squadId,
+      slotId: target.slotId
+    });
+    setDesertStormMoveSource(null);
+    await refresh();
+  });
+
   if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><View style={styles.loadingScreen}><ActivityIndicator color="#1f5c4d" size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
 
   if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
@@ -792,9 +894,14 @@ export default function App() {
           </ScrollView>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor="#1f5c4d" colors={["#1f5c4d"]} />}>
             {activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} votes={votes} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} t={t} /> : null}
-            {activeTab === "desertStorm" ? <DesertStormView section={desertStormSection} onChangeSection={setDesertStormSection} taskForce={selectedTaskForce} layouts={desertStormLayouts} currentUser={currentUser} currentUserIsLeader={leader} isLocked={desertStormLocked} onPickPlayer={(context) => leader && !desertStormLocked && (setPlayerModal(context), setPlayerPickerMode("voted"), setSearchText(""))} onCreateNewTeams={() => run(async () => { await resetTaskForcesRequest(session.backendUrl, session.token); setDesertStormSection("taskForceA"); await refresh(); })} onLockIn={() => run(async () => { await lockInDesertStormLayoutRequest(session.backendUrl, session.token, {}); await refresh(); })} onUpdateResult={(layoutId, result) => run(async () => { await updateDesertStormLayoutResultRequest(session.backendUrl, session.token, layoutId, { result }); await refresh(); })} /> : null}
+            {activeTab === "desertStorm" ? <DesertStormView section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
+              if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
+              setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
+              setPlayerPickerMode("voted");
+              setSearchText("");
+            }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
             {activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
-            {activeTab === "voting" ? <VotingView votes={votes} currentUser={currentUser} currentUserIsLeader={leader} latestDesertStormVote={latestDesertStormVote} newVoteTitle={newVoteTitle} newVoteOptionsText={newVoteOptionsText} onChangeNewVoteTitle={setNewVoteTitle} onChangeNewVoteOptionsText={setNewVoteOptionsText} onCreateVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: newVoteTitle, options: parseVoteOptions(newVoteOptionsText) }); setNewVoteTitle(""); setNewVoteOptionsText(""); await refresh(); })} onCreateDesertStormVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: DESERT_STORM_VOTE_TITLE, options: [DESERT_STORM_PLAY_LABEL, DESERT_STORM_SUB_LABEL, DESERT_STORM_CANT_PLAY_LABEL] }); await refresh(); })} onSubmitVote={(voteId, optionId) => run(async () => { await submitVoteRequest(session.backendUrl, session.token, voteId, optionId); await refresh(); })} onCloseVote={(voteId) => run(async () => { await closeVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onArchiveVote={(voteId) => run(async () => { await archiveVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onReopenVote={(voteId) => run(async () => { await reopenVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onDeleteVote={(voteId) => run(async () => { await deleteVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} /> : null}
+            {activeTab === "voting" ? <VotingView votes={votes} currentUser={currentUser} currentUserIsLeader={leader} newVoteTitle={newVoteTitle} newVoteOptionsText={newVoteOptionsText} onChangeNewVoteTitle={setNewVoteTitle} onChangeNewVoteOptionsText={setNewVoteOptionsText} onCreateVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: newVoteTitle, options: parseVoteOptions(newVoteOptionsText) }); setNewVoteTitle(""); setNewVoteOptionsText(""); await refresh(); })} onSubmitVote={(voteId, optionId) => run(async () => { await submitVoteRequest(session.backendUrl, session.token, voteId, optionId); await refresh(); })} onCloseVote={(voteId) => run(async () => { await closeVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onArchiveVote={(voteId) => run(async () => { await archiveVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onReopenVote={(voteId) => run(async () => { await reopenVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onDeleteVote={(voteId) => run(async () => { await deleteVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} /> : null}
             {activeTab === "calendar" ? <CalendarView entries={calendarEntries} currentUserIsLeader={leader} calendarView={calendarView} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={() => run(async () => { await createCalendarEntryRequest(session.backendUrl, session.token, { title: newCalendarTitle, description: newCalendarDescription, startsAt: newCalendarDate, leaderNotes: newCalendarLeaderNotes, leaderOnly: newCalendarLeaderOnly }); setNewCalendarTitle(""); setNewCalendarDescription(""); setNewCalendarLeaderNotes(""); setNewCalendarLeaderOnly(false); setNewCalendarDate(formatLocalDateKey(new Date())); await refresh(); })} onDeleteEntry={(entryId) => run(async () => { await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} /> : null}
             {activeTab === "zombieSiege" ? <ZombieSiegeView events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
             {activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} /> : null}
@@ -808,13 +915,21 @@ export default function App() {
             <View style={styles.screen}>
               <Text style={styles.title}>{t("choosePlayer")}</Text>
               {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
-              {playerModal && latestDesertStormVote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "${DESERT_STORM_SUB_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.` : `Showing members who voted "${DESERT_STORM_PLAY_LABEL}" in ${DESERT_STORM_VOTE_TITLE}.`}</Text> : null}
+              {playerModal && selectedDesertStormEvent?.vote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent.title}.` : `Showing members who voted "Play" for ${selectedDesertStormEvent.title}.`}</Text> : null}
               {playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}
               <TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
               <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-                <Pressable style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
-                {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => { await updateTaskForceSlot(session.backendUrl, session.token, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name }); setPlayerModal(null); await refresh(); })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
-                {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && latestDesertStormVote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
+                <Pressable style={styles.pick} onPress={() => run(async () => {
+                  await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });
+                  setPlayerModal(null);
+                  await refresh();
+                })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
+                {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => {
+                  await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name });
+                  setPlayerModal(null);
+                  await refresh();
+                })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
+                {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && selectedDesertStormEvent?.vote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -871,7 +986,7 @@ function MyInfoView({ currentUser, desertStormAssignment, votes, todayCalendarEn
   const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
   const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
   const [draftSquadPowers, setDraftSquadPowers] = useState({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
-  const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss") };
+  const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
 
   useEffect(() => {
     setDraftOverallPower(String(currentUser?.overallPower ?? 0));
@@ -883,8 +998,188 @@ function MyInfoView({ currentUser, desertStormAssignment, votes, todayCalendarEn
 
   return <View style={styles.profileCard}><View style={styles.profileHeader}><View><Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text><Text style={styles.cardTitle}>{currentUser?.name}</Text><Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text></View><View style={styles.rankBadge}><Text style={styles.rankBadgeText}>{currentUser?.rank}</Text></View></View><View style={styles.metricGrid}><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalBasePower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalSquadPower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text></View></View><View style={[styles.statusCard, desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text><Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>{desertStormAssignment ? <><Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text><Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text><Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text></> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Key Things Today</Text><Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today’s schedule` : "Nothing scheduled for today"}</Text>{todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}><Text style={styles.todayItemTitle}>{entry.title}</Text>{entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}</View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}</View><View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>Zombie Siege</Text><Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>{activeZombieSiegeEvent ? <><Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text><Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>{activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}</> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text><Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>{appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}</View><View style={[styles.statusCard, votes.length && votedCount === votes.length ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("allianceVotingTitle")}</Text><Text style={styles.statusTitle}>{votes.length ? t("votesCompleted", { count: votedCount, total: votes.length }) : t("noActiveVotes")}</Text>{votes.length ? votes.map((vote) => <View key={vote.id} style={styles.voteStatusRow}><Text style={[styles.statusLine, styles.voteStatusTitle]}>{vote.title}</Text><Text style={[styles.votePill, vote.didVote ? styles.votePillDone : styles.votePillPending]}>{vote.didVote ? t("votedStatus") : t("didNotVoteStatus")}</Text></View>) : <Text style={styles.statusLine}>{t("whenLeadersCreateVote")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("basePowerSection")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text><TextInput value={draftSquadPowers.squad1} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad1: v }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text><TextInput value={draftSquadPowers.squad2} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad2: v }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" /></View></View><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text><TextInput value={draftSquadPowers.squad3} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad3: v }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text><TextInput value={draftSquadPowers.squad4} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad4: v }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" /></View></View></View></View>;
 }
-function TaskForceView({ taskForce, currentUser, currentUserIsLeader, onPickPlayer, isLocked = false }) { return <View style={styles.card}><Text style={styles.cardTitle}>{taskForce.label} - {taskForce.totalPower.toFixed(2)}M</Text>{isLocked ? <Text style={styles.hint}>This Desert Storm setup is locked. Use Create New Teams to start a new setup.</Text> : null}{taskForce.squads.map((squad) => <View key={squad.id} style={styles.section}><Text style={styles.sectionTitle}>{squad.label} - {squad.totalPower.toFixed(2)}M</Text>{squad.slots.map((slot) => <Pressable key={slot.id} style={[styles.pick, slot.isDuplicate && styles.dangerBox, currentUser?.name && slot.playerName === currentUser.name && styles.selectedPlayerBox, isLocked && styles.disabled]} disabled={!currentUserIsLeader || isLocked} onPress={() => onPickPlayer({ taskForceKey: taskForce.key, taskForceLabel: taskForce.label, squadId: squad.id, squadLabel: squad.label, slotId: slot.id, slotLabel: slot.label, memberType: slot.memberType })}><Text style={[styles.pickText, currentUser?.name && slot.playerName === currentUser.name && styles.selectedPlayerText]}>{slot.label}: {slot.playerName || "Open"} ({slot.overallPower.toFixed(2)}M)</Text>{currentUser?.name && slot.playerName === currentUser.name ? <Text style={styles.selectedPlayerHint}>Selected for Desert Storm</Text> : null}</Pressable>)}</View>)}</View>; }
-function DesertStormView({ section, onChangeSection, taskForce, layouts, currentUser, currentUserIsLeader, isLocked, onPickPlayer, onCreateNewTeams, onLockIn, onUpdateResult }) { return <View style={styles.card}><Text style={styles.cardTitle}>Desert Storm</Text><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, section === "taskForceA" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceA")}><Text style={[styles.secondaryButtonText, section === "taskForceA" && styles.modeButtonTextActive]}>Task Force A</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, section === "taskForceB" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceB")}><Text style={[styles.secondaryButtonText, section === "taskForceB" && styles.modeButtonTextActive]}>Task Force B</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, section === "history" && styles.modeButtonActive]} onPress={() => onChangeSection("history")}><Text style={[styles.secondaryButtonText, section === "history" && styles.modeButtonTextActive]}>History</Text></Pressable></View>{currentUserIsLeader && section !== "history" ? <Pressable style={[styles.secondaryButton, isLocked && styles.modeButtonActive]} onPress={onCreateNewTeams}><Text style={[styles.secondaryButtonText, isLocked && styles.modeButtonTextActive]}>Create New Teams</Text></Pressable> : null}{section === "history" ? <DesertStormHistoryView layouts={layouts} currentUserIsLeader={currentUserIsLeader} onLockIn={onLockIn} onUpdateResult={onUpdateResult} /> : <TaskForceView taskForce={taskForce} currentUser={currentUser} currentUserIsLeader={currentUserIsLeader} onPickPlayer={onPickPlayer} isLocked={isLocked} />}{currentUserIsLeader && section !== "history" ? <Pressable style={[styles.button, isLocked && styles.disabledButton]} disabled={isLocked} onPress={onLockIn}><Text style={styles.buttonText}>{isLocked ? "Teams Locked In" : "Lock In Current Teams"}</Text></Pressable> : null}</View>; }
+function TaskForceView({ taskForce, currentUser, currentUserIsLeader, canEdit = false, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer }) {
+  return <View style={styles.card}>
+    <Text style={styles.cardTitle}>{taskForce.label} - {taskForce.totalPower.toFixed(2)}M</Text>
+    {taskForce.squads.map((squad) => <View key={squad.id} style={styles.section}>
+      <Text style={styles.sectionTitle}>{squad.label} - {squad.totalPower.toFixed(2)}M</Text>
+      {squad.slots.map((slot) => {
+        const isSelectedPlayer = currentUser?.name && slot.playerName === currentUser.name;
+        const isMoveSource = Boolean(moveSource && moveSource.taskForceKey === taskForce.key && moveSource.squadId === squad.id && moveSource.slotId === slot.id);
+        const slotContext = { taskForceKey: taskForce.key, taskForceLabel: taskForce.label, squadId: squad.id, squadLabel: squad.label, slotId: slot.id, slotLabel: slot.label, memberType: slot.memberType };
+        return <View key={slot.id} style={styles.section}>
+          <Pressable style={[styles.pick, slot.isDuplicate && styles.dangerBox, isSelectedPlayer && styles.selectedPlayerBox, isMoveSource && styles.modeButtonActive]} disabled={!currentUserIsLeader || !canEdit} onPress={() => {
+            if (!currentUserIsLeader || !canEdit) return;
+            if (moveSource && !isMoveSource && moveSource.playerName) {
+              onMovePlayer(slotContext);
+              return;
+            }
+            onPickPlayer(slotContext);
+          }}>
+            <Text style={[styles.pickText, isSelectedPlayer && styles.selectedPlayerText, isMoveSource && styles.modeButtonTextActive]}>{slot.label}: {slot.playerName || "Open"} ({slot.overallPower.toFixed(2)}M)</Text>
+            {isSelectedPlayer ? <Text style={styles.selectedPlayerHint}>Selected for Desert Storm</Text> : null}
+            {isMoveSource ? <Text style={[styles.selectedPlayerHint, styles.modeButtonTextActive]}>Move target: tap another slot to swap</Text> : null}
+          </Pressable>
+          {currentUserIsLeader && canEdit && slot.playerName ? <View style={styles.row}>
+            <Pressable style={[styles.secondaryButton, styles.half, isMoveSource && styles.modeButtonActive]} onPress={() => onSelectMoveSource(isMoveSource ? null : { ...slotContext, playerName: slot.playerName })}>
+              <Text style={[styles.secondaryButtonText, isMoveSource && styles.modeButtonTextActive]}>{isMoveSource ? "Cancel Move" : "Move Player"}</Text>
+            </Pressable>
+            <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onPickPlayer(slotContext)}>
+              <Text style={styles.secondaryButtonText}>{slot.playerName ? "Change Player" : "Assign Player"}</Text>
+            </Pressable>
+          </View> : null}
+        </View>;
+      })}
+    </View>)}
+  </View>;
+}
+
+function DesertStormView({ section, onChangeSection, currentUser, currentUserIsLeader, events, archivedEvents, selectedEvent, selectedEventId, onSelectEvent, taskForce, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer, onCreateEvent, newEventTitle, onChangeNewEventTitle, onSubmitVote, onOpenVote, onCloseVote, onReopenVote, onPublishTeams, onEditTeams, onEndEvent, onArchiveEvent }) {
+  const [draftResults, setDraftResults] = useState({
+    taskForceA: { outcome: "pending", notes: "" },
+    taskForceB: { outcome: "pending", notes: "" }
+  });
+  const activeEvent = selectedEvent?.status !== "archived" ? selectedEvent : null;
+  const canEditTeams = Boolean(currentUserIsLeader && activeEvent && activeEvent.status !== "completed" && activeEvent.status !== "archived");
+  const canPublish = Boolean(currentUserIsLeader && activeEvent && (activeEvent.status === "draft" || activeEvent.status === "voting_open" || activeEvent.status === "voting_closed" || activeEvent.status === "editing"));
+  const canEditPublished = Boolean(currentUserIsLeader && activeEvent?.publishedTaskForces && activeEvent.status === "published");
+  const canEndEvent = Boolean(currentUserIsLeader && activeEvent?.publishedTaskForces && activeEvent.status !== "completed" && activeEvent.status !== "archived");
+  const canArchive = Boolean(currentUserIsLeader && selectedEvent && selectedEvent.status === "completed");
+  const eventHistory = archivedEvents || [];
+
+  useEffect(() => {
+    setDraftResults({
+      taskForceA: {
+        outcome: selectedEvent?.result?.taskForceA?.outcome || "pending",
+        notes: selectedEvent?.result?.taskForceA?.notes || ""
+      },
+      taskForceB: {
+        outcome: selectedEvent?.result?.taskForceB?.outcome || "pending",
+        notes: selectedEvent?.result?.taskForceB?.notes || ""
+      }
+    });
+  }, [selectedEvent?.id, selectedEvent?.result?.taskForceA?.outcome, selectedEvent?.result?.taskForceA?.notes, selectedEvent?.result?.taskForceB?.outcome, selectedEvent?.result?.taskForceB?.notes]);
+
+  if (!activeEvent) {
+    return <View style={styles.card}>
+      <Text style={styles.cardTitle}>Desert Storm</Text>
+      <Text style={styles.hint}>Create a Desert Storm event when you are ready to collect votes and build teams.</Text>
+      {currentUserIsLeader ? <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Create Desert Storm Event</Text>
+        <TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Desert Storm event title" />
+        <Pressable style={styles.button} onPress={onCreateEvent}>
+          <Text style={styles.buttonText}>Create Desert Storm Event</Text>
+        </Pressable>
+      </View> : <Text style={styles.hint}>Leaders create Desert Storm events here. Published teams will appear once an event is active.</Text>}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>History</Text>
+        {eventHistory.length ? eventHistory.map((event) => <Pressable key={event.id} style={[styles.voteCard, selectedEventId === event.id && styles.zombieSelectedCard]} onPress={() => onSelectEvent(event.id)}>
+          <Text style={styles.sectionTitle}>{event.title}</Text>
+          <Text style={styles.hint}>{String(event.archivedAt || event.endedAt || event.publishedAt || event.createdAt).slice(0, 16)}</Text>
+          <Text style={styles.line}>Task Force A: {getDesertStormStatusLabel(event.result?.taskForceA?.outcome || "pending")}</Text>
+          <Text style={styles.line}>Task Force B: {getDesertStormStatusLabel(event.result?.taskForceB?.outcome || "pending")}</Text>
+        </Pressable>) : <Text style={styles.hint}>No archived Desert Storm events yet.</Text>}
+      </View>
+      {selectedEvent?.status === "archived" ? <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{selectedEvent.title}</Text>
+        <Text style={styles.hint}>Archived event details</Text>
+        <View style={styles.statusCard}>
+          <Text style={styles.statusEyebrow}>Archived Vote</Text>
+          {(selectedEvent.vote?.options || []).map((option) => <Text key={option.id} style={styles.statusLine}>{option.label}: {option.votes}</Text>)}
+          {currentUserIsLeader && selectedEvent.vote?.responses?.length ? <Text style={styles.statusLine}>{selectedEvent.vote.responses.map((response) => `${response.playerName} (${getDesertStormVoteOptionLabel(response.optionId)})`).join(", ")}</Text> : null}
+        </View>
+        {Object.values(selectedEvent.publishedTaskForces || {}).map((taskForce) => <View key={taskForce.key} style={styles.statusCard}>
+          <Text style={styles.statusEyebrow}>{taskForce.label}</Text>
+          {(taskForce.squads || []).map((squad) => <View key={squad.id} style={styles.section}>
+            <Text style={styles.sectionTitle}>{squad.label}</Text>
+            {(squad.slots || []).map((slot) => <Text key={slot.id} style={styles.statusLine}>{slot.label}: {slot.playerName || "Open"}</Text>)}
+          </View>)}
+        </View>)}
+        {["taskForceA", "taskForceB"].map((key) => <View key={key} style={styles.statusCard}>
+          <Text style={styles.statusEyebrow}>{key === "taskForceA" ? "Task Force A" : "Task Force B"}</Text>
+          <Text style={styles.statusTitle}>{selectedEvent.result?.[key]?.outcome === "won" ? "Won" : selectedEvent.result?.[key]?.outcome === "lost" ? "Lost" : "Pending"}</Text>
+          {selectedEvent.result?.[key]?.notes ? <Text style={styles.statusLine}>{selectedEvent.result[key].notes}</Text> : <Text style={styles.statusLine}>No notes saved.</Text>}
+        </View>)}
+      </View> : null}
+    </View>;
+  }
+
+  const voteResponses = activeEvent.vote?.responses || [];
+  const voteCounts = Object.fromEntries((activeEvent.vote?.options || []).map((option) => [option.id, voteResponses.filter((response) => response.optionId === option.id)]));
+
+  return <View style={styles.card}>
+    <Text style={styles.cardTitle}>Desert Storm</Text>
+    <Text style={styles.line}>{activeEvent.title}</Text>
+    <Text style={styles.hint}>Status: {getDesertStormStatusLabel(activeEvent.status)}{activeEvent.publishedAt ? ` • Published v${activeEvent.version || 1}` : ""}</Text>
+    <View style={styles.row}>
+      <Pressable style={[styles.secondaryButton, styles.half, section === "vote" && styles.modeButtonActive]} onPress={() => onChangeSection("vote")}><Text style={[styles.secondaryButtonText, section === "vote" && styles.modeButtonTextActive]}>Vote</Text></Pressable>
+      <Pressable style={[styles.secondaryButton, styles.half, section === "taskForceA" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceA")}><Text style={[styles.secondaryButtonText, section === "taskForceA" && styles.modeButtonTextActive]}>Task Force A</Text></Pressable>
+      <Pressable style={[styles.secondaryButton, styles.half, section === "taskForceB" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceB")}><Text style={[styles.secondaryButtonText, section === "taskForceB" && styles.modeButtonTextActive]}>Task Force B</Text></Pressable>
+      <Pressable style={[styles.secondaryButton, styles.half, section === "history" && styles.modeButtonActive]} onPress={() => onChangeSection("history")}><Text style={[styles.secondaryButtonText, section === "history" && styles.modeButtonTextActive]}>History</Text></Pressable>
+    </View>
+
+    {section === "vote" ? <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Desert Storm Vote</Text>
+      <Text style={styles.hint}>Vote choices stay with this event. Leaders can build teams while voting is open or closed.</Text>
+      <View style={styles.row}>
+        {(activeEvent.vote?.options || []).map((option) => <Pressable key={option.id} style={[styles.secondaryButton, styles.half, activeEvent.vote?.selectedOptionId === option.id && styles.modeButtonActive]} onPress={() => onSubmitVote(activeEvent.id, option.id)}>
+          <Text style={[styles.secondaryButtonText, activeEvent.vote?.selectedOptionId === option.id && styles.modeButtonTextActive]}>{option.label}</Text>
+        </Pressable>)}
+      </View>
+      <Text style={styles.line}>Vote status: {activeEvent.vote?.status === "open" ? "Open" : "Closed"}</Text>
+      <Text style={styles.line}>{activeEvent.vote?.totalVotes || 0} / {activeEvent.vote?.eligibleVoters || 0} alliance members responded</Text>
+      {(activeEvent.vote?.options || []).map((option) => <View key={option.id} style={styles.voteOption}>
+        <View style={styles.voteOptionHeader}>
+          <Text style={styles.pickText}>{option.label}</Text>
+          <Text style={styles.voteCount}>{voteCounts[option.id]?.length || 0}</Text>
+        </View>
+        {currentUserIsLeader ? <Text style={styles.voteResponseList}>{(voteCounts[option.id] || []).length ? voteCounts[option.id].map((response) => response.playerName).join(", ") : "No responses yet."}</Text> : null}
+      </View>)}
+      {currentUserIsLeader ? <View style={styles.row}>
+        {activeEvent.vote?.status === "open" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Close Vote</Text></Pressable> : <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onOpenVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>{activeEvent.vote?.openedAt ? "Reopen Vote" : "Open Vote"}</Text></Pressable>}
+        {activeEvent.vote?.status === "closed" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onReopenVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Reopen Vote</Text></Pressable> : null}
+      </View> : null}
+    </View> : null}
+
+    {(section === "taskForceA" || section === "taskForceB") ? <>
+      {!currentUserIsLeader && !activeEvent.publishedTaskForces ? <View style={styles.statusCard}>
+        <Text style={styles.statusEyebrow}>Teams Hidden</Text>
+        <Text style={styles.statusTitle}>Waiting for publish</Text>
+        <Text style={styles.statusLine}>Leaders are still building draft teams. Published teams will appear here once they are ready.</Text>
+      </View> : <TaskForceView taskForce={taskForce} currentUser={currentUser} currentUserIsLeader={currentUserIsLeader} canEdit={canEditTeams} moveSource={moveSource} onSelectMoveSource={onSelectMoveSource} onMovePlayer={onMovePlayer} onPickPlayer={onPickPlayer} />}
+      {currentUserIsLeader ? <View style={styles.section}>
+        {canPublish ? <Pressable style={styles.button} onPress={() => onPublishTeams(activeEvent.id)}><Text style={styles.buttonText}>{activeEvent.publishedTaskForces ? "Republish Teams" : "Publish Teams"}</Text></Pressable> : null}
+        {canEditPublished ? <Pressable style={styles.secondaryButton} onPress={() => onEditTeams(activeEvent.id)}><Text style={styles.secondaryButtonText}>Edit Teams</Text></Pressable> : null}
+        {activeEvent.publishedTaskForces ? <Text style={styles.hint}>Members only see the published version. Any new edits stay private until you publish again.</Text> : null}
+      </View> : null}
+    </> : null}
+
+    {section === "history" ? <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Event Wrap Up</Text>
+      <Text style={styles.hint}>When the event is over, save each task force result and then archive the event.</Text>
+      {["taskForceA", "taskForceB"].map((key) => <View key={key} style={styles.statusCard}>
+        <Text style={styles.statusEyebrow}>{key === "taskForceA" ? "Task Force A" : "Task Force B"}</Text>
+        <View style={styles.row}>
+          <Pressable style={[styles.secondaryButton, styles.half, draftResults[key].outcome === "won" && styles.modeButtonActive]} onPress={() => setDraftResults((current) => ({ ...current, [key]: { ...current[key], outcome: "won" } }))}><Text style={[styles.secondaryButtonText, draftResults[key].outcome === "won" && styles.modeButtonTextActive]}>Won</Text></Pressable>
+          <Pressable style={[styles.secondaryButton, styles.half, draftResults[key].outcome === "lost" && styles.modeButtonActive]} onPress={() => setDraftResults((current) => ({ ...current, [key]: { ...current[key], outcome: "lost" } }))}><Text style={[styles.secondaryButtonText, draftResults[key].outcome === "lost" && styles.modeButtonTextActive]}>Lost</Text></Pressable>
+        </View>
+        <TextInput value={draftResults[key].notes} onChangeText={(value) => setDraftResults((current) => ({ ...current, [key]: { ...current[key], notes: value } }))} style={[styles.input, styles.textArea]} placeholder="Optional notes" multiline editable={currentUserIsLeader && selectedEvent.status !== "archived"} />
+      </View>)}
+      {canEndEvent ? <Pressable style={styles.button} onPress={() => onEndEvent(activeEvent.id, draftResults)}><Text style={styles.buttonText}>End Event</Text></Pressable> : null}
+      {canArchive ? <Pressable style={styles.secondaryButton} onPress={() => onArchiveEvent(activeEvent.id)}><Text style={styles.secondaryButtonText}>Archive Event</Text></Pressable> : null}
+      {selectedEvent.status === "archived" ? <Text style={styles.hint}>This event is archived. The Desert Storm home screen will stay focused on create-plus-history until a new event is created.</Text> : null}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Archived Events</Text>
+        {eventHistory.length ? eventHistory.map((event) => <View key={event.id} style={styles.voteCard}>
+          <Text style={styles.sectionTitle}>{event.title}</Text>
+          <Text style={styles.hint}>{String(event.archivedAt || event.endedAt || event.createdAt).slice(0, 16)}</Text>
+          <Text style={styles.line}>Task Force A: {event.result?.taskForceA?.outcome || "pending"}</Text>
+          <Text style={styles.line}>Task Force B: {event.result?.taskForceB?.outcome || "pending"}</Text>
+        </View>) : <Text style={styles.hint}>No archived Desert Storm events yet.</Text>}
+      </View>
+    </View> : null}
+  </View>;
+}
 function MembersView({ players, memberSearchText, memberSortMode, memberRankFilter, onChangeMemberSearchText, onChangeMemberSortMode, onChangeMemberRankFilter, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) {
   const [drafts, setDrafts] = useState({});
   const [expandedMemberId, setExpandedMemberId] = useState("");
@@ -1253,7 +1548,7 @@ function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackTex
     </View>
   </View>;
 }
-function VotingView({ votes, currentUser, currentUserIsLeader, latestDesertStormVote, newVoteTitle, newVoteOptionsText, onChangeNewVoteTitle, onChangeNewVoteOptionsText, onCreateVote, onCreateDesertStormVote, onSubmitVote, onCloseVote, onArchiveVote, onReopenVote, onDeleteVote }) {
+function VotingView({ votes, currentUser, currentUserIsLeader, newVoteTitle, newVoteOptionsText, onChangeNewVoteTitle, onChangeNewVoteOptionsText, onCreateVote, onSubmitVote, onCloseVote, onArchiveVote, onReopenVote, onDeleteVote }) {
   const [folder, setFolder] = useState("root");
   const [selectedVoteId, setSelectedVoteId] = useState("");
   const [expandedOptionId, setExpandedOptionId] = useState("");
@@ -1294,7 +1589,7 @@ function VotingView({ votes, currentUser, currentUserIsLeader, latestDesertStorm
     return <View style={styles.card}><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setFolder("root")}><Text style={styles.secondaryButtonText}>Back To Voting</Text></Pressable></View><Text style={styles.cardTitle}>{folderTitle}</Text><Text style={styles.hint}>Tap a vote to open it.</Text>{folderVotes.length ? folderVotes.map(renderVoteSummary) : <Text style={styles.hint}>No votes in this folder yet.</Text>}</View>;
   }
 
-  return <View style={styles.card}><Text style={styles.cardTitle}>Alliance Voting</Text><Text style={styles.hint}>Leaders can create votes. Every member can open the vote and respond.</Text>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>Desert Storm Vote</Text><Text style={styles.hint}>{latestDesertStormVote ? `Latest Desert Storm vote has ${latestDesertStormVote.totalVotes}/${latestDesertStormVote.eligibleVoters} responses.` : "Push the standard weekly Desert Storm vote to the alliance."}</Text><Pressable style={styles.button} onPress={onCreateDesertStormVote}><Text style={styles.buttonText}>Push Desert Storm Vote</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>Create Vote</Text><TextInput value={newVoteTitle} onChangeText={onChangeNewVoteTitle} style={styles.input} placeholder="Vote title" /><TextInput value={newVoteOptionsText} onChangeText={onChangeNewVoteOptionsText} style={[styles.input, styles.textArea]} placeholder={"One option per line\nAttack early\nAttack late"} multiline /><Pressable style={styles.button} onPress={onCreateVote}><Text style={styles.buttonText}>Push Vote To Alliance</Text></Pressable></View></> : null}<View style={styles.section}><Pressable style={styles.voteCard} onPress={() => setFolder("open")}><Text style={styles.sectionTitle}>Open Votes</Text><Text style={styles.hint}>{openVotes.length} vote{openVotes.length === 1 ? "" : "s"} waiting inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("closed")}><Text style={styles.sectionTitle}>Closed Votes</Text><Text style={styles.hint}>{closedVotes.length} vote{closedVotes.length === 1 ? "" : "s"} inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("archived")}><Text style={styles.sectionTitle}>Archived Votes</Text><Text style={styles.hint}>{archivedVotes.length} vote{archivedVotes.length === 1 ? "" : "s"} inside</Text></Pressable></View>{currentUser ? <View style={styles.inlineSummary}><Text style={styles.line}>{votes.filter((vote) => vote.didVote).length} of {votes.length} votes completed for {currentUser.name}</Text></View> : null}</View>;
+  return <View style={styles.card}><Text style={styles.cardTitle}>Alliance Voting</Text><Text style={styles.hint}>Leaders can create votes here. Desert Storm voting now lives inside the Desert Storm tab.</Text>{currentUserIsLeader ? <View style={styles.section}><Text style={styles.sectionTitle}>Create Vote</Text><TextInput value={newVoteTitle} onChangeText={onChangeNewVoteTitle} style={styles.input} placeholder="Vote title" /><TextInput value={newVoteOptionsText} onChangeText={onChangeNewVoteOptionsText} style={[styles.input, styles.textArea]} placeholder={"One option per line\nAttack early\nAttack late"} multiline /><Pressable style={styles.button} onPress={onCreateVote}><Text style={styles.buttonText}>Push Vote To Alliance</Text></Pressable></View> : null}<View style={styles.section}><Pressable style={styles.voteCard} onPress={() => setFolder("open")}><Text style={styles.sectionTitle}>Open Votes</Text><Text style={styles.hint}>{openVotes.length} vote{openVotes.length === 1 ? "" : "s"} waiting inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("closed")}><Text style={styles.sectionTitle}>Closed Votes</Text><Text style={styles.hint}>{closedVotes.length} vote{closedVotes.length === 1 ? "" : "s"} inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("archived")}><Text style={styles.sectionTitle}>Archived Votes</Text><Text style={styles.hint}>{archivedVotes.length} vote{archivedVotes.length === 1 ? "" : "s"} inside</Text></Pressable></View>{currentUser ? <View style={styles.inlineSummary}><Text style={styles.line}>{votes.filter((vote) => vote.didVote).length} of {votes.length} votes completed for {currentUser.name}</Text></View> : null}</View>;
 }
 function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("allianceTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><Text style={styles.line}>{t("accountLabel", { value: account?.username })}</Text><Text style={styles.line}>{t("allianceLabel", { value: alliance?.name })}</Text><Text style={styles.line}>{t("codeLabel", { value: alliance?.code })}</Text><Text style={styles.line}>{t("signedInAsPlayer", { value: currentUser?.name })}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>{t("pendingJoinRequests")}</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>{t("approve")}</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable></View></View>) : <Text style={styles.hint}>{t("noPendingRequests")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("rotateCode")}</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>{t("updateCode")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("addMember")}</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} /><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>{t("addMember")}</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>{t("memberOptions")}</Text><Text style={styles.hint}>{t("leaveAnyTime")}</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable></View>}</View>; }
 

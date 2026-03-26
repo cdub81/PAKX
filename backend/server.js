@@ -256,6 +256,15 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "GET" && pathname === "/api/desert-storm/events") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, { events: store.listDesertStormEventsForAlliance(context.alliance.id, context.player.id) });
+      return;
+    }
+
     if (request.method === "GET" && pathname === "/api/join-requests") {
       const context = requireLeader(request, response);
       if (!context) {
@@ -338,6 +347,16 @@ async function handleRequest(request, response) {
       }
       const body = await readJson(request);
       sendJson(response, 201, store.createZombieSiegeEvent(context.alliance.id, context.player, body));
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/desert-storm/events") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, store.createDesertStormEvent(context.alliance.id, context.player, body));
       return;
     }
 
@@ -500,6 +519,99 @@ async function handleRequest(request, response) {
         return;
       }
       sendJson(response, 200, store.submitZombieSiegeAvailability(context.alliance.id, zombieAvailabilityMatch[1], context.player, body.status));
+      return;
+    }
+
+    const desertStormVoteRespondMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/vote\/respond$/);
+    if (desertStormVoteRespondMatch && request.method === "POST") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.optionId) {
+        sendError(response, 400, "optionId is required.");
+        return;
+      }
+      sendJson(response, 200, store.submitDesertStormVote(context.alliance.id, desertStormVoteRespondMatch[1], context.player, body.optionId));
+      return;
+    }
+
+    const desertStormVoteStateMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/vote\/(open|close|reopen)$/);
+    if (desertStormVoteStateMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const nextVoteStatus = desertStormVoteStateMatch[2] === "open" || desertStormVoteStateMatch[2] === "reopen" ? "open" : "closed";
+      sendJson(response, 200, store.setDesertStormVoteState(context.alliance.id, desertStormVoteStateMatch[1], context.player, nextVoteStatus));
+      return;
+    }
+
+    const desertStormSlotMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/slot$/);
+    if (desertStormSlotMatch && request.method === "PATCH") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.taskForceKey || !body.squadId || !body.slotId) {
+        sendError(response, 400, "taskForceKey, squadId, and slotId are required.");
+        return;
+      }
+      sendJson(response, 200, store.updateDesertStormEventSlot(context.alliance.id, desertStormSlotMatch[1], context.player, body));
+      return;
+    }
+
+    const desertStormMoveMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/move$/);
+    if (desertStormMoveMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 200, store.moveDesertStormEventPlayer(context.alliance.id, desertStormMoveMatch[1], context.player, body));
+      return;
+    }
+
+    const desertStormPublishMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/publish$/);
+    if (desertStormPublishMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.publishDesertStormEvent(context.alliance.id, desertStormPublishMatch[1], context.player));
+      return;
+    }
+
+    const desertStormEditMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/edit$/);
+    if (desertStormEditMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.beginDesertStormEditing(context.alliance.id, desertStormEditMatch[1], context.player));
+      return;
+    }
+
+    const desertStormEndMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/end$/);
+    if (desertStormEndMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 200, store.saveDesertStormEventResults(context.alliance.id, desertStormEndMatch[1], context.player, body));
+      return;
+    }
+
+    const desertStormArchiveMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)\/archive$/);
+    if (desertStormArchiveMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.archiveDesertStormEvent(context.alliance.id, desertStormArchiveMatch[1], context.player));
       return;
     }
 
