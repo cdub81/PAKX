@@ -320,6 +320,17 @@ export function archiveDesertStormEvent(baseUrl, token, eventId) {
   });
 }
 
+export function registerExpoPushToken(baseUrl, token, expoPushToken) {
+  return request(baseUrl, "/api/me/expo-push-token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ expoPushToken })
+  });
+}
+
 export function addFeedback(baseUrl, token, message) {
   return request(baseUrl, "/api/feedback", {
     method: "POST",
