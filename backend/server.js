@@ -167,6 +167,22 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/me/expo-push-token") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.expoPushToken) {
+        sendError(response, 400, "expoPushToken is required.");
+        return;
+      }
+      sendJson(response, 200, {
+        player: store.registerExpoPushToken(context.alliance.id, context.player, body.expoPushToken)
+      });
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/account/join-request") {
       const context = requireAuth(request, response);
       if (!context) {
@@ -435,6 +451,9 @@ async function handleRequest(request, response) {
       }
       if (body.squadPowers !== undefined) {
         updates.squadPowers = body.squadPowers;
+      }
+      if (body.desertStormVoteNotificationsEnabled !== undefined) {
+        updates.desertStormVoteNotificationsEnabled = body.desertStormVoteNotificationsEnabled;
       }
       sendJson(response, 200, store.updateMember(context.alliance.id, memberId, updates));
       return;

@@ -2,14 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, archiveVote as archiveVoteRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, closeVote as closeVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createVote as createVoteRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteVote as deleteVoteRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, reopenVote as reopenVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitVote as submitVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
+import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const SESSION_STORAGE_KEY = "lwadmin-session";
 const LANGUAGE_STORAGE_KEY = "lwadmin-language";
-const ALL_TABS = ["myInfo", "desertStorm", "players", "voting", "calendar", "zombieSiege", "alliance", "feedback"];
+const PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY = "lwadmin-push-notifications-prompt-dismissed";
+const ALL_TABS = ["myInfo", "desertStorm", "players", "calendar", "zombieSiege", "alliance", "feedback"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
 const APP_VERSION = Constants.expoConfig?.version || "0.1.0";
@@ -22,6 +24,16 @@ const SUPPORTED_LANGUAGES = [
   { code: "es", label: "Español" },
   { code: "pt", label: "Português" }
 ];
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false
+  })
+});
 const TRANSLATIONS = {
   en: {
     appTitle: "PAKX Alliance App",
@@ -46,9 +58,6 @@ const TRANSLATIONS = {
     playersWaiting: "{count} players are waiting for approval",
     onePlayerWaiting: "1 player is waiting for approval",
     tapReviewRequests: "Tap to review join requests in the Alliance tab.",
-    votesNeedResponse: "{count} alliance votes need your response",
-    oneVoteNeedsResponse: "1 alliance vote needs your response",
-    tapOpenVoting: "Tap to open the Voting tab.",
     restoringSession: "Restoring your session...",
     sessionExpired: "Your session expired. Please sign in again.",
     choosePlayer: "Choose Player",
@@ -66,7 +75,6 @@ const TRANSLATIONS = {
     tabTaskForceB: "Task Force B",
     tabDSHistory: "DS History",
     tabFeedback: "Feedback",
-    tabVoting: "Voting",
     tabDashboard: "Dashboard",
     feedbackTitle: "App Feedback",
     feedbackHint: "Share comments, bugs, and recommended updates with the alliance.",
@@ -112,12 +120,6 @@ const TRANSLATIONS = {
     lockInsPlayed: "{count} Desert Storm's Played",
     noLockedHistoryYet: "No locked Desert Storm history yet",
     appearancesWillShow: "Once leaders lock in a Desert Storm layout, your appearances will show here.",
-    allianceVotingTitle: "Alliance Voting",
-    votesCompleted: "{count} of {total} votes completed",
-    noActiveVotes: "No active votes right now",
-    whenLeadersCreateVote: "When leaders create a vote, it will show up here.",
-    votedStatus: "Voted",
-    didNotVoteStatus: "Did Not Vote",
     basePowerSection: "Base Power",
     squadPowerBreakdown: "Squad Power Breakdown",
     squadNumber: "Squad {number}",
@@ -148,9 +150,6 @@ const TRANSLATIONS = {
     playersWaiting: "{count}명의 플레이어가 승인 대기 중입니다",
     onePlayerWaiting: "1명의 플레이어가 승인 대기 중입니다",
     tapReviewRequests: "얼라이언스 탭에서 가입 요청을 확인하세요.",
-    votesNeedResponse: "{count}개의 투표에 응답이 필요합니다",
-    oneVoteNeedsResponse: "1개의 투표에 응답이 필요합니다",
-    tapOpenVoting: "투표 탭을 열려면 누르세요.",
     restoringSession: "세션을 복원하는 중...",
     sessionExpired: "세션이 만료되었습니다. 다시 로그인해 주세요.",
     choosePlayer: "플레이어 선택",
@@ -168,7 +167,6 @@ const TRANSLATIONS = {
     tabTaskForceB: "태스크포스 B",
     tabDSHistory: "DS 기록",
     tabFeedback: "피드백",
-    tabVoting: "투표",
     tabDashboard: "대시보드",
     feedbackTitle: "앱 피드백",
     feedbackHint: "앱에 대한 의견, 버그, 업데이트 제안을 남겨주세요.",
@@ -214,12 +212,6 @@ const TRANSLATIONS = {
     lockInsPlayed: "디저트 스톰 {count}회 플레이",
     noLockedHistoryYet: "아직 잠긴 디저트 스톰 기록이 없습니다",
     appearancesWillShow: "리더가 디저트 스톰 배치를 잠그면 여기에 참여 기록이 표시됩니다.",
-    allianceVotingTitle: "얼라이언스 투표",
-    votesCompleted: "{total}개 중 {count}개 투표 완료",
-    noActiveVotes: "현재 진행 중인 투표가 없습니다",
-    whenLeadersCreateVote: "리더가 투표를 만들면 여기에 표시됩니다.",
-    votedStatus: "투표함",
-    didNotVoteStatus: "미투표",
     basePowerSection: "기본 전투력",
     squadPowerBreakdown: "분대 전투력 세부",
     squadNumber: "{number} 분대",
@@ -250,9 +242,6 @@ const TRANSLATIONS = {
     playersWaiting: "{count} jugadores esperan aprobación",
     onePlayerWaiting: "1 jugador espera aprobación",
     tapReviewRequests: "Toca para revisar solicitudes en la pestaña Alianza.",
-    votesNeedResponse: "{count} votos de alianza requieren respuesta",
-    oneVoteNeedsResponse: "1 voto de alianza requiere respuesta",
-    tapOpenVoting: "Toca para abrir la pestaña Votación.",
     restoringSession: "Restaurando tu sesión...",
     sessionExpired: "Tu sesión expiró. Vuelve a iniciar sesión.",
     choosePlayer: "Elegir jugador",
@@ -270,7 +259,6 @@ const TRANSLATIONS = {
     tabTaskForceB: "Task Force B",
     tabDSHistory: "Historial DS",
     tabFeedback: "Comentarios",
-    tabVoting: "Votación",
     tabDashboard: "Panel",
     feedbackTitle: "Comentarios de la app",
     feedbackHint: "Comparte comentarios, errores y mejoras recomendadas con la alianza.",
@@ -316,12 +304,6 @@ const TRANSLATIONS = {
     lockInsPlayed: "{count} Desert Storm jugados",
     noLockedHistoryYet: "Todavía no hay historial bloqueado de Desert Storm",
     appearancesWillShow: "Cuando los líderes bloqueen una alineación de Desert Storm, tus apariciones se mostrarán aquí.",
-    allianceVotingTitle: "Votación de la alianza",
-    votesCompleted: "{count} de {total} votos completados",
-    noActiveVotes: "No hay votos activos ahora mismo",
-    whenLeadersCreateVote: "Cuando los líderes creen un voto, aparecerá aquí.",
-    votedStatus: "Votó",
-    didNotVoteStatus: "No votó",
     basePowerSection: "Poder Base",
     squadPowerBreakdown: "Desglose de poder por escuadra",
     squadNumber: "Escuadra {number}",
@@ -352,9 +334,6 @@ const TRANSLATIONS = {
     playersWaiting: "{count} jogadores aguardando aprovação",
     onePlayerWaiting: "1 jogador aguardando aprovação",
     tapReviewRequests: "Toque para revisar pedidos na aba Aliança.",
-    votesNeedResponse: "{count} votações da aliança aguardam resposta",
-    oneVoteNeedsResponse: "1 votação da aliança aguarda resposta",
-    tapOpenVoting: "Toque para abrir a aba Votação.",
     restoringSession: "Restaurando sua sessão...",
     sessionExpired: "Sua sessão expirou. Entre novamente.",
     choosePlayer: "Escolher jogador",
@@ -372,7 +351,6 @@ const TRANSLATIONS = {
     tabTaskForceB: "Task Force B",
     tabDSHistory: "Histórico DS",
     tabFeedback: "Feedback",
-    tabVoting: "Votação",
     tabDashboard: "Painel",
     feedbackTitle: "Feedback do app",
     feedbackHint: "Compartilhe comentários, bugs e melhorias sugeridas com a aliança.",
@@ -418,12 +396,6 @@ const TRANSLATIONS = {
     lockInsPlayed: "{count} Desert Storm jogados",
     noLockedHistoryYet: "Ainda não há histórico travado de Desert Storm",
     appearancesWillShow: "Quando os líderes travarem uma formação do Desert Storm, suas participações aparecerão aqui.",
-    allianceVotingTitle: "Votação da aliança",
-    votesCompleted: "{count} de {total} votações concluídas",
-    noActiveVotes: "Não há votações ativas agora",
-    whenLeadersCreateVote: "Quando os líderes criarem uma votação, ela aparecerá aqui.",
-    votedStatus: "Votou",
-    didNotVoteStatus: "Não votou",
     basePowerSection: "Poder Base",
     squadPowerBreakdown: "Detalhamento do poder dos esquadrões",
     squadNumber: "Esquadrão {number}",
@@ -438,10 +410,6 @@ function findAssignment(taskForces, playerName) {
   return null;
 }
 
-function parseVoteOptions(value) {
-  return String(value || "").split(/\r?\n|,/).map((entry) => entry.trim()).filter(Boolean);
-}
-
 function getTranslator(language) {
   const locale = TRANSLATIONS[language] || TRANSLATIONS.en;
   return (key, values = {}) => {
@@ -450,7 +418,7 @@ function getTranslator(language) {
   };
 }
 
-function tabLabel(tab, leader, joinRequests, unvotedCount, t) {
+function tabLabel(tab, leader, joinRequests, t) {
   if (tab === "myInfo") return t("tabMyInfo");
   if (tab === "players") return t("tabMembers");
   if (tab === "alliance") return `${t("tabAlliance")}${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
@@ -458,7 +426,6 @@ function tabLabel(tab, leader, joinRequests, unvotedCount, t) {
   if (tab === "calendar") return "Calendar";
   if (tab === "zombieSiege") return "Zombie Siege";
   if (tab === "feedback") return t("tabFeedback");
-  if (tab === "voting") return `${t("tabVoting")}${unvotedCount ? ` (${unvotedCount})` : ""}`;
   return t("tabDashboard");
 }
 
@@ -579,10 +546,11 @@ export default function App() {
   const [newCalendarLeaderNotes, setNewCalendarLeaderNotes] = useState("");
   const [newCalendarLeaderOnly, setNewCalendarLeaderOnly] = useState(false);
   const [newAllianceCode, setNewAllianceCode] = useState("");
-  const [newVoteTitle, setNewVoteTitle] = useState("");
-  const [newVoteOptionsText, setNewVoteOptionsText] = useState("");
   const [newFeedbackText, setNewFeedbackText] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
+  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState("unknown");
+  const [notificationSetupInFlight, setNotificationSetupInFlight] = useState(false);
   const [selectedDesertStormEventId, setSelectedDesertStormEventId] = useState("");
   const [desertStormSection, setDesertStormSection] = useState("vote");
   const [newDesertStormEventTitle, setNewDesertStormEventTitle] = useState("");
@@ -596,7 +564,6 @@ export default function App() {
   const t = useMemo(() => getTranslator(language), [language]);
 
   const players = alliance?.players || [];
-  const votes = alliance?.votes || [];
   const calendarEntries = alliance?.calendarEntries || [];
   const desertStormEvents = alliance?.desertStormEvents || [];
   const feedbackEntries = alliance?.feedbackEntries || [];
@@ -635,7 +602,10 @@ export default function App() {
     return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
   }, [options, searchText, playerModal, playerPickerMode, selectedDesertStormEvent, assignedPlayerNames]);
   const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); const rankWeight = { R5: 5, R4: 4, R3: 3, R2: 2, R1: 1 }; const rankFilteredPlayers = memberRankFilter === "all" ? players : players.filter((p) => p.rank === memberRankFilter); const matchingPlayers = !q ? rankFilteredPlayers : rankFilteredPlayers.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); return [...matchingPlayers].sort((a, b) => memberSortMode === "name" ? a.name.localeCompare(b.name) : (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0) || a.name.localeCompare(b.name)); }, [players, memberSearchText, memberSortMode, memberRankFilter]);
-  const unvotedCount = useMemo(() => votes.filter((vote) => vote.status === "open" && !vote.didVote).length, [votes]);
+  const activeDesertStormVote = activeDesertStormEvent?.vote?.status === "open" ? activeDesertStormEvent.vote : null;
+  const desertStormVoteNeedsResponse = Boolean(activeDesertStormVote && !activeDesertStormVote.didVote);
+  const desertStormVoteSubmitted = Boolean(activeDesertStormVote && activeDesertStormVote.didVote);
+  const shouldShowPushNotificationsPrompt = Boolean(session.token && alliance && currentUser && currentUser.desertStormVoteNotificationsEnabled !== false && !currentUser.hasExpoPushToken && notificationPermissionStatus !== "granted" && !pushPromptDismissed);
   const todayCalendarEntries = useMemo(() => {
     const todayKey = formatLocalDateKey(new Date());
     return [...calendarEntries]
@@ -662,6 +632,16 @@ export default function App() {
     }
   }
 
+  function openDesertStormVoteArea(eventId = "") {
+    setActiveTab("desertStorm");
+    setDesertStormSection("vote");
+    if (eventId) {
+      setSelectedDesertStormEventId(eventId);
+    } else if (activeDesertStormEvent?.id) {
+      setSelectedDesertStormEventId(activeDesertStormEvent.id);
+    }
+  }
+
   async function persistSession(nextSession) {
     setSession(nextSession);
     setBackendUrlInput(nextSession?.backendUrl || DEFAULT_BACKEND_URL);
@@ -681,6 +661,55 @@ export default function App() {
     const nextMessage = typeof message === "string" ? message : "";
     await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
     clearSessionState(nextMessage);
+  }
+
+  async function dismissPushNotificationsPrompt() {
+    setPushPromptDismissed(true);
+    await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
+  }
+
+  async function syncPushNotifications({ requestPermission = false } = {}) {
+    if (!session.token || !session.backendUrl || !currentUser || !alliance) {
+      return false;
+    }
+    try {
+      setNotificationSetupInFlight(true);
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX
+        });
+      }
+      let permission = await Notifications.getPermissionsAsync();
+      let status = permission.status || "undetermined";
+      if (status !== "granted" && requestPermission) {
+        permission = await Notifications.requestPermissionsAsync();
+        status = permission.status || "undetermined";
+      }
+      setNotificationPermissionStatus(status);
+      if (status !== "granted") {
+        return false;
+      }
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
+      if (!projectId) {
+        throw new Error("Expo project ID is missing for push notifications.");
+      }
+      const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+      const expoPushToken = String(tokenResponse?.data || "");
+      if (!expoPushToken) {
+        throw new Error("Unable to get an Expo push token for this device.");
+      }
+      await registerExpoPushTokenRequest(session.backendUrl, session.token, expoPushToken);
+      setPushPromptDismissed(true);
+      await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
+      await refresh();
+      return true;
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to enable push notifications.");
+      return false;
+    } finally {
+      setNotificationSetupInFlight(false);
+    }
   }
 
   async function handleRequestError(error) {
@@ -725,8 +754,22 @@ export default function App() {
       try {
         const stored = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
         const storedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const storedPushPromptDismissed = await AsyncStorage.getItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY);
         if (storedLanguage && TRANSLATIONS[storedLanguage]) {
           setLanguage(storedLanguage);
+        }
+        if (alive) {
+          setPushPromptDismissed(storedPushPromptDismissed === "true");
+        }
+        try {
+          const permission = await Notifications.getPermissionsAsync();
+          if (alive) {
+            setNotificationPermissionStatus(permission.status || "undetermined");
+          }
+        } catch {
+          if (alive) {
+            setNotificationPermissionStatus("unknown");
+          }
         }
         if (!stored) return;
         const parsed = JSON.parse(stored);
@@ -757,6 +800,32 @@ export default function App() {
     }, 30000);
     return () => clearInterval(intervalId);
   }, [session.token, session.backendUrl, alliance, activeTab]);
+
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      const data = response?.notification?.request?.content?.data || {};
+      if (data?.type === "desertStormVote") {
+        openDesertStormVoteArea(String(data.eventId || ""));
+      }
+    }).catch(() => {});
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response?.notification?.request?.content?.data || {};
+      if (data?.type === "desertStormVote") {
+        openDesertStormVoteArea(String(data.eventId || ""));
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !alliance || !currentUser) {
+      return;
+    }
+    if (notificationPermissionStatus !== "granted" || currentUser.hasExpoPushToken) {
+      return;
+    }
+    syncPushNotifications().catch(() => {});
+  }, [session.token, session.backendUrl, alliance, currentUser?.id, currentUser?.hasExpoPushToken, notificationPermissionStatus]);
 
   useEffect(() => {
     if (!desertStormEvents.length) {
@@ -793,9 +862,22 @@ export default function App() {
 
   function saveMyInfo(field, value) {
     if (!currentUser) return;
-    const payload = field === "overallPower" ? { overallPower: Number.parseFloat(value) || 0 } : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
+    const payload = field === "overallPower"
+      ? { overallPower: Number.parseFloat(value) || 0 }
+      : field === "desertStormVoteNotificationsEnabled"
+        ? { desertStormVoteNotificationsEnabled: Boolean(value) }
+        : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
     run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
   }
+
+  const handleSetDesertStormVoteNotificationsEnabled = (enabled) => run(async () => {
+    if (enabled) {
+      setPushPromptDismissed(false);
+      await AsyncStorage.removeItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY);
+    }
+    await updateMember(session.backendUrl, session.token, currentUser.id, { desertStormVoteNotificationsEnabled: Boolean(enabled) });
+    await refresh();
+  });
 
   async function handlePullToRefresh() {
     if (!session.token || !alliance) return;
@@ -886,14 +968,21 @@ export default function App() {
           <Text style={styles.title}>{alliance?.name}</Text>
           <Text style={styles.hint}>{t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })}</Text>
           {leader && joinRequests.length ? <Pressable style={styles.alertBanner} onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></Pressable> : null}
-          {unvotedCount ? <Pressable style={styles.voteBanner} onPress={() => setActiveTab("voting")}><Text style={styles.voteBannerTitle}>{unvotedCount === 1 ? t("oneVoteNeedsResponse") : t("votesNeedResponse", { count: unvotedCount })}</Text><Text style={styles.voteBannerText}>{t("tapOpenVoting")}</Text></Pressable> : null}
+          {activeTab === "myInfo" && desertStormVoteNeedsResponse ? <Pressable style={styles.voteBanner} onPress={() => openDesertStormVoteArea()}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><Text style={styles.voteBannerText}>Open the Desert Storm tab to submit your vote.</Text></Pressable> : null}
           {loading ? <ActivityIndicator color="#1f5c4d" /> : null}
           {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
-            {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, unvotedCount, t)}</Text></Pressable>)}
+            {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text></Pressable>)}
           </ScrollView>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor="#1f5c4d" colors={["#1f5c4d"]} />}>
-            {activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} votes={votes} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} t={t} /> : null}
+            {activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              const enabled = await syncPushNotifications({ requestPermission: true });
+              if (!enabled) {
+                Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
+              }
+            })} onDismissPushNotificationsPrompt={() => run(async () => {
+              await dismissPushNotificationsPrompt();
+            })} t={t} /> : null}
             {activeTab === "desertStorm" ? <DesertStormView section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
               if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
               setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
@@ -901,7 +990,6 @@ export default function App() {
               setSearchText("");
             }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
             {activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
-            {activeTab === "voting" ? <VotingView votes={votes} currentUser={currentUser} currentUserIsLeader={leader} newVoteTitle={newVoteTitle} newVoteOptionsText={newVoteOptionsText} onChangeNewVoteTitle={setNewVoteTitle} onChangeNewVoteOptionsText={setNewVoteOptionsText} onCreateVote={() => run(async () => { await createVoteRequest(session.backendUrl, session.token, { title: newVoteTitle, options: parseVoteOptions(newVoteOptionsText) }); setNewVoteTitle(""); setNewVoteOptionsText(""); await refresh(); })} onSubmitVote={(voteId, optionId) => run(async () => { await submitVoteRequest(session.backendUrl, session.token, voteId, optionId); await refresh(); })} onCloseVote={(voteId) => run(async () => { await closeVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onArchiveVote={(voteId) => run(async () => { await archiveVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onReopenVote={(voteId) => run(async () => { await reopenVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} onDeleteVote={(voteId) => run(async () => { await deleteVoteRequest(session.backendUrl, session.token, voteId); await refresh(); })} /> : null}
             {activeTab === "calendar" ? <CalendarView entries={calendarEntries} currentUserIsLeader={leader} calendarView={calendarView} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={() => run(async () => { await createCalendarEntryRequest(session.backendUrl, session.token, { title: newCalendarTitle, description: newCalendarDescription, startsAt: newCalendarDate, leaderNotes: newCalendarLeaderNotes, leaderOnly: newCalendarLeaderOnly }); setNewCalendarTitle(""); setNewCalendarDescription(""); setNewCalendarLeaderNotes(""); setNewCalendarLeaderOnly(false); setNewCalendarDate(formatLocalDateKey(new Date())); await refresh(); })} onDeleteEntry={(entryId) => run(async () => { await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} /> : null}
             {activeTab === "zombieSiege" ? <ZombieSiegeView events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
             {activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} /> : null}
@@ -978,12 +1066,12 @@ function RankSelector({ value, onChange, disabled = false, style }) {
     </View> : null}
   </View>;
 }
-function MyInfoView({ currentUser, desertStormAssignment, votes, todayCalendarEntries, currentZombieSiegeEvent, currentZombieSiegeAssignment, onChangeField, t }) {
+function MyInfoView({ currentUser, desertStormAssignment, desertStormVoteStatus, todayCalendarEntries, currentZombieSiegeEvent, currentZombieSiegeAssignment, onChangeField, onOpenDesertStormVote, showPushNotificationsPrompt, notificationSetupInFlight, onSetDesertStormVoteNotificationsEnabled, onEnablePushNotifications, onDismissPushNotificationsPrompt, t }) {
   const s = currentUser?.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
-  const votedCount = votes.filter((vote) => vote.didVote).length;
   const appearances = currentUser?.desertStormAppearances || [];
   const activeZombieSiegeEvent = currentZombieSiegeEvent?.status === "archived" ? null : currentZombieSiegeEvent;
   const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
+  const desertStormNotificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
   const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
   const [draftSquadPowers, setDraftSquadPowers] = useState({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
   const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
@@ -996,7 +1084,7 @@ function MyInfoView({ currentUser, desertStormAssignment, votes, todayCalendarEn
     setDraftSquadPowers({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
   }, [s.squad1, s.squad2, s.squad3, s.squad4]);
 
-  return <View style={styles.profileCard}><View style={styles.profileHeader}><View><Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text><Text style={styles.cardTitle}>{currentUser?.name}</Text><Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text></View><View style={styles.rankBadge}><Text style={styles.rankBadgeText}>{currentUser?.rank}</Text></View></View><View style={styles.metricGrid}><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalBasePower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalSquadPower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text></View></View><View style={[styles.statusCard, desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text><Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>{desertStormAssignment ? <><Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text><Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text><Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text></> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Key Things Today</Text><Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today’s schedule` : "Nothing scheduled for today"}</Text>{todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}><Text style={styles.todayItemTitle}>{entry.title}</Text>{entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}</View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}</View><View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>Zombie Siege</Text><Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>{activeZombieSiegeEvent ? <><Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text><Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>{activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}</> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text><Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>{appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}</View><View style={[styles.statusCard, votes.length && votedCount === votes.length ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("allianceVotingTitle")}</Text><Text style={styles.statusTitle}>{votes.length ? t("votesCompleted", { count: votedCount, total: votes.length }) : t("noActiveVotes")}</Text>{votes.length ? votes.map((vote) => <View key={vote.id} style={styles.voteStatusRow}><Text style={[styles.statusLine, styles.voteStatusTitle]}>{vote.title}</Text><Text style={[styles.votePill, vote.didVote ? styles.votePillDone : styles.votePillPending]}>{vote.didVote ? t("votedStatus") : t("didNotVoteStatus")}</Text></View>) : <Text style={styles.statusLine}>{t("whenLeadersCreateVote")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("basePowerSection")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text><TextInput value={draftSquadPowers.squad1} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad1: v }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text><TextInput value={draftSquadPowers.squad2} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad2: v }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" /></View></View><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text><TextInput value={draftSquadPowers.squad3} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad3: v }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text><TextInput value={draftSquadPowers.squad4} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad4: v }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" /></View></View></View></View>;
+  return <View style={styles.profileCard}><View style={styles.profileHeader}><View><Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text><Text style={styles.cardTitle}>{currentUser?.name}</Text><Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text></View><View style={styles.rankBadge}><Text style={styles.rankBadgeText}>{currentUser?.rank}</Text></View></View><View style={styles.metricGrid}><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalBasePower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalSquadPower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text></View></View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Desert Storm vote alerts</Text><Text style={styles.statusLine}>{!desertStormNotificationsEnabled ? "Disabled. You will not get Desert Storm vote-open push notifications." : currentUser?.hasExpoPushToken ? "Enabled on this device." : "Enabled. Finish notification setup on this device to receive alerts."}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, desertStormNotificationsEnabled && styles.disabledButton]} disabled={desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(true)}><Text style={styles.buttonText}>Enable</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, !desertStormNotificationsEnabled && styles.disabled]} disabled={!desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(false)}><Text style={styles.secondaryButtonText}>Disable</Text></Pressable></View></View>{showPushNotificationsPrompt ? <View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Enable Desert Storm alerts</Text><Text style={styles.statusLine}>Turn on push notifications to get a heads-up when the Desert Storm vote goes live.</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, notificationSetupInFlight && styles.disabledButton]} disabled={notificationSetupInFlight} onPress={onEnablePushNotifications}><Text style={styles.buttonText}>{notificationSetupInFlight ? "Enabling..." : "Enable"}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={onDismissPushNotificationsPrompt}><Text style={styles.secondaryButtonText}>Later</Text></Pressable></View></View> : null}<Pressable disabled={!onOpenDesertStormVote} onPress={() => onOpenDesertStormVote && onOpenDesertStormVote()} style={[styles.statusCard, desertStormVoteStatus === "needed" ? styles.statusCardInactive : desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text><Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>{desertStormVoteStatus === "needed" ? <Text style={styles.statusLine}>Response needed</Text> : null}{desertStormVoteStatus === "submitted" ? <Text style={styles.statusLine}>Vote submitted</Text> : null}{desertStormAssignment ? <><Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text><Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text><Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text></> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}{onOpenDesertStormVote ? <Text style={styles.selectedPlayerHint}>Tap to open the Desert Storm vote</Text> : null}</Pressable><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Key Things Today</Text><Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today's schedule` : "Nothing scheduled for today"}</Text>{todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}><Text style={styles.todayItemTitle}>{entry.title}</Text>{entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}</View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}</View><View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>Zombie Siege</Text><Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>{activeZombieSiegeEvent ? <><Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text><Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>{activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}</> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text><Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>{appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("basePowerSection")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text><TextInput value={draftSquadPowers.squad1} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad1: v }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text><TextInput value={draftSquadPowers.squad2} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad2: v }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" /></View></View><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text><TextInput value={draftSquadPowers.squad3} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad3: v }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text><TextInput value={draftSquadPowers.squad4} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad4: v }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" /></View></View></View></View>;
 }
 function TaskForceView({ taskForce, currentUser, currentUserIsLeader, canEdit = false, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer }) {
   return <View style={styles.card}>
@@ -1548,49 +1636,6 @@ function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackTex
       }) : <Text style={styles.hint}>{t("noFeedback")}</Text>}
     </View>
   </View>;
-}
-function VotingView({ votes, currentUser, currentUserIsLeader, newVoteTitle, newVoteOptionsText, onChangeNewVoteTitle, onChangeNewVoteOptionsText, onCreateVote, onSubmitVote, onCloseVote, onArchiveVote, onReopenVote, onDeleteVote }) {
-  const [folder, setFolder] = useState("root");
-  const [selectedVoteId, setSelectedVoteId] = useState("");
-  const [expandedOptionId, setExpandedOptionId] = useState("");
-  const openVotes = votes.filter((vote) => vote.status === "open");
-  const closedVotes = votes.filter((vote) => vote.status === "closed");
-  const archivedVotes = votes.filter((vote) => vote.status === "archived");
-  const selectedVote = votes.find((vote) => vote.id === selectedVoteId) || null;
-  const folderVotes = folder === "open" ? openVotes : folder === "closed" ? closedVotes : archivedVotes;
-  const folderTitle = folder === "open" ? "Open Votes" : folder === "closed" ? "Closed Votes" : "Archived Votes";
-
-  useEffect(() => {
-    if (selectedVote && selectedVote.status !== folder && !(folder === "open" && selectedVote.status === "open")) {
-      setSelectedVoteId("");
-      setExpandedOptionId("");
-    }
-    if (selectedVoteId && !selectedVote) {
-      setSelectedVoteId("");
-      setExpandedOptionId("");
-    }
-  }, [selectedVote, selectedVoteId, folder]);
-
-  function renderVoteSummary(vote) {
-    return <Pressable key={vote.id} style={styles.voteCard} onPress={() => { setSelectedVoteId(vote.id); setExpandedOptionId(""); }}><Text style={styles.sectionTitle}>{vote.title}</Text><Text style={styles.hint}>{vote.status[0].toUpperCase() + vote.status.slice(1)} • {vote.totalVotes}/{vote.eligibleVoters} voted</Text><Text style={styles.line}>{vote.didVote ? "You voted in this vote." : "You have not voted in this vote."}</Text></Pressable>;
-  }
-
-  function renderOptionDetails(vote, option, isOpenVote) {
-    const optionResponses = vote.responses?.filter((response) => response.optionId === option.id) || [];
-    const expanded = expandedOptionId === option.id;
-    return <View key={option.id} style={styles.voteOptionWrap}><Pressable style={[styles.voteOption, vote.selectedOptionId === option.id && styles.voteOptionSelected]} onPress={() => { if (isOpenVote) { onSubmitVote(vote.id, option.id); } else { setExpandedOptionId(expanded ? "" : option.id); } }}><View style={styles.voteOptionHeader}><Text style={[styles.pickText, vote.selectedOptionId === option.id && styles.selectedPlayerText]}>{option.label}</Text><Text style={styles.voteCount}>{option.votes}</Text></View>{vote.selectedOptionId === option.id ? <Text style={styles.selectedPlayerHint}>{isOpenVote ? "Your current vote" : "Your final vote"}</Text> : null}</Pressable>{expanded ? optionResponses.length ? <View style={styles.section}>{optionResponses.map((response) => <Text key={`${option.id}-${response.playerId}`} style={styles.line}>{response.playerName}</Text>)}</View> : <Text style={styles.hint}>No members selected this option.</Text> : null}</View>;
-  }
-
-  if (selectedVote) {
-    const isOpenVote = selectedVote.status === "open";
-    return <View style={styles.card}><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => { setSelectedVoteId(""); setExpandedOptionId(""); }}><Text style={styles.secondaryButtonText}>Back To {folderTitle}</Text></Pressable></View><Text style={styles.cardTitle}>{selectedVote.title}</Text><Text style={styles.hint}>Created by {selectedVote.createdByName} • {selectedVote.totalVotes}/{selectedVote.eligibleVoters} voted • {selectedVote.status[0].toUpperCase() + selectedVote.status.slice(1)}</Text>{selectedVote.options.map((option) => renderOptionDetails(selectedVote, option, isOpenVote))}{currentUserIsLeader ? <View style={styles.row}>{selectedVote.status === "open" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(selectedVote.id)}><Text style={styles.secondaryButtonText}>Close</Text></Pressable> : null}{selectedVote.status === "closed" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onReopenVote(selectedVote.id)}><Text style={styles.secondaryButtonText}>Reopen</Text></Pressable> : null}{selectedVote.status === "closed" ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onArchiveVote(selectedVote.id)}><Text style={styles.secondaryButtonText}>Archive</Text></Pressable> : null}{selectedVote.status !== "open" ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDeleteVote(selectedVote.id)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable> : <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDeleteVote(selectedVote.id)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable>}</View> : null}<Text style={styles.line}>{selectedVote.didVote ? "You voted in this vote." : "You have not voted in this vote."}</Text></View>;
-  }
-
-  if (folder !== "root") {
-    return <View style={styles.card}><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setFolder("root")}><Text style={styles.secondaryButtonText}>Back To Voting</Text></Pressable></View><Text style={styles.cardTitle}>{folderTitle}</Text><Text style={styles.hint}>Tap a vote to open it.</Text>{folderVotes.length ? folderVotes.map(renderVoteSummary) : <Text style={styles.hint}>No votes in this folder yet.</Text>}</View>;
-  }
-
-  return <View style={styles.card}><Text style={styles.cardTitle}>Alliance Voting</Text><Text style={styles.hint}>Leaders can create votes here. Desert Storm voting now lives inside the Desert Storm tab.</Text>{currentUserIsLeader ? <View style={styles.section}><Text style={styles.sectionTitle}>Create Vote</Text><TextInput value={newVoteTitle} onChangeText={onChangeNewVoteTitle} style={styles.input} placeholder="Vote title" /><TextInput value={newVoteOptionsText} onChangeText={onChangeNewVoteOptionsText} style={[styles.input, styles.textArea]} placeholder={"One option per line\nAttack early\nAttack late"} multiline /><Pressable style={styles.button} onPress={onCreateVote}><Text style={styles.buttonText}>Push Vote To Alliance</Text></Pressable></View> : null}<View style={styles.section}><Pressable style={styles.voteCard} onPress={() => setFolder("open")}><Text style={styles.sectionTitle}>Open Votes</Text><Text style={styles.hint}>{openVotes.length} vote{openVotes.length === 1 ? "" : "s"} waiting inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("closed")}><Text style={styles.sectionTitle}>Closed Votes</Text><Text style={styles.hint}>{closedVotes.length} vote{closedVotes.length === 1 ? "" : "s"} inside</Text></Pressable><Pressable style={styles.voteCard} onPress={() => setFolder("archived")}><Text style={styles.sectionTitle}>Archived Votes</Text><Text style={styles.hint}>{archivedVotes.length} vote{archivedVotes.length === 1 ? "" : "s"} inside</Text></Pressable></View>{currentUser ? <View style={styles.inlineSummary}><Text style={styles.line}>{votes.filter((vote) => vote.didVote).length} of {votes.length} votes completed for {currentUser.name}</Text></View> : null}</View>;
 }
 function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("allianceTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><Text style={styles.line}>{t("accountLabel", { value: account?.username })}</Text><Text style={styles.line}>{t("allianceLabel", { value: alliance?.name })}</Text><Text style={styles.line}>{t("codeLabel", { value: alliance?.code })}</Text><Text style={styles.line}>{t("signedInAsPlayer", { value: currentUser?.name })}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>{t("pendingJoinRequests")}</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>{t("approve")}</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable></View></View>) : <Text style={styles.hint}>{t("noPendingRequests")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("rotateCode")}</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>{t("updateCode")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("addMember")}</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} /><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>{t("addMember")}</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>{t("memberOptions")}</Text><Text style={styles.hint}>{t("leaveAnyTime")}</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable></View>}</View>; }
 

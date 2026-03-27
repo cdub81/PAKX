@@ -48,11 +48,44 @@ function isLeaderRank(rank) {
   return rank === "R5" || rank === "R4";
 }
 
+function isExpoPushToken(value) {
+  return /^(Expo(?:nent)?PushToken)\[.+\]$/.test(String(value || "").trim());
+}
+
+function normalizeExpoPushTokens(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return [...new Set(value.map((entry) => String(entry || "").trim()).filter((entry) => isExpoPushToken(entry)))];
+}
+
+function queueExpoPushMessages(messages) {
+  const payload = Array.isArray(messages) ? messages.filter((message) => isExpoPushToken(message?.to)) : [];
+  if (!payload.length || typeof fetch !== "function") {
+    return;
+  }
+  fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Accept-encoding": "gzip, deflate",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  }).catch((error) => {
+    console.error("Failed to send Expo push notifications:", error);
+  });
+}
+
 function normalizeDesertStormStats(value) {
   return {
     playedCount: Number(value?.playedCount) || 0,
     missedCount: Number(value?.missedCount) || 0
   };
+}
+
+function normalizeDesertStormVoteNotificationsEnabled(value) {
+  return value !== false;
 }
 
 function normalizeDesertStormLayout(value) {
@@ -301,7 +334,9 @@ function createPlayer(name, rank, overallPower) {
     rank,
     overallPower,
     squadPowers: normalizeSquadPowers(),
-    desertStormStats: normalizeDesertStormStats()
+    desertStormStats: normalizeDesertStormStats(),
+    desertStormVoteNotificationsEnabled: true,
+    expoPushTokens: []
   };
 }
 
@@ -357,7 +392,9 @@ function normalizeAlliance(alliance) {
       rank: player.rank,
       overallPower: Number(player.overallPower) || 0,
       squadPowers: normalizeSquadPowers(player.squadPowers),
-      desertStormStats: normalizeDesertStormStats(player.desertStormStats)
+      desertStormStats: normalizeDesertStormStats(player.desertStormStats),
+      desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
+      expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens)
     })),
     taskForces: alliance.taskForces,
     desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
@@ -448,6 +485,8 @@ function createStore(config = {}) {
       squadPowers,
       totalSquadPower: totalSquadPower(squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
+      desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
+      hasExpoPushToken: normalizeExpoPushTokens(player.expoPushTokens).length > 0,
       desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
     };
   }
@@ -760,6 +799,40 @@ function createStore(config = {}) {
 
   function findDesertStormEvent(alliance, eventId) {
     return (alliance.desertStormEvents || []).find((event) => event.id === eventId);
+  }
+
+  function buildDesertStormVoteOpenMessages(alliance, event, triggeringPlayerId = "") {
+    const responsePlayerIds = new Set((event.vote.responses || []).map((entry) => entry.playerId));
+    const uniqueTokens = new Set();
+    const messages = [];
+    alliance.players.forEach((member) => {
+      if (triggeringPlayerId && member.id === triggeringPlayerId) {
+        return;
+      }
+      if (!normalizeDesertStormVoteNotificationsEnabled(member.desertStormVoteNotificationsEnabled)) {
+        return;
+      }
+      if (responsePlayerIds.has(member.id)) {
+        return;
+      }
+      normalizeExpoPushTokens(member.expoPushTokens).forEach((expoPushToken) => {
+        if (uniqueTokens.has(expoPushToken)) {
+          return;
+        }
+        uniqueTokens.add(expoPushToken);
+        messages.push({
+          to: expoPushToken,
+          sound: "default",
+          title: "Desert Storm",
+          body: "Desert Storm vote is live — tap to respond",
+          data: {
+            type: "desertStormVote",
+            eventId: event.id
+          }
+        });
+      });
+    });
+    return messages;
   }
 
   function isPlayerAssignedToDesertStorm(alliance, playerName) {
@@ -1099,6 +1172,9 @@ function createStore(config = {}) {
     }
     if (updates.squadPowers !== undefined) {
       member.squadPowers = mergeSquadPowers(member.squadPowers, updates.squadPowers);
+    }
+    if (updates.desertStormVoteNotificationsEnabled !== undefined) {
+      member.desertStormVoteNotificationsEnabled = normalizeDesertStormVoteNotificationsEnabled(updates.desertStormVoteNotificationsEnabled);
     }
 
     const linkedAccount = state.accounts.find((account) => account.playerId === member.id);
@@ -1461,12 +1537,34 @@ function createStore(config = {}) {
     return publicDesertStormEvent(event, alliance, player.id, true);
   }
 
+  function registerExpoPushToken(allianceId, player, expoPushToken) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const member = alliance.players.find((entry) => entry.id === player.id);
+    if (!member) {
+      throw new Error("Player not found.");
+    }
+    const normalizedToken = String(expoPushToken || "").trim();
+    if (!isExpoPushToken(normalizedToken)) {
+      throw new Error("A valid Expo push token is required.");
+    }
+    member.expoPushTokens = normalizeExpoPushTokens([...(member.expoPushTokens || []), normalizedToken]);
+    commit();
+    return publicPlayer(member, alliance.desertStormLayouts, alliance.desertStormEvents);
+  }
+
   function setDesertStormVoteState(allianceId, eventId, player, status) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) throw new Error("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
     if (!event) throw new Error("Desert Storm event not found.");
+    if (event.status === "completed" || event.status === "archived") {
+      throw new Error("This Desert Storm event can no longer be updated.");
+    }
     const now = new Date().toISOString();
+    const wasOpen = event.vote.status === "open";
     if (status === "open") {
       event.vote.status = "open";
       event.vote.openedAt = event.vote.openedAt || now;
@@ -1482,6 +1580,9 @@ function createStore(config = {}) {
       }
     }
     commit();
+    if (status === "open" && !wasOpen) {
+      queueExpoPushMessages(buildDesertStormVoteOpenMessages(alliance, event, player.id));
+    }
     return publicDesertStormEvent(event, alliance, player.id, true);
   }
 
@@ -1853,6 +1954,7 @@ function createStore(config = {}) {
     resetTaskForcesForNewTeams,
     listDesertStormEventsForAlliance,
     createDesertStormEvent,
+    registerExpoPushToken,
     submitDesertStormVote,
     setDesertStormVoteState,
     updateDesertStormEventSlot,
