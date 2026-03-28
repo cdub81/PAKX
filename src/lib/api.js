@@ -364,6 +364,17 @@ export function createCalendarEntry(baseUrl, token, payload) {
   });
 }
 
+export function updateCalendarEntry(baseUrl, token, entryId, payload) {
+  return request(baseUrl, `/api/calendar/${encodeURIComponent(entryId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
 export function deleteCalendarEntry(baseUrl, token, entryId) {
   return request(baseUrl, `/api/calendar/${encodeURIComponent(entryId)}`, {
     method: "DELETE",

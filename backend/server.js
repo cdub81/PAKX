@@ -701,6 +701,15 @@ async function handleRequest(request, response) {
     }
 
     const calendarEntryMatch = pathname.match(/^\/api\/calendar\/([^/]+)$/);
+    if (calendarEntryMatch && request.method === "PATCH") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 200, store.updateCalendarEntry(context.alliance.id, calendarEntryMatch[1], context.player, body));
+      return;
+    }
     if (calendarEntryMatch && request.method === "DELETE") {
       const context = requireLeader(request, response);
       if (!context) {

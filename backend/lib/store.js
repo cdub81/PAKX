@@ -202,13 +202,52 @@ function normalizeFeedbackComment(value) {
   };
 }
 
+function normalizeCalendarRecurrence(value) {
+  const recurrence = value && typeof value === "object" ? value : {};
+  const repeat = ["none", "daily", "every_other_day", "weekly", "custom_weekdays"].includes(recurrence.repeat) ? recurrence.repeat : "none";
+  const weekdays = Array.isArray(recurrence.weekdays)
+    ? [...new Set(recurrence.weekdays.map((entry) => String(entry || "").toLowerCase()).filter((entry) => ["sun", "mon", "tue", "wed", "thu", "fri", "sat"].includes(entry)))]
+    : [];
+  const endDate = recurrence.endDate ? String(recurrence.endDate).slice(0, 10) : "";
+  return {
+    repeat,
+    weekdays,
+    endDate
+  };
+}
+
+function normalizeCalendarTimeZone(value) {
+  const timeZone = String(value || "").trim() || "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
+    return timeZone;
+  } catch {
+    return "UTC";
+  }
+}
+
 function normalizeCalendarEntry(value) {
+  const entryType = ["manual", "reminder", "linked_desert_storm", "linked_zombie_siege"].includes(value.entryType) ? value.entryType : "manual";
+  const allDay = value.allDay !== false;
+  const startDate = String(value.startDate || (typeof value.startsAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.startsAt) ? value.startsAt : value.startsAt ? String(value.startsAt).slice(0, 10) : "")).slice(0, 10);
+  const startTime = allDay ? "" : String(value.startTime || "").slice(0, 5);
+  const endTime = allDay ? "" : String(value.endTime || "").slice(0, 5);
+  const recurrence = normalizeCalendarRecurrence(value.recurrence);
   return {
     id: value.id || crypto.randomUUID(),
     title: String(value.title || "").trim(),
     description: String(value.description || "").trim(),
     startsAt: value.startsAt || new Date().toISOString(),
     endAt: value.endAt || null,
+    entryType,
+    linkedType: value.linkedType === "zombieSiege" ? "zombieSiege" : value.linkedType === "desertStorm" ? "desertStorm" : "",
+    linkedEventId: String(value.linkedEventId || "").trim(),
+    allDay,
+      eventTimeZone: normalizeCalendarTimeZone(value.eventTimeZone),
+    startDate,
+    startTime,
+    endTime,
+    recurrence,
     createdAt: value.createdAt || new Date().toISOString(),
     createdByPlayerId: value.createdByPlayerId || "",
     createdByName: value.createdByName || "",
@@ -498,6 +537,15 @@ function createStore(config = {}) {
       description: entry.description,
       startsAt: entry.startsAt,
       endAt: entry.endAt,
+      entryType: entry.entryType || "manual",
+      linkedType: entry.linkedType || "",
+      linkedEventId: entry.linkedEventId || "",
+      allDay: entry.allDay !== false,
+      eventTimeZone: entry.eventTimeZone || "UTC",
+      startDate: entry.startDate || "",
+      startTime: entry.startTime || "",
+      endTime: entry.endTime || "",
+      recurrence: normalizeCalendarRecurrence(entry.recurrence),
       createdAt: entry.createdAt,
       createdByPlayerId: entry.createdByPlayerId,
       createdByName: entry.createdByName,
@@ -1323,18 +1371,31 @@ function createStore(config = {}) {
     }
     const title = String(payload?.title || "").trim();
     const startsAt = String(payload?.startsAt || "").trim();
+    const startDate = String(payload?.startDate || "").trim();
+    const allDay = payload?.allDay !== false;
+    const entryType = String(payload?.entryType || "manual").trim();
+    const recurrence = normalizeCalendarRecurrence(payload?.recurrence);
     if (!title) {
       throw new Error("title is required.");
     }
-    if (!startsAt) {
-      throw new Error("startsAt is required.");
+    if (!startsAt && !startDate) {
+      throw new Error("startsAt or startDate is required.");
     }
     alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
     const entry = normalizeCalendarEntry({
       title,
       description: payload.description || "",
-      startsAt,
+      startsAt: startsAt || startDate,
       endAt: payload.endAt || null,
+      entryType,
+      linkedType: payload.linkedType || "",
+      linkedEventId: payload.linkedEventId || "",
+      allDay,
+      eventTimeZone: normalizeCalendarTimeZone(payload.eventTimeZone),
+      startDate: payload.startDate || "",
+      startTime: payload.startTime || "",
+      endTime: payload.endTime || "",
+      recurrence,
       createdByPlayerId: player.id,
       createdByName: player.name,
       leaderNotes: payload.leaderNotes || "",
@@ -1343,6 +1404,55 @@ function createStore(config = {}) {
     alliance.calendarEntries.unshift(entry);
     commit();
     return clone(entry);
+  }
+
+  function updateCalendarEntry(allianceId, entryId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
+    const index = alliance.calendarEntries.findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new Error("Calendar entry not found.");
+    }
+    const currentEntry = alliance.calendarEntries[index];
+    const title = String(payload?.title || "").trim();
+    const startsAt = String(payload?.startsAt || "").trim();
+    const startDate = String(payload?.startDate || "").trim();
+    const allDay = payload?.allDay !== false;
+    const entryType = String(payload?.entryType || currentEntry.entryType || "manual").trim();
+    const recurrence = normalizeCalendarRecurrence(payload?.recurrence);
+    if (!title) {
+      throw new Error("title is required.");
+    }
+    if (!startsAt && !startDate) {
+      throw new Error("startsAt or startDate is required.");
+    }
+    const updatedEntry = normalizeCalendarEntry({
+      ...currentEntry,
+      title,
+      description: payload.description || "",
+      startsAt: startsAt || startDate,
+      endAt: payload.endAt || null,
+      entryType,
+      linkedType: payload.linkedType || "",
+      linkedEventId: payload.linkedEventId || "",
+      allDay,
+      eventTimeZone: normalizeCalendarTimeZone(payload.eventTimeZone || currentEntry.eventTimeZone || "UTC"),
+      startDate: payload.startDate || "",
+      startTime: payload.startTime || "",
+      endTime: payload.endTime || "",
+      recurrence,
+      leaderNotes: payload.leaderNotes || "",
+      leaderOnly: payload.leaderOnly,
+      updatedAt: new Date().toISOString(),
+      updatedByPlayerId: player.id,
+      updatedByName: player.name
+    });
+    alliance.calendarEntries[index] = updatedEntry;
+    commit();
+    return clone(updatedEntry);
   }
 
   function deleteCalendarEntry(allianceId, entryId) {
@@ -1963,11 +2073,12 @@ function createStore(config = {}) {
     beginDesertStormEditing,
     saveDesertStormEventResults,
     archiveDesertStormEvent,
-    addFeedbackEntry,
-    addFeedbackComment,
-    createCalendarEntry,
-    deleteCalendarEntry,
-    listZombieSiegeEventsForAlliance,
+      addFeedbackEntry,
+      addFeedbackComment,
+      createCalendarEntry,
+      updateCalendarEntry,
+      deleteCalendarEntry,
+      listZombieSiegeEventsForAlliance,
     createZombieSiegeEvent,
     submitZombieSiegeAvailability,
     runZombieSiegePlan,
