@@ -32,16 +32,17 @@ export function normalizeReminderTimeZone(value) {
 }
 
 export function parseReminderTimeValue(value) {
-  const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+  const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
   if (!match) {
     return null;
   }
   const hours = Number.parseInt(match[1], 10);
   const minutes = Number.parseInt(match[2], 10);
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+  const seconds = Number.parseInt(match[3] || "0", 10);
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
     return null;
   }
-  return { hours, minutes };
+  return { hours, minutes, seconds };
 }
 
 export function formatReminderDateKey(date) {
@@ -122,6 +123,7 @@ export function buildReminderSchedule({
   durationDays = 0,
   durationHours = 0,
   durationMinutes = 0,
+  durationSeconds = 0,
   dateKey,
   timeValue,
   localTimeZone
@@ -129,8 +131,8 @@ export function buildReminderSchedule({
   const normalizedMode = mode === "serverTime" || mode === "localTime" ? mode : "elapsed";
   const normalizedLocalTimeZone = normalizeReminderTimeZone(localTimeZone || getReminderDeviceTimeZone());
   if (normalizedMode === "elapsed") {
-    const totalMinutes = Math.max(0, Number(durationDays) || 0) * 24 * 60 + Math.max(0, Number(durationHours) || 0) * 60 + Math.max(0, Number(durationMinutes) || 0);
-    const scheduled = new Date(Date.now() + totalMinutes * 60 * 1000);
+    const totalSeconds = Math.max(0, Number(durationDays) || 0) * 24 * 60 * 60 + Math.max(0, Number(durationHours) || 0) * 60 * 60 + Math.max(0, Number(durationMinutes) || 0) * 60 + Math.max(0, Number(durationSeconds) || 0);
+    const scheduled = new Date(Date.now() + totalSeconds * 1000);
     const scheduledForUtc = scheduled.toISOString();
     const local = convertReminderUtcToTimeZoneDateTime(scheduledForUtc, normalizedLocalTimeZone);
     const server = convertReminderUtcToTimeZoneDateTime(scheduledForUtc, SERVER_TIME_ZONE);
@@ -141,6 +143,7 @@ export function buildReminderSchedule({
       durationDays: Math.max(0, Number(durationDays) || 0),
       durationHours: Math.max(0, Number(durationHours) || 0),
       durationMinutes: Math.max(0, Number(durationMinutes) || 0),
+      durationSeconds: Math.max(0, Number(durationSeconds) || 0),
       scheduledForUtc,
       originalLocalDateTime: `${local.dateKey}T${local.timeValue}`,
       originalServerDateTime: `${server.dateKey}T${server.timeValue}`
@@ -157,6 +160,7 @@ export function buildReminderSchedule({
     durationDays: 0,
     durationHours: 0,
     durationMinutes: 0,
+    durationSeconds: 0,
     scheduledForUtc,
     originalLocalDateTime: `${local.dateKey}T${local.timeValue}`,
     originalServerDateTime: `${server.dateKey}T${server.timeValue}`

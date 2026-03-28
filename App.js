@@ -2186,6 +2186,45 @@ function CalendarTimePickerModal({ visible, title, value, minValue = "", onChang
   </Modal>;
 }
 
+function ReminderDurationPickerModal({ visible, title, value, onChange, onClose }) {
+  const parsed = parseReminderTimeValue(value || "00:00:00") || { hours: 0, minutes: 0, seconds: 0 };
+  const hourValue = formatTwoDigits(parsed.hours);
+  const minuteValue = formatTwoDigits(parsed.minutes);
+  const secondValue = formatTwoDigits(parsed.seconds || 0);
+  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, index) => formatTwoDigits(index)), []);
+  const minuteOptions = useMemo(() => Array.from({ length: 60 }, (_, index) => formatTwoDigits(index)), []);
+  const secondOptions = useMemo(() => Array.from({ length: 60 }, (_, index) => formatTwoDigits(index)), []);
+
+  function emit(nextHour, nextMinute, nextSecond) {
+    onChange(`${nextHour}:${nextMinute}:${nextSecond}`);
+  }
+
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
+      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
+        <View style={CALENDAR_MODAL_CARD_STYLE}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <View style={styles.calendarWheelHeader}>
+            <Text style={styles.hint}>Hours</Text>
+            <Text style={styles.hint}>Minutes</Text>
+            <Text style={styles.hint}>Seconds</Text>
+          </View>
+          <View style={styles.calendarWheelRow}>
+            <CalendarTimeWheelColumn value={hourValue} values={hourOptions} onChange={(nextHour) => emit(nextHour, minuteValue, secondValue)} />
+            <Text style={styles.calendarWheelDivider}>:</Text>
+            <CalendarTimeWheelColumn value={minuteValue} values={minuteOptions} onChange={(nextMinute) => emit(hourValue, nextMinute, secondValue)} />
+            <Text style={styles.calendarWheelDivider}>:</Text>
+            <CalendarTimeWheelColumn value={secondValue} values={secondOptions} onChange={(nextSecond) => emit(hourValue, minuteValue, nextSecond)} />
+          </View>
+          <Pressable style={styles.button} onPress={onClose}>
+            <Text style={styles.buttonText}>Done</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </View>
+  </Modal>;
+}
+
 function CalendarDatePickerModal({ visible, title, value, onChange, onClose, language }) {
   const calendarT = getCalendarTranslator(language);
   const fallbackDateKey = isValidDateKey(value) ? value : formatLocalDateKey(new Date());
@@ -2622,6 +2661,25 @@ function MembersViewV2({ players, memberSearchText, memberSortMode, memberRankFi
     {!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}
   </View>;
 }
+
+function formatReminderCountdown(isoValue, nowTick) {
+  const remainingMs = new Date(isoValue).getTime() - nowTick;
+  if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
+    return "Due now";
+  }
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (days || hours) parts.push(`${hours}h`);
+  if (days || hours || minutes) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return parts.join(" ");
+}
+
 function RemindersView({ reminders, language, onCreateReminder, onCancelReminder, onDeleteReminder }) {
   const localTimeZone = getReminderDeviceTimeZone();
   const serverTimeZone = getReminderServerTimeZone();
@@ -2629,12 +2687,13 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [mode, setMode] = useState("elapsed");
-  const [durationValue, setDurationValue] = useState("01:00");
+  const [durationValue, setDurationValue] = useState("01:00:00");
   const [dateKey, setDateKey] = useState(formatReminderDateKey(new Date()));
   const [timeValue, setTimeValue] = useState("09:00");
   const [datePickerTarget, setDatePickerTarget] = useState("");
   const [timePickerTarget, setTimePickerTarget] = useState("");
   const [error, setError] = useState("");
+  const [nowTick, setNowTick] = useState(Date.now());
   const activeReminders = reminders.filter((entry) => entry.status === "active");
   const pastReminders = reminders.filter((entry) => entry.status !== "active");
   const preview = useMemo(() => {
@@ -2648,17 +2707,25 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       durationDays: 0,
       durationHours: parseReminderTimeValue(durationValue)?.hours || 0,
       durationMinutes: parseReminderTimeValue(durationValue)?.minutes || 0,
+      durationSeconds: parseReminderTimeValue(durationValue)?.seconds || 0,
       dateKey,
       timeValue,
       localTimeZone
     });
   }, [mode, title, notes, durationValue, dateKey, timeValue, localTimeZone]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setNowTick(Date.now());
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   function resetForm() {
     setTitle("");
     setNotes("");
     setMode("elapsed");
-    setDurationValue("01:00");
+    setDurationValue("01:00:00");
     setDateKey(formatReminderDateKey(new Date()));
     setTimeValue("09:00");
     setDatePickerTarget("");
@@ -2696,6 +2763,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       durationDays: "0",
       durationHours: String(parseReminderTimeValue(durationValue)?.hours || 0),
       durationMinutes: String(parseReminderTimeValue(durationValue)?.minutes || 0),
+      durationSeconds: String(parseReminderTimeValue(durationValue)?.seconds || 0),
       dateKey,
       timeValue
     });
@@ -2710,6 +2778,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       <Text style={styles.statusTitle}>{reminder.title}</Text>
       {reminder.notes ? <Text style={styles.statusLine}>{reminder.notes}</Text> : null}
       <Text style={styles.statusLine}>Status: {reminder.status}</Text>
+      {showCancel ? <Text style={styles.statusLine}>Time left: {formatReminderCountdown(reminder.scheduledForUtc, nowTick)}</Text> : null}
       <Text style={styles.statusLine}>Local: {formatReminderDateTimeDisplay(reminder.scheduledForUtc, localTimeZone, language)}</Text>
       <Text style={styles.statusLine}>Server ({serverTimeLabel}): {formatReminderDateTimeDisplay(reminder.scheduledForUtc, serverTimeZone, language)}</Text>
       <View style={styles.row}>
@@ -2761,7 +2830,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       {pastReminders.map((reminder) => renderReminderCard(reminder, false))}
     </View> : null}
     <CalendarDatePickerModal visible={datePickerTarget === "reminderDate"} title="Select Reminder Date" value={dateKey} onChange={setDateKey} onClose={() => setDatePickerTarget("")} language={language} />
-    <CalendarTimePickerModal visible={timePickerTarget === "reminderDuration"} title="Select Duration" value={durationValue} onChange={setDurationValue} onClose={() => setTimePickerTarget("")} language={language} />
+    <ReminderDurationPickerModal visible={timePickerTarget === "reminderDuration"} title="Select Duration" value={durationValue} onChange={setDurationValue} onClose={() => setTimePickerTarget("")} />
     <CalendarTimePickerModal visible={timePickerTarget === "reminderTime"} title="Select Reminder Time" value={timeValue} onChange={setTimeValue} onClose={() => setTimePickerTarget("")} language={language} />
   </View>;
 }
