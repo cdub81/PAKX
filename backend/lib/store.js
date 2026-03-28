@@ -226,6 +226,43 @@ function normalizeCalendarTimeZone(value) {
   }
 }
 
+function normalizeReminderStatus(value) {
+  return ["active", "completed", "cancelled"].includes(value) ? value : "active";
+}
+
+function normalizeReminderMode(value) {
+  return ["elapsed", "localTime", "serverTime"].includes(value) ? value : "elapsed";
+}
+
+function normalizeReminder(value) {
+  return {
+    id: value?.id || crypto.randomUUID(),
+    memberId: String(value?.memberId || "").trim(),
+    title: String(value?.title || "").trim() || "Reminder",
+    notes: String(value?.notes || "").trim(),
+    mode: normalizeReminderMode(value?.mode),
+    durationDays: Math.max(0, Number(value?.durationDays) || 0),
+    durationHours: Math.max(0, Number(value?.durationHours) || 0),
+    durationMinutes: Math.max(0, Number(value?.durationMinutes) || 0),
+    scheduledForUtc: String(value?.scheduledForUtc || ""),
+    originalLocalDateTime: String(value?.originalLocalDateTime || ""),
+    originalServerDateTime: String(value?.originalServerDateTime || ""),
+    status: normalizeReminderStatus(value?.status),
+    notificationId: String(value?.notificationId || "").trim(),
+    createdAt: value?.createdAt || new Date().toISOString(),
+    updatedAt: value?.updatedAt || value?.createdAt || new Date().toISOString()
+  };
+}
+
+function normalizeReminders(value, memberId = "") {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => normalizeReminder({ ...entry, memberId: entry?.memberId || memberId }))
+    .sort((a, b) => String(a.scheduledForUtc || "").localeCompare(String(b.scheduledForUtc || "")));
+}
+
 function normalizeCalendarEntry(value) {
   const entryType = ["manual", "reminder", "linked_desert_storm", "linked_zombie_siege"].includes(value.entryType) ? value.entryType : "manual";
   const allDay = value.allDay !== false;
@@ -383,10 +420,12 @@ function createPlayer(name, rank, overallPower) {
     name,
     rank,
     overallPower,
+    heroPower: 0,
     squadPowers: normalizeSquadPowers(),
     desertStormStats: normalizeDesertStormStats(),
     desertStormVoteNotificationsEnabled: true,
-    expoPushTokens: []
+    expoPushTokens: [],
+    reminders: []
   };
 }
 
@@ -441,10 +480,12 @@ function normalizeAlliance(alliance) {
       name: player.name,
       rank: player.rank,
       overallPower: Number(player.overallPower) || 0,
+      heroPower: Number(player.heroPower) || 0,
       squadPowers: normalizeSquadPowers(player.squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
-      expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens)
+      expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens),
+      reminders: normalizeReminders(player.reminders, player.id || "")
     })),
     taskForces: alliance.taskForces,
     desertStormSetupLocked: Boolean(alliance.desertStormSetupLocked),
@@ -532,6 +573,7 @@ function createStore(config = {}) {
       name: player.name,
       rank: player.rank,
       overallPower: player.overallPower,
+      heroPower: Number(player.heroPower) || 0,
       squadPowers,
       totalSquadPower: totalSquadPower(squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
@@ -690,6 +732,58 @@ function createStore(config = {}) {
       allianceId: account.allianceId,
       playerId: account.playerId
     };
+  }
+
+  function publicReminder(reminder) {
+    return {
+      id: reminder.id,
+      memberId: reminder.memberId,
+      title: reminder.title,
+      notes: reminder.notes,
+      mode: reminder.mode,
+      durationDays: reminder.durationDays || 0,
+      durationHours: reminder.durationHours || 0,
+      durationMinutes: reminder.durationMinutes || 0,
+      scheduledForUtc: reminder.scheduledForUtc,
+      originalLocalDateTime: reminder.originalLocalDateTime || "",
+      originalServerDateTime: reminder.originalServerDateTime || "",
+      status: normalizeReminderStatus(reminder.status),
+      notificationId: reminder.notificationId || "",
+      createdAt: reminder.createdAt,
+      updatedAt: reminder.updatedAt
+    };
+  }
+
+  function getMemberReminders(member) {
+    member.reminders = normalizeReminders(member.reminders, member.id);
+    const now = Date.now();
+    let changed = false;
+    member.reminders.forEach((reminder) => {
+      if (reminder.status === "active" && reminder.scheduledForUtc) {
+        const fireAt = new Date(reminder.scheduledForUtc).getTime();
+        if (!Number.isNaN(fireAt) && fireAt <= now) {
+          reminder.status = "completed";
+          reminder.updatedAt = new Date().toISOString();
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      commit();
+    }
+    return member.reminders;
+  }
+
+  function listRemindersForMember(allianceId, memberId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const member = alliance.players.find((player) => player.id === memberId);
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+    return getMemberReminders(member).map(publicReminder);
   }
 
   function publicJoinRequest(joinRequest) {
@@ -1205,12 +1299,13 @@ function createStore(config = {}) {
     return publicAlliance(alliance);
   }
 
-  function addMember(allianceId, { name, rank, overallPower }) {
+  function addMember(allianceId, { name, rank, overallPower, heroPower }) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
       throw new Error("Alliance not found.");
     }
     const member = createPlayer(name, rank, overallPower);
+    member.heroPower = Number(heroPower) || 0;
     alliance.players.push(member);
     commit();
     return publicPlayer(member);
@@ -1235,6 +1330,9 @@ function createStore(config = {}) {
     if (updates.overallPower !== undefined) {
       member.overallPower = Number(updates.overallPower) || 0;
     }
+    if (updates.heroPower !== undefined) {
+      member.heroPower = Number(updates.heroPower) || 0;
+    }
     if (updates.squadPowers !== undefined) {
       member.squadPowers = mergeSquadPowers(member.squadPowers, updates.squadPowers);
     }
@@ -1249,6 +1347,93 @@ function createStore(config = {}) {
 
     commit();
     return publicPlayer(member);
+  }
+
+  function createReminder(allianceId, memberId, payload = {}) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const member = alliance.players.find((player) => player.id === memberId);
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+    const reminder = normalizeReminder({
+      ...payload,
+      memberId,
+      status: "active",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    if (!reminder.scheduledForUtc || Number.isNaN(new Date(reminder.scheduledForUtc).getTime())) {
+      throw new Error("scheduledForUtc is required.");
+    }
+    if (new Date(reminder.scheduledForUtc).getTime() <= Date.now()) {
+      throw new Error("scheduledForUtc must be in the future.");
+    }
+    member.reminders = normalizeReminders([...(member.reminders || []), reminder], member.id);
+    commit();
+    return publicReminder(reminder);
+  }
+
+  function updateReminder(allianceId, memberId, reminderId, updates = {}) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const member = alliance.players.find((player) => player.id === memberId);
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+    member.reminders = normalizeReminders(member.reminders, member.id);
+    const reminder = (member.reminders || []).find((entry) => entry.id === reminderId);
+    if (!reminder) {
+      throw new Error("Reminder not found.");
+    }
+    if (updates.title !== undefined) {
+      reminder.title = String(updates.title || "").trim() || reminder.title;
+    }
+    if (updates.notes !== undefined) {
+      reminder.notes = String(updates.notes || "").trim();
+    }
+    if (updates.notificationId !== undefined) {
+      reminder.notificationId = String(updates.notificationId || "").trim();
+    }
+    if (updates.status !== undefined) {
+      reminder.status = normalizeReminderStatus(updates.status);
+    }
+    if (updates.scheduledForUtc !== undefined) {
+      const scheduledForUtc = String(updates.scheduledForUtc || "");
+      if (!scheduledForUtc || Number.isNaN(new Date(scheduledForUtc).getTime())) {
+        throw new Error("scheduledForUtc must be a valid ISO timestamp.");
+      }
+      if (new Date(scheduledForUtc).getTime() <= Date.now()) {
+        throw new Error("scheduledForUtc must be in the future.");
+      }
+      reminder.scheduledForUtc = scheduledForUtc;
+    }
+    reminder.updatedAt = new Date().toISOString();
+    commit();
+    return publicReminder(reminder);
+  }
+
+  function deleteReminder(allianceId, memberId, reminderId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const member = alliance.players.find((player) => player.id === memberId);
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+    member.reminders = normalizeReminders(member.reminders, member.id);
+    const index = (member.reminders || []).findIndex((entry) => entry.id === reminderId);
+    if (index === -1) {
+      throw new Error("Reminder not found.");
+    }
+    const [deleted] = member.reminders.splice(index, 1);
+    commit();
+    return publicReminder(deleted);
   }
 
   function removeMember(allianceId, memberId) {
@@ -2089,6 +2274,10 @@ function createStore(config = {}) {
     addMember,
     updateMember,
     removeMember,
+    listRemindersForMember,
+    createReminder,
+    updateReminder,
+    deleteReminder,
     updateTaskForceSlot,
     resetTaskForcesForNewTeams,
     listDesertStormEventsForAlliance,

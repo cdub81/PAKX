@@ -5,8 +5,9 @@ import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
-import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
+import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createReminder as createReminderRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteReminder as deleteReminderRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, getReminders as getRemindersRequest, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateReminder as updateReminderRequest, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
+import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, parseReminderTimeValue } from "./src/lib/reminders";
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const SESSION_STORAGE_KEY = "lwadmin-session";
@@ -14,7 +15,7 @@ const LANGUAGE_STORAGE_KEY = "lwadmin-language";
 const PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY = "lwadmin-push-notifications-prompt-dismissed";
 const CALENDAR_SERVER_TIME_ZONE = "Etc/GMT+2";
 const CALENDAR_SERVER_TIME_LABEL = "UTC-2";
-const ALL_TABS = ["myInfo", "desertStorm", "players", "calendar", "zombieSiege", "alliance", "feedback"];
+const ALL_TABS = ["myInfo", "desertStorm", "players", "calendar", "reminders", "zombieSiege", "alliance", "feedback"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
 const APP_VERSION = Application.nativeApplicationVersion || Constants.expoConfig?.version || "0.1.0";
@@ -89,6 +90,7 @@ const TRANSLATIONS = {
     noMembersMatchVoteFilter: "No members match this Desert Storm vote filter.",
     tabMyInfo: "My Info",
     tabMembers: "Members",
+    tabReminders: "Reminders",
     tabAlliance: "Settings",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
@@ -127,6 +129,7 @@ const TRANSLATIONS = {
     leave: "Leave",
     signedInPlayer: "Signed-In Player",
     totalBasePower: "Total Base Power",
+    heroPower: "Hero Power",
     totalSquadPower: "Total Squad Power",
     desertStormTitle: "Desert Storm",
     selectedForDesertStorm: "Selected for Desert Storm",
@@ -461,6 +464,7 @@ function tabLabel(tab, leader, joinRequests, t) {
   if (tab === "alliance") return `${t("tabAlliance")}${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
   if (tab === "desertStorm") return "Desert Storm";
   if (tab === "calendar") return "Calendar";
+  if (tab === "reminders") return t("tabReminders");
   if (tab === "zombieSiege") return "Zombie Siege";
   if (tab === "feedback") return t("tabFeedback");
   return t("tabDashboard");
@@ -933,6 +937,7 @@ export default function App() {
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberRank, setNewMemberRank] = useState("R1");
   const [newMemberPower, setNewMemberPower] = useState("");
+  const [reminders, setReminders] = useState([]);
   const [calendarView, setCalendarView] = useState("today");
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
   const [newCalendarDescription, setNewCalendarDescription] = useState("");
@@ -971,6 +976,7 @@ export default function App() {
   const [calendarTimePickerTarget, setCalendarTimePickerTarget] = useState("");
   const [calendarDatePickerTarget, setCalendarDatePickerTarget] = useState("");
   const [calendarFormError, setCalendarFormError] = useState("");
+  const reminderSyncInFlight = useRef(false);
   const t = useMemo(() => getTranslator(language), [language]);
 
   const players = alliance?.players || [];
@@ -1058,6 +1064,7 @@ export default function App() {
     setAccount(null);
     setAlliance(null);
     setCurrentUser(null);
+    setReminders([]);
     setJoinRequest(null);
     setJoinRequests([]);
     setAuthMode("");
@@ -1241,9 +1248,11 @@ export default function App() {
 
   async function refresh(token = session.token, backendUrl = session.backendUrl) {
     const me = await getMe(backendUrl, token);
+    const reminderResponse = me.player ? await getRemindersRequest(backendUrl, token) : { reminders: [] };
     setAccount(me.account);
     setAlliance(me.alliance);
     setCurrentUser(me.player);
+    setReminders(reminderResponse.reminders || []);
     setJoinRequest(me.joinRequest || null);
     setAlliancePreview(me.alliance ? { id: me.alliance.id, name: me.alliance.name, code: me.alliance.code, players: me.alliance.players } : null);
     setNewAllianceCode(me.alliance?.code || "");
@@ -1322,12 +1331,16 @@ export default function App() {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "reminder") {
+        setActiveTab("reminders");
       }
     }).catch(() => {});
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "reminder") {
+        setActiveTab("reminders");
       }
     });
     return () => subscription.remove();
@@ -1342,6 +1355,48 @@ export default function App() {
     }
     syncPushNotifications().catch(() => {});
   }, [session.token, session.backendUrl, alliance, currentUser?.id, currentUser?.hasExpoPushToken, notificationPermissionStatus]);
+
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !currentUser?.id || !reminders.length || reminderSyncInFlight.current) {
+      return;
+    }
+    let alive = true;
+    (async () => {
+      const permissionGranted = await ensureReminderNotificationPermission();
+      if (!alive || !permissionGranted || reminderSyncInFlight.current) {
+        return;
+      }
+      reminderSyncInFlight.current = true;
+      try {
+        for (const reminder of reminders) {
+          const fireAt = new Date(reminder.scheduledForUtc).getTime();
+          const isFuture = !Number.isNaN(fireAt) && fireAt > Date.now();
+          if (reminder.status === "active" && isFuture && !reminder.notificationId) {
+            const notificationId = await scheduleReminderNotification(reminder);
+            if (!alive) return;
+            await updateReminderRequest(session.backendUrl, session.token, reminder.id, { notificationId });
+          } else if ((!isFuture || reminder.status !== "active") && reminder.notificationId) {
+            await cancelReminderNotification(reminder.notificationId);
+            if (!alive) return;
+            await updateReminderRequest(session.backendUrl, session.token, reminder.id, { notificationId: "" });
+          }
+        }
+        if (alive) {
+          const reminderResponse = await getRemindersRequest(session.backendUrl, session.token);
+          if (alive) {
+            setReminders(reminderResponse.reminders || []);
+          }
+        }
+      } catch {
+        // Leave reminders intact if local notification reconciliation fails on a device.
+      } finally {
+        reminderSyncInFlight.current = false;
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [session.token, session.backendUrl, currentUser?.id, reminders]);
 
   useEffect(() => {
     if (!desertStormEvents.length) {
@@ -1371,7 +1426,13 @@ export default function App() {
 
   function saveMember(playerId, field, value) {
     if (!(currentUser && (leader || currentUser.id === playerId))) return;
-    const payload = field === "overallPower" ? { overallPower: Number.parseFloat(value) || 0 } : field === "squadPowers" ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } } : leader ? { [field]: value } : null;
+    const payload = field === "overallPower"
+      ? { overallPower: Number.parseFloat(value) || 0 }
+      : field === "heroPower"
+        ? { heroPower: Number.parseFloat(value) || 0 }
+        : field === "squadPowers"
+          ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
+          : leader ? { [field]: value } : null;
     if (!payload) return;
     run(async () => { await updateMember(session.backendUrl, session.token, playerId, payload); await refresh(); });
   }
@@ -1380,6 +1441,8 @@ export default function App() {
     if (!currentUser) return;
     const payload = field === "overallPower"
       ? { overallPower: Number.parseFloat(value) || 0 }
+      : field === "heroPower"
+        ? { heroPower: Number.parseFloat(value) || 0 }
       : field === "desertStormVoteNotificationsEnabled"
         ? { desertStormVoteNotificationsEnabled: Boolean(value) }
         : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
@@ -1394,6 +1457,124 @@ export default function App() {
     await updateMember(session.backendUrl, session.token, currentUser.id, { desertStormVoteNotificationsEnabled: Boolean(enabled) });
     await refresh();
   });
+
+  async function ensureReminderNotificationPermission({ requestPermission = false } = {}) {
+    let permission = await Notifications.getPermissionsAsync();
+    let status = permission.status || "undetermined";
+    if (status !== "granted" && requestPermission) {
+      permission = await Notifications.requestPermissionsAsync();
+      status = permission.status || "undetermined";
+    }
+    return status === "granted";
+  }
+
+  async function scheduleReminderNotification(reminder) {
+    if (!reminder?.scheduledForUtc) {
+      throw new Error("Reminder is missing a scheduled time.");
+    }
+    const fireDate = new Date(reminder.scheduledForUtc);
+    if (Number.isNaN(fireDate.getTime()) || fireDate.getTime() <= Date.now()) {
+      throw new Error("Reminder time must be in the future.");
+    }
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: reminder.title || "Reminder",
+        body: reminder.notes || "Your reminder is ready.",
+        data: {
+          type: "reminder",
+          reminderId: reminder.id
+        }
+      },
+      trigger: fireDate
+    });
+  }
+
+  async function cancelReminderNotification(notificationId) {
+    if (!notificationId) {
+      return;
+    }
+    try {
+      await Notifications.cancelScheduledNotificationAsync(notificationId);
+    } catch {
+      // Swallow device-specific notification cancellation failures.
+    }
+  }
+
+  async function handleCreateReminder(draft) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      const schedule = buildReminderSchedule({
+        mode: draft.mode,
+        title: draft.title,
+        notes: draft.notes,
+        durationDays: draft.durationDays,
+        durationHours: draft.durationHours,
+        durationMinutes: draft.durationMinutes,
+        dateKey: draft.dateKey,
+        timeValue: draft.timeValue,
+        localTimeZone: getReminderDeviceTimeZone()
+      });
+      const scheduledAt = new Date(schedule.scheduledForUtc).getTime();
+      if (Number.isNaN(scheduledAt) || scheduledAt <= Date.now()) {
+        throw new Error("Reminder time must be in the future.");
+      }
+      const permissionGranted = await ensureReminderNotificationPermission({ requestPermission: true });
+      if (!permissionGranted) {
+        throw new Error("Enable notifications on this device to create reminders.");
+      }
+      const created = await createReminderRequest(session.backendUrl, session.token, schedule);
+      try {
+        const notificationId = await scheduleReminderNotification(created);
+        await updateReminderRequest(session.backendUrl, session.token, created.id, { notificationId });
+      } catch (error) {
+        await deleteReminderRequest(session.backendUrl, session.token, created.id).catch(() => {});
+        throw error;
+      }
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelReminder(reminder) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      await cancelReminderNotification(reminder?.notificationId);
+      await updateReminderRequest(session.backendUrl, session.token, reminder.id, {
+        status: "cancelled",
+        notificationId: ""
+      });
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteReminder(reminder) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      await cancelReminderNotification(reminder?.notificationId);
+      await deleteReminderRequest(session.backendUrl, session.token, reminder.id);
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function validateCalendarForm() {
     const calendarT = getCalendarTranslator(language);
@@ -1578,7 +1759,7 @@ export default function App() {
             {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text></Pressable>)}
           </ScrollView>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor="#1f5c4d" colors={["#1f5c4d"]} />}>
-            {activeTab === "myInfo" ? <MyInfoView currentUser={currentUser} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+            {activeTab === "myInfo" ? <MyInfoViewV2 currentUser={currentUser} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
               const enabled = await syncPushNotifications({ requestPermission: true });
               if (!enabled) {
                 Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
@@ -1592,7 +1773,7 @@ export default function App() {
               setPlayerPickerMode("voted");
               setSearchText("");
             }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
-            {activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
+            {activeTab === "players" && leader ? <MembersViewV2 players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
             {activeTab === "calendar" ? <EnhancedCalendarView entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
               setNewCalendarEntryType(value);
               if (value === "linked_desert_storm") {
@@ -1608,6 +1789,7 @@ export default function App() {
                 setNewCalendarLinkedEventId("");
               }
             }} onChangeNewCalendarRepeat={setNewCalendarRepeat} onChangeNewCalendarRepeatEndDate={setNewCalendarRepeatEndDate} onToggleNewCalendarRepeatWeekday={(code) => setNewCalendarRepeatWeekdays((current) => toggleWeekdaySelection(current, code))} onChangeNewCalendarLinkedEventId={setNewCalendarLinkedEventId} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={handleSubmitCalendarEntry} onCancelEdit={resetCalendarForm} onEditEntry={beginCalendarEntryEdit} onDeleteEntry={(entryId) => run(async () => { if (editingCalendarEntryId === entryId) { resetCalendarForm(); } await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} onOpenLinkedEntry={openLinkedCalendarEntry} /> : null}
+            {activeTab === "reminders" ? <RemindersView reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} /> : null}
             {activeTab === "zombieSiege" ? <ZombieSiegeView events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
             {activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} /> : null}
             {activeTab === "feedback" ? <FeedbackView feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} t={t} /> : null}
@@ -1690,6 +1872,7 @@ function MyInfoView({ currentUser, desertStormAssignment, desertStormVoteStatus,
   const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
   const desertStormNotificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
   const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
+  const [draftHeroPower, setDraftHeroPower] = useState(String(currentUser?.heroPower ?? 0));
   const [draftSquadPowers, setDraftSquadPowers] = useState({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
   const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
 
@@ -1698,10 +1881,167 @@ function MyInfoView({ currentUser, desertStormAssignment, desertStormVoteStatus,
   }, [currentUser?.overallPower]);
 
   useEffect(() => {
+    setDraftHeroPower(String(currentUser?.heroPower ?? 0));
+  }, [currentUser?.heroPower]);
+
+  useEffect(() => {
     setDraftSquadPowers({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
   }, [s.squad1, s.squad2, s.squad3, s.squad4]);
 
   return <View style={styles.profileCard}><View style={styles.profileHeader}><View><Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text><Text style={styles.cardTitle}>{currentUser?.name}</Text><Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text></View><View style={styles.rankBadge}><Text style={styles.rankBadgeText}>{currentUser?.rank}</Text></View></View><View style={styles.metricGrid}><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalBasePower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalSquadPower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text></View></View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Desert Storm vote alerts</Text><Text style={styles.statusLine}>{!desertStormNotificationsEnabled ? "Disabled. You will not get Desert Storm vote-open push notifications." : currentUser?.hasExpoPushToken ? "Enabled on this device." : "Enabled. Finish notification setup on this device to receive alerts."}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, desertStormNotificationsEnabled && styles.disabledButton]} disabled={desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(true)}><Text style={styles.buttonText}>Enable</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, !desertStormNotificationsEnabled && styles.disabled]} disabled={!desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(false)}><Text style={styles.secondaryButtonText}>Disable</Text></Pressable></View></View>{showPushNotificationsPrompt ? <View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Enable Desert Storm alerts</Text><Text style={styles.statusLine}>Turn on push notifications to get a heads-up when the Desert Storm vote goes live.</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, notificationSetupInFlight && styles.disabledButton]} disabled={notificationSetupInFlight} onPress={onEnablePushNotifications}><Text style={styles.buttonText}>{notificationSetupInFlight ? "Enabling..." : "Enable"}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={onDismissPushNotificationsPrompt}><Text style={styles.secondaryButtonText}>Later</Text></Pressable></View></View> : null}<Pressable disabled={!onOpenDesertStormVote} onPress={() => onOpenDesertStormVote && onOpenDesertStormVote()} style={[styles.statusCard, desertStormVoteStatus === "needed" ? styles.statusCardInactive : desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text><Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>{desertStormVoteStatus === "needed" ? <Text style={styles.statusLine}>Response needed</Text> : null}{desertStormVoteStatus === "submitted" ? <Text style={styles.statusLine}>Vote submitted</Text> : null}{desertStormAssignment ? <><Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text><Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text><Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text></> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}{onOpenDesertStormVote ? <Text style={styles.selectedPlayerHint}>Tap to open the Desert Storm vote</Text> : null}</Pressable><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Key Things Today</Text><Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today's schedule` : "Nothing scheduled for today"}</Text>{todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}><Text style={styles.todayItemTitle}>{entry.title}</Text>{entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}</View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}</View><View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>Zombie Siege</Text><Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>{activeZombieSiegeEvent ? <><Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text><Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>{activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}</> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text><Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>{appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("basePowerSection")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text><TextInput value={draftSquadPowers.squad1} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad1: v }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text><TextInput value={draftSquadPowers.squad2} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad2: v }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" /></View></View><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text><TextInput value={draftSquadPowers.squad3} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad3: v }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text><TextInput value={draftSquadPowers.squad4} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad4: v }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" /></View></View></View></View>;
+}
+function MyInfoViewV2({ currentUser, desertStormAssignment, desertStormVoteStatus, todayCalendarEntries, currentZombieSiegeEvent, currentZombieSiegeAssignment, onChangeField, onOpenDesertStormVote, showPushNotificationsPrompt, notificationSetupInFlight, onSetDesertStormVoteNotificationsEnabled, onEnablePushNotifications, onDismissPushNotificationsPrompt, t }) {
+  const squadPowers = currentUser?.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
+  const appearances = currentUser?.desertStormAppearances || [];
+  const activeZombieSiegeEvent = currentZombieSiegeEvent?.status === "archived" ? null : currentZombieSiegeEvent;
+  const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
+  const desertStormNotificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
+  const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
+  const [draftHeroPower, setDraftHeroPower] = useState(String(currentUser?.heroPower ?? 0));
+  const [draftSquadPowers, setDraftSquadPowers] = useState({
+    squad1: String(squadPowers.squad1),
+    squad2: String(squadPowers.squad2),
+    squad3: String(squadPowers.squad3),
+    squad4: String(squadPowers.squad4)
+  });
+  const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
+
+  useEffect(() => {
+    setDraftOverallPower(String(currentUser?.overallPower ?? 0));
+  }, [currentUser?.overallPower]);
+
+  useEffect(() => {
+    setDraftHeroPower(String(currentUser?.heroPower ?? 0));
+  }, [currentUser?.heroPower]);
+
+  useEffect(() => {
+    setDraftSquadPowers({
+      squad1: String(squadPowers.squad1),
+      squad2: String(squadPowers.squad2),
+      squad3: String(squadPowers.squad3),
+      squad4: String(squadPowers.squad4)
+    });
+  }, [squadPowers.squad1, squadPowers.squad2, squadPowers.squad3, squadPowers.squad4]);
+
+  return <View style={styles.profileCard}>
+    <View style={styles.profileHeader}>
+      <View>
+        <Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text>
+        <Text style={styles.cardTitle}>{currentUser?.name}</Text>
+        <Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text>
+      </View>
+      <View style={styles.rankBadge}>
+        <Text style={styles.rankBadgeText}>{currentUser?.rank}</Text>
+      </View>
+    </View>
+    <View style={styles.metricGrid}>
+      <View style={styles.metricPanel}>
+        <Text style={styles.metricLabel}>{t("totalBasePower")}</Text>
+        <Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text>
+      </View>
+      <View style={styles.metricPanel}>
+        <Text style={styles.metricLabel}>{t("heroPower")}</Text>
+        <Text style={styles.metricPanelValue}>{Number(currentUser?.heroPower || 0).toFixed(2)}M</Text>
+      </View>
+    </View>
+    <View style={styles.metricGrid}>
+      <View style={styles.metricPanel}>
+        <Text style={styles.metricLabel}>{t("totalSquadPower")}</Text>
+        <Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text>
+      </View>
+    </View>
+    <View style={styles.statusCard}>
+      <Text style={styles.statusEyebrow}>Push Notifications</Text>
+      <Text style={styles.statusTitle}>Desert Storm vote alerts</Text>
+      <Text style={styles.statusLine}>{!desertStormNotificationsEnabled ? "Disabled. You will not get Desert Storm vote-open push notifications." : currentUser?.hasExpoPushToken ? "Enabled on this device." : "Enabled. Finish notification setup on this device to receive alerts."}</Text>
+      <View style={styles.row}>
+        <Pressable style={[styles.button, styles.half, desertStormNotificationsEnabled && styles.disabledButton]} disabled={desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(true)}>
+          <Text style={styles.buttonText}>Enable</Text>
+        </Pressable>
+        <Pressable style={[styles.secondaryButton, styles.half, !desertStormNotificationsEnabled && styles.disabled]} disabled={!desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(false)}>
+          <Text style={styles.secondaryButtonText}>Disable</Text>
+        </Pressable>
+      </View>
+    </View>
+    {showPushNotificationsPrompt ? <View style={styles.statusCard}>
+      <Text style={styles.statusEyebrow}>Push Notifications</Text>
+      <Text style={styles.statusTitle}>Enable Desert Storm alerts</Text>
+      <Text style={styles.statusLine}>Turn on push notifications to get a heads-up when the Desert Storm vote goes live.</Text>
+      <View style={styles.row}>
+        <Pressable style={[styles.button, styles.half, notificationSetupInFlight && styles.disabledButton]} disabled={notificationSetupInFlight} onPress={onEnablePushNotifications}>
+          <Text style={styles.buttonText}>{notificationSetupInFlight ? "Enabling..." : "Enable"}</Text>
+        </Pressable>
+        <Pressable style={[styles.secondaryButton, styles.half]} onPress={onDismissPushNotificationsPrompt}>
+          <Text style={styles.secondaryButtonText}>Later</Text>
+        </Pressable>
+      </View>
+    </View> : null}
+    <Pressable disabled={!onOpenDesertStormVote} onPress={() => onOpenDesertStormVote && onOpenDesertStormVote()} style={[styles.statusCard, desertStormVoteStatus === "needed" ? styles.statusCardInactive : desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}>
+      <Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text>
+      <Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>
+      {desertStormVoteStatus === "needed" ? <Text style={styles.statusLine}>Response needed</Text> : null}
+      {desertStormVoteStatus === "submitted" ? <Text style={styles.statusLine}>Vote submitted</Text> : null}
+      {desertStormAssignment ? <>
+        <Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text>
+        <Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text>
+        <Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text>
+      </> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}
+      {onOpenDesertStormVote ? <Text style={styles.selectedPlayerHint}>Tap to open the Desert Storm vote</Text> : null}
+    </Pressable>
+    <View style={styles.statusCard}>
+      <Text style={styles.statusEyebrow}>Key Things Today</Text>
+      <Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today's schedule` : "Nothing scheduled for today"}</Text>
+      {todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}>
+        <Text style={styles.todayItemTitle}>{entry.title}</Text>
+        {entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}
+      </View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}
+    </View>
+    <View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}>
+      <Text style={styles.statusEyebrow}>Zombie Siege</Text>
+      <Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>
+      {activeZombieSiegeEvent ? <>
+        <Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text>
+        <Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>
+        {activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}
+      </> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}
+    </View>
+    <View style={styles.statusCard}>
+      <Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text>
+      <Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>
+      {appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}
+    </View>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{t("basePowerSection")}</Text>
+      <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
+      <TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" />
+      <Text style={styles.sectionTitle}>{t("heroPower")}</Text>
+      <TextInput value={draftHeroPower} onChangeText={setDraftHeroPower} onEndEditing={() => onChangeField("heroPower", draftHeroPower)} onBlur={() => onChangeField("heroPower", draftHeroPower)} style={styles.input} keyboardType="decimal-pad" />
+    </View>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text>
+      <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
+      <View style={styles.row}>
+        <View style={styles.squadCard}>
+          <Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text>
+          <TextInput value={draftSquadPowers.squad1} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad1: value }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" />
+        </View>
+        <View style={styles.squadCard}>
+          <Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text>
+          <TextInput value={draftSquadPowers.squad2} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad2: value }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" />
+        </View>
+      </View>
+      <View style={styles.row}>
+        <View style={styles.squadCard}>
+          <Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text>
+          <TextInput value={draftSquadPowers.squad3} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad3: value }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" />
+        </View>
+        <View style={styles.squadCard}>
+          <Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text>
+          <TextInput value={draftSquadPowers.squad4} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad4: value }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" />
+        </View>
+      </View>
+    </View>
+  </View>;
 }
 function TaskForceView({ taskForce, currentUser, currentUserIsLeader, canEdit = false, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer }) {
   return <View style={styles.card}>
@@ -2139,6 +2479,275 @@ function MembersView({ players, memberSearchText, memberSortMode, memberRankFilt
     {!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}
   </View>;
 }
+function MembersViewV2({ players, memberSearchText, memberSortMode, memberRankFilter, onChangeMemberSearchText, onChangeMemberSortMode, onChangeMemberRankFilter, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) {
+  const [drafts, setDrafts] = useState({});
+  const [expandedMemberId, setExpandedMemberId] = useState("");
+  const [editingMemberIds, setEditingMemberIds] = useState({});
+
+  useEffect(() => {
+    setDrafts(Object.fromEntries(players.map((player) => [player.id, {
+      name: player.name,
+      rank: player.rank,
+      overallPower: String(player.overallPower ?? 0),
+      heroPower: String(player.heroPower ?? 0),
+      squad1: String(player.squadPowers?.squad1 ?? 0),
+      squad2: String(player.squadPowers?.squad2 ?? 0),
+      squad3: String(player.squadPowers?.squad3 ?? 0),
+      squad4: String(player.squadPowers?.squad4 ?? 0)
+    }])));
+  }, [players]);
+
+  useEffect(() => {
+    if (expandedMemberId && !players.some((player) => player.id === expandedMemberId)) {
+      setExpandedMemberId("");
+    }
+  }, [expandedMemberId, players]);
+
+  useEffect(() => {
+    setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => players.some((player) => player.id === playerId))));
+  }, [players]);
+
+  function handleRemoveMember(player) {
+    Alert.alert("Remove Member", `Are you sure you want to remove ${player.name} from the alliance?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
+    ]);
+  }
+
+  return <View style={styles.card}>
+    <Text style={styles.cardTitle}>Members</Text>
+    <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />
+    <View style={styles.row}>
+      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "rankDesc" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.secondaryButtonText, memberSortMode === "rankDesc" && styles.modeButtonTextActive]}>Sort By Rank</Text></Pressable>
+      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "name" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.secondaryButtonText, memberSortMode === "name" && styles.modeButtonTextActive]}>Sort By Name</Text></Pressable>
+    </View>
+    <View style={styles.rankFilterRow}>
+      <Pressable style={[styles.rankFilterButton, memberRankFilter === "all" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter("all")}><Text style={[styles.rankFilterButtonText, memberRankFilter === "all" && styles.rankFilterButtonTextActive]}>All</Text></Pressable>
+      {["R5", "R4", "R3", "R2", "R1"].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank}</Text></Pressable>)}
+    </View>
+    {players.map((player) => {
+      const isEditing = Boolean(editingMemberIds[player.id]);
+      const canEdit = currentUserIsLeader && isEditing;
+      const squadPowers = player.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
+      const stats = player.desertStormStats || { playedCount: 0, missedCount: 0 };
+      const draft = drafts[player.id] || {
+        name: player.name,
+        rank: player.rank,
+        overallPower: String(player.overallPower ?? 0),
+        heroPower: String(player.heroPower ?? 0),
+        squad1: String(squadPowers.squad1),
+        squad2: String(squadPowers.squad2),
+        squad3: String(squadPowers.squad3),
+        squad4: String(squadPowers.squad4)
+      };
+      const expanded = expandedMemberId === player.id;
+
+      return <View key={player.id} style={styles.memberCard}>
+        <Pressable style={styles.memberCardSummary} onPress={() => setExpandedMemberId((current) => current === player.id ? "" : player.id)}>
+          <View style={styles.memberSummaryText}>
+            <Text style={styles.memberNameCompact}>{player.name}</Text>
+            <Text style={styles.memberSubline}>{player.rank}</Text>
+          </View>
+          <View style={styles.memberSummaryRight}>
+            <View style={styles.memberRankChip}><Text style={styles.memberRankChipText}>{player.rank}</Text></View>
+            <Text style={styles.memberExpandIcon}>{expanded ? "−" : "+"}</Text>
+          </View>
+        </Pressable>
+        {expanded ? <>
+          <View style={styles.memberStatGrid}>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Base Power</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Hero Power</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
+          </View>
+          <View style={styles.memberStatGrid}>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Squad Power</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Played</Text><Text style={styles.memberStatValue}>{stats.playedCount}</Text></View>
+          </View>
+          <View style={styles.memberStatGrid}>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Missed</Text><Text style={styles.memberStatValue}>{stats.missedCount}</Text></View>
+          </View>
+          {currentUserIsLeader ? <View style={styles.row}>
+            <Pressable style={[styles.secondaryButton, styles.half, isEditing && styles.modeButtonActive]} onPress={() => setEditingMemberIds((current) => ({ ...current, [player.id]: !current[player.id] }))}>
+              <Text style={[styles.secondaryButtonText, isEditing && styles.modeButtonTextActive]}>{isEditing ? "Done Editing" : "Edit"}</Text>
+            </Pressable>
+            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemoveMember(player)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
+          </View> : null}
+          <View style={styles.section}>
+            <Text style={styles.memberSectionLabel}>Player Info</Text>
+            <TextInput value={draft.name} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: value } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} />
+          </View>
+          <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
+          <View style={styles.row}>
+            <RankSelector value={draft.rank} onChange={(rank) => {
+              setDrafts((current) => ({ ...current, [player.id]: { ...draft, rank } }));
+              onChangeField(player.id, "rank", rank);
+            }} disabled={!canEdit} style={styles.half} />
+            <TextInput value={draft.overallPower} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, overallPower: value } }))} onEndEditing={() => onChangeField(player.id, "overallPower", draft.overallPower)} onBlur={() => onChangeField(player.id, "overallPower", draft.overallPower)} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
+          </View>
+          <TextInput value={draft.heroPower} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, heroPower: value } }))} onEndEditing={() => onChangeField(player.id, "heroPower", draft.heroPower)} onBlur={() => onChangeField(player.id, "heroPower", draft.heroPower)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} keyboardType="decimal-pad" placeholder="Hero Power" />
+          <View style={styles.memberSection}>
+            <Text style={styles.memberSectionLabel}>Squad Powers</Text>
+            <View style={styles.row}>
+              <TextInput value={draft.squad1} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad1: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
+              <TextInput value={draft.squad2} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad2: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
+            </View>
+            <View style={styles.row}>
+              <TextInput value={draft.squad3} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad3: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
+              <TextInput value={draft.squad4} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad4: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
+            </View>
+          </View>
+        </> : null}
+      </View>;
+    })}
+    {!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}
+  </View>;
+}
+function RemindersView({ reminders, language, onCreateReminder, onCancelReminder, onDeleteReminder }) {
+  const localTimeZone = getReminderDeviceTimeZone();
+  const serverTimeZone = getReminderServerTimeZone();
+  const serverTimeLabel = getReminderServerTimeLabel();
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [mode, setMode] = useState("elapsed");
+  const [durationDays, setDurationDays] = useState("0");
+  const [durationHours, setDurationHours] = useState("1");
+  const [durationMinutes, setDurationMinutes] = useState("0");
+  const [dateKey, setDateKey] = useState(formatReminderDateKey(new Date()));
+  const [timeValue, setTimeValue] = useState("09:00");
+  const [datePickerTarget, setDatePickerTarget] = useState("");
+  const [timePickerTarget, setTimePickerTarget] = useState("");
+  const [error, setError] = useState("");
+  const activeReminders = reminders.filter((entry) => entry.status === "active");
+  const pastReminders = reminders.filter((entry) => entry.status !== "active");
+  const preview = useMemo(() => {
+    if ((mode === "localTime" || mode === "serverTime") && (!dateKey || !parseReminderTimeValue(timeValue))) {
+      return null;
+    }
+    return buildReminderSchedule({
+      mode,
+      title,
+      notes,
+      durationDays,
+      durationHours,
+      durationMinutes,
+      dateKey,
+      timeValue,
+      localTimeZone
+    });
+  }, [mode, title, notes, durationDays, durationHours, durationMinutes, dateKey, timeValue, localTimeZone]);
+
+  function resetForm() {
+    setTitle("");
+    setNotes("");
+    setMode("elapsed");
+    setDurationDays("0");
+    setDurationHours("1");
+    setDurationMinutes("0");
+    setDateKey(formatReminderDateKey(new Date()));
+    setTimeValue("09:00");
+    setDatePickerTarget("");
+    setTimePickerTarget("");
+    setError("");
+  }
+
+  async function handleCreate() {
+    if (mode === "elapsed") {
+      const totalMinutes = (Number.parseInt(durationDays, 10) || 0) * 24 * 60 + (Number.parseInt(durationHours, 10) || 0) * 60 + (Number.parseInt(durationMinutes, 10) || 0);
+      if (totalMinutes <= 0) {
+        setError("Choose a future duration.");
+        return;
+      }
+    } else {
+      if (!dateKey) {
+        setError("Choose a date before saving.");
+        return;
+      }
+      if (!parseReminderTimeValue(timeValue)) {
+        setError("Choose a time before saving.");
+        return;
+      }
+    }
+    if (!preview?.scheduledForUtc || new Date(preview.scheduledForUtc).getTime() <= Date.now()) {
+      setError("Reminder time must be in the future.");
+      return;
+    }
+    setError("");
+    const created = await onCreateReminder({
+      title,
+      notes,
+      mode,
+      durationDays,
+      durationHours,
+      durationMinutes,
+      dateKey,
+      timeValue
+    });
+    if (created) {
+      resetForm();
+    }
+  }
+
+  function renderReminderCard(reminder, showCancel) {
+    return <View key={reminder.id} style={styles.statusCard}>
+      <Text style={styles.statusEyebrow}>{reminder.mode === "elapsed" ? "After a duration" : reminder.mode === "serverTime" ? `Server Time (${serverTimeLabel})` : "My Local Time"}</Text>
+      <Text style={styles.statusTitle}>{reminder.title}</Text>
+      {reminder.notes ? <Text style={styles.statusLine}>{reminder.notes}</Text> : null}
+      <Text style={styles.statusLine}>Status: {reminder.status}</Text>
+      <Text style={styles.statusLine}>Local: {formatReminderDateTimeDisplay(reminder.scheduledForUtc, localTimeZone, language)}</Text>
+      <Text style={styles.statusLine}>Server ({serverTimeLabel}): {formatReminderDateTimeDisplay(reminder.scheduledForUtc, serverTimeZone, language)}</Text>
+      <View style={styles.row}>
+        {showCancel ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCancelReminder(reminder)}>
+          <Text style={styles.secondaryButtonText}>Cancel</Text>
+        </Pressable> : null}
+        <Pressable style={[showCancel ? styles.dangerButton : styles.secondaryButton, styles.half]} onPress={() => onDeleteReminder(reminder)}>
+          <Text style={showCancel ? styles.dangerButtonText : styles.secondaryButtonText}>Delete</Text>
+        </Pressable>
+      </View>
+    </View>;
+  }
+
+  return <View style={styles.card}>
+    <Text style={styles.cardTitle}>Reminders</Text>
+    <Text style={styles.hint}>Each reminder is personal to your account and fires on this device.</Text>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>New Reminder</Text>
+      <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder="Reminder title" />
+      <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.textArea]} placeholder="Optional notes" multiline />
+      <View style={styles.rankFilterRow}>
+        <Pressable style={[styles.rankFilterButton, mode === "elapsed" && styles.rankFilterButtonActive]} onPress={() => setMode("elapsed")}><Text style={[styles.rankFilterButtonText, mode === "elapsed" && styles.rankFilterButtonTextActive]}>After a duration</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, mode === "localTime" && styles.rankFilterButtonActive]} onPress={() => setMode("localTime")}><Text style={[styles.rankFilterButtonText, mode === "localTime" && styles.rankFilterButtonTextActive]}>At local time</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, mode === "serverTime" && styles.rankFilterButtonActive]} onPress={() => setMode("serverTime")}><Text style={[styles.rankFilterButtonText, mode === "serverTime" && styles.rankFilterButtonTextActive]}>At server time</Text></Pressable>
+      </View>
+      {mode === "elapsed" ? <View style={styles.row}>
+        <TextInput value={durationDays} onChangeText={setDurationDays} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Days" />
+        <TextInput value={durationHours} onChangeText={setDurationHours} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Hours" />
+        <TextInput value={durationMinutes} onChangeText={setDurationMinutes} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Minutes" />
+      </View> : <>
+        <Text style={styles.hint}>{mode === "serverTime" ? `Server time is ${serverTimeLabel}.` : `Using your local time zone (${localTimeZone}).`}</Text>
+        <View style={styles.row}>
+          <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setDatePickerTarget("reminderDate")}><Text style={styles.secondaryButtonText}>Date: {dateKey}</Text></Pressable>
+          <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setTimePickerTarget("reminderTime")}><Text style={styles.secondaryButtonText}>Time: {timeValue}</Text></Pressable>
+        </View>
+      </>}
+      {preview ? <View style={styles.statusCard}>
+        <Text style={styles.statusEyebrow}>Preview</Text>
+        <Text style={styles.statusLine}>Server ({serverTimeLabel}): {formatReminderDateTimeDisplay(preview.scheduledForUtc, serverTimeZone, language)}</Text>
+        <Text style={styles.statusLine}>Local: {formatReminderDateTimeDisplay(preview.scheduledForUtc, localTimeZone, language)}</Text>
+      </View> : null}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Pressable style={styles.button} onPress={handleCreate}><Text style={styles.buttonText}>Create Reminder</Text></Pressable>
+    </View>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Active Reminders</Text>
+      {activeReminders.length ? activeReminders.map((reminder) => renderReminderCard(reminder, true)) : <Text style={styles.hint}>No active reminders yet.</Text>}
+    </View>
+    {pastReminders.length ? <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Past Reminders</Text>
+      {pastReminders.map((reminder) => renderReminderCard(reminder, false))}
+    </View> : null}
+    <CalendarDatePickerModal visible={datePickerTarget === "reminderDate"} title="Select Reminder Date" value={dateKey} onChange={setDateKey} onClose={() => setDatePickerTarget("")} language={language} />
+    <CalendarTimePickerModal visible={timePickerTarget === "reminderTime"} title="Select Reminder Time" value={timeValue} onChange={setTimeValue} onClose={() => setTimePickerTarget("")} language={language} />
+  </View>;
+}
 function DesertStormHistoryView({ layouts, currentUserIsLeader, onUpdateResult }) {
   const [selectedLayoutId, setSelectedLayoutId] = useState("");
   const selectedLayout = layouts.find((layout) => layout.id === selectedLayoutId) || null;
@@ -2543,6 +3152,7 @@ const styles = StyleSheet.create({
   rankOptionText: { color: "#243025", fontWeight: "600" },
   rankOptionTextActive: { color: "#17352b" },
   half: { flex: 1 },
+  third: { flex: 1 },
   tabs: { flexGrow: 0, minHeight: 52 },
   tab: { backgroundColor: "#f5ead8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: "#ccb99a", shadowColor: "#3d3124", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   tabActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" },

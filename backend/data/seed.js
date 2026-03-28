@@ -1,5 +1,5 @@
-function makePlayer(name, rank, overallPower) {
-  return { name, rank, overallPower };
+function makePlayer(name, rank, overallPower, heroPower = 0) {
+  return { name, rank, overallPower, heroPower };
 }
 
 function makeSlot(id, label, memberType, playerName) {

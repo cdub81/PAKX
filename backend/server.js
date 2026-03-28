@@ -303,8 +303,28 @@ async function handleRequest(request, response) {
       sendJson(response, 201, store.addMember(context.alliance.id, {
         name: body.name,
         rank: body.rank || "R1",
-        overallPower: body.overallPower || 0
+        overallPower: body.overallPower || 0,
+        heroPower: body.heroPower || 0
       }));
+      return;
+    }
+
+    if (request.method === "GET" && pathname === "/api/reminders") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, { reminders: store.listRemindersForMember(context.alliance.id, context.player.id) });
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/reminders") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, store.createReminder(context.alliance.id, context.player.id, body));
       return;
     }
 
@@ -448,6 +468,9 @@ async function handleRequest(request, response) {
       }
       if (body.overallPower !== undefined) {
         updates.overallPower = body.overallPower;
+      }
+      if (body.heroPower !== undefined) {
+        updates.heroPower = body.heroPower;
       }
       if (body.squadPowers !== undefined) {
         updates.squadPowers = body.squadPowers;
@@ -716,6 +739,25 @@ async function handleRequest(request, response) {
         return;
       }
       sendJson(response, 200, store.deleteCalendarEntry(context.alliance.id, calendarEntryMatch[1]));
+      return;
+    }
+
+    const reminderMatch = pathname.match(/^\/api\/reminders\/([^/]+)$/);
+    if (reminderMatch && request.method === "PATCH") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 200, store.updateReminder(context.alliance.id, context.player.id, reminderMatch[1], body));
+      return;
+    }
+    if (reminderMatch && request.method === "DELETE") {
+      const context = requireAllianceMember(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.deleteReminder(context.alliance.id, context.player.id, reminderMatch[1]));
       return;
     }
 

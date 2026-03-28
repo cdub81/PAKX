@@ -384,6 +384,45 @@ export function deleteCalendarEntry(baseUrl, token, entryId) {
   });
 }
 
+export function getReminders(baseUrl, token) {
+  return request(baseUrl, "/api/reminders", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function createReminder(baseUrl, token, payload) {
+  return request(baseUrl, "/api/reminders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateReminder(baseUrl, token, reminderId, payload) {
+  return request(baseUrl, `/api/reminders/${encodeURIComponent(reminderId)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteReminder(baseUrl, token, reminderId) {
+  return request(baseUrl, `/api/reminders/${encodeURIComponent(reminderId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function getZombieSiegeEvents(baseUrl, token) {
   return request(baseUrl, "/api/zombie-siege/events", {
     headers: {
