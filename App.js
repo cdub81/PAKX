@@ -1807,75 +1807,30 @@ function DesertStormHistoryView({ layouts, currentUserIsLeader, onUpdateResult }
   if (!selectedLayout) {
     return <View style={styles.card}><Text style={styles.cardTitle}>Desert Storm History</Text><Text style={styles.hint}>Tap a locked date to open that saved setup.</Text>{layouts.map((layout) => <Pressable key={layout.id} style={styles.voteCard} onPress={() => setSelectedLayoutId(layout.id)}><Text style={styles.sectionTitle}>{layout.lockedInAt.slice(0, 10)}</Text><Text style={styles.hint}>{layout.title}</Text><Text style={styles.hint}>Locked by {layout.lockedByName || "Leader"} • {layout.result}</Text></Pressable>)}</View>;
   }
-    if (recurrence.repeat === "every_other_day") return "Repeats every other day";
-    if (recurrence.repeat === "weekly") return "Repeats weekly";
-    if (recurrence.repeat === "custom_weekdays") return `Repeats ${recurrence.weekdays.map((code) => CALENDAR_WEEKDAY_OPTIONS.find((option) => option.code === code)?.label).filter(Boolean).join(", ")}`;
-    return "";
-  }
-
-  const linkEventOptions = newCalendarEntryType === "linked_desert_storm" ? availableDesertStormEvents : newCalendarEntryType === "linked_zombie_siege" ? availableZombieSiegeEvents : [];
-
   return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Alliance Calendar</Text>
-    <Text style={styles.hint}>Tap a day to see what is scheduled and what needs attention.</Text>
-    <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "today" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("today")}><Text style={[styles.secondaryButtonText, calendarView === "today" && styles.modeButtonTextActive]}>Today</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "week" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("week")}><Text style={[styles.secondaryButtonText, calendarView === "week" && styles.modeButtonTextActive]}>Week</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "month" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("month")}><Text style={[styles.secondaryButtonText, calendarView === "month" && styles.modeButtonTextActive]}>Month</Text></Pressable>
-    </View>
-    {calendarView === "month" ? <View style={styles.calendarMonthShell}>
-      <View style={styles.calendarMonthHeader}>
-        <Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(-1)}><Text style={styles.calendarMonthArrowText}>{"<"}</Text></Pressable>
-        <Text style={styles.calendarMonthTitle}>{monthLabel}</Text>
-        <Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(1)}><Text style={styles.calendarMonthArrowText}>{">"}</Text></Pressable>
-      </View>
-      <View style={styles.calendarWeekdayRow}>
-        {CALENDAR_WEEKDAY_OPTIONS.map((option) => <Text key={option.code} style={styles.calendarWeekday}>{option.label}</Text>)}
-      </View>
-      <View style={styles.calendarGrid}>
-        {monthDays.map((day) => renderDayButton(day))}
-      </View>
+    <Text style={styles.cardTitle}>Desert Storm History</Text>
+    <Text style={styles.hint}>{selectedLayout.title}</Text>
+    <Text style={styles.hint}>Locked on {selectedLayout.lockedInAt.slice(0, 10)} by {selectedLayout.lockedByName || "Leader"}</Text>
+    <Text style={styles.line}>Result: {getDesertStormStatusLabel(selectedLayout.result || "pending")}</Text>
+    {selectedLayout.notes ? <Text style={styles.line}>Notes: {selectedLayout.notes}</Text> : null}
+    <Pressable style={styles.secondaryButton} onPress={() => setSelectedLayoutId("")}>
+      <Text style={styles.secondaryButtonText}>Back to History</Text>
+    </Pressable>
+    {Object.values(selectedLayout.taskForces || {}).map((taskForce) => <View key={taskForce.key || taskForce.label} style={styles.section}>
+      <Text style={styles.sectionTitle}>{taskForce.label || "Task Force"}</Text>
+      {(taskForce.squads || []).map((squad) => <View key={squad.id || squad.label} style={styles.voteCard}>
+        <Text style={styles.line}>{squad.label}</Text>
+        {(squad.slots || []).map((slot) => <Text key={slot.id || slot.label} style={styles.hint}>{slot.label}: {slot.playerName || "Open"}</Text>)}
+      </View>)}
+    </View>)}
+    {currentUserIsLeader ? <View style={styles.row}>
+      <Pressable style={[styles.secondaryButton, styles.half, selectedLayout.result === "pending" && styles.modeButtonActive]} onPress={() => handleResultPress(selectedLayout, "pending")}><Text style={[styles.secondaryButtonText, selectedLayout.result === "pending" && styles.modeButtonTextActive]}>Pending</Text></Pressable>
+      <Pressable style={[styles.button, styles.half]} onPress={() => handleResultPress(selectedLayout, "win")}><Text style={styles.buttonText}>Win</Text></Pressable>
+      <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleResultPress(selectedLayout, "loss")}><Text style={styles.dangerButtonText}>Loss</Text></Pressable>
     </View> : null}
-    {calendarView === "week" ? <View style={styles.calendarStrip}>{weekDays.map((day) => renderDayButton(day, true))}</View> : null}
-    {calendarView === "today" ? <View style={styles.calendarStrip}>{renderDayButton(today, true)}</View> : null}
-    <View style={styles.calendarDetailCard}>
-      <View style={styles.calendarDetailHeader}>
-        <View style={styles.memberHeaderText}>
-          <Text style={styles.sectionTitle}>{selectedDateLabel}</Text>
-          <Text style={styles.hint}>{selectedEntries.length ? `${selectedEntries.length} event${selectedEntries.length === 1 ? "" : "s"} scheduled` : "No events scheduled"}</Text>
-        </View>
-        <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>Selected Day</Text>
-          <Text style={styles.memberStatValue}>{selectedDateShortLabel}</Text>
-        </View>
-      </View>
-      {selectedEntries.length ? selectedEntries.map((entry) => <Pressable key={entry.occurrenceId || entry.id} style={styles.voteCard} disabled={!entry.linkedType} onPress={() => entry.linkedType && onOpenLinkedEntry(entry)}>
-        <View style={styles.memberCardHeader}>
-          <View style={styles.memberHeaderText}>
-            <Text style={styles.sectionTitle}>{entry.title}</Text>
-            <Text style={styles.hint}>{entry.displayTime || "All day"}{entry.leaderOnly ? " • Leader Only" : ""}</Text>
-          </View>
-          {currentUserIsLeader ? <View style={styles.memberCardActions}><Pressable style={styles.secondaryButton} onPress={() => onEditEntry(entry)}><Text style={styles.secondaryButtonText}>Edit</Text></Pressable><Pressable style={styles.dangerButton} onPress={() => onDeleteEntry(entry.sourceEntryId || entry.id)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable></View> : null}
-        </View>
-        {entry.description ? <Text style={styles.line}>{entry.description}</Text> : null}
-        {getRepeatLabel(entry) ? <Text style={styles.hint}>{getRepeatLabel(entry)}</Text> : null}
-        {entry.allDay === false ? <Text style={styles.hint}>Anchored to {entry.eventTimeZone || "UTC"}</Text> : null}
-        {entry.linkedType === "desertStorm" ? <Text style={styles.selectedPlayerHint}>Linked to Desert Storm</Text> : null}
-        {entry.linkedType === "zombieSiege" ? <Text style={styles.selectedPlayerHint}>Linked to Zombie Siege</Text> : null}
-        {currentUserIsLeader && entry.leaderNotes ? <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Leader Notes</Text><Text style={styles.line}>{entry.leaderNotes}</Text></View> : null}
-        <Text style={styles.hint}>Added by {entry.createdByName || "Leader"}</Text>
-      </Pressable>) : <Text style={styles.hint}>{calendarView === "today" ? "Nothing is scheduled for today." : "Tap another day to review what is planned."}</Text>}
-    </View>
-    {currentUserIsLeader ? <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{editingCalendarEntryId ? "Edit Calendar Entry" : "Add Calendar Entry"}</Text>
-      <View style={styles.rankFilterRow}>
-        {[["manual", "Manual Event"], ["reminder", "Reminder"], ["linked_desert_storm", "Link Desert Storm"], ["linked_zombie_siege", "Link Zombie Siege"]].map(([value, label]) => <Pressable key={value} style={[styles.rankFilterButton, newCalendarEntryType === value && styles.rankFilterButtonActive]} onPress={() => onChangeNewCalendarEntryType(value)}><Text style={[styles.rankFilterButtonText, newCalendarEntryType === value && styles.rankFilterButtonTextActive]}>{label}</Text></Pressable>)}
-      </View>
-      <TextInput value={newCalendarTitle} onChangeText={onChangeNewCalendarTitle} style={styles.input} placeholder="Event title" />
-      <TextInput value={newCalendarDate} onChangeText={onChangeNewCalendarDate} style={styles.input} placeholder="YYYY-MM-DD" autoCapitalize="none" />
-      <View style={styles.row}>
-        <Pressable style={[styles.secondaryButton, styles.half, newCalendarAllDay && styles.modeButtonActive]} onPress={onToggleNewCalendarAllDay}><Text style={[styles.secondaryButtonText, newCalendarAllDay && styles.modeButtonTextActive]}>{newCalendarAllDay ? "All-day entry" : "Time-specific entry"}</Text></Pressable>
-      </View>
+  </View>;
+}
+
 function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, currentUserIsLeader, calendarView, editingCalendarEntryId, onChangeCalendarView, newCalendarTitle, newCalendarDescription, newCalendarDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarEntryType, newCalendarRepeat, newCalendarRepeatEndDate, newCalendarRepeatWeekdays, newCalendarLinkedType, newCalendarLinkedEventId, newCalendarEventTimeZone, newCalendarLeaderNotes, newCalendarLeaderOnly, onChangeNewCalendarTitle, onChangeNewCalendarDescription, onChangeNewCalendarDate, onChangeNewCalendarStartTime, onChangeNewCalendarEndTime, onChangeNewCalendarEventTimeZone, onToggleNewCalendarAllDay, onChangeNewCalendarEntryType, onChangeNewCalendarRepeat, onChangeNewCalendarRepeatEndDate, onToggleNewCalendarRepeatWeekday, onChangeNewCalendarLinkedEventId, onChangeNewCalendarLeaderNotes, onToggleLeaderOnly, onCreateEntry, onCancelEdit, onEditEntry, onDeleteEntry, onOpenLinkedEntry }) {
   const today = startOfLocalDay();
   const todayKey = formatLocalDateKey(today);
