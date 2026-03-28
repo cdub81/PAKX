@@ -22,6 +22,7 @@ const APP_VERSION = Application.nativeApplicationVersion || Constants.expoConfig
 const APP_BUILD = Application.nativeBuildVersion || Constants.nativeBuildVersion || (Platform.OS === "ios" ? String(Constants.expoConfig?.ios?.buildNumber || "") : String(Constants.expoConfig?.android?.versionCode || ""));
 const RANK_OPTIONS = ["R5", "R4", "R3", "R2", "R1"];
 const POWER_INPUT_HINT = "Please enter power value in millions. Ex. 12,700,000 = 12.7";
+const REMINDER_NOTIFICATION_CHANNEL_ID = "reminders";
 const CALENDAR_TIME_INPUT_MODES = [
   { id: "server", label: `Server Time (${CALENDAR_SERVER_TIME_LABEL})` },
   { id: "local", label: "My Local Time" }
@@ -1468,6 +1469,18 @@ export default function App() {
     return status === "granted";
   }
 
+  async function ensureReminderNotificationChannel() {
+    if (Platform.OS !== "android") {
+      return;
+    }
+    await Notifications.setNotificationChannelAsync(REMINDER_NOTIFICATION_CHANNEL_ID, {
+      name: "Reminders",
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#1f5c4d"
+    });
+  }
+
   async function scheduleReminderNotification(reminder) {
     if (!reminder?.scheduledForUtc) {
       throw new Error("Reminder is missing a scheduled time.");
@@ -1476,16 +1489,24 @@ export default function App() {
     if (Number.isNaN(fireDate.getTime()) || fireDate.getTime() <= Date.now()) {
       throw new Error("Reminder time must be in the future.");
     }
+    await ensureReminderNotificationChannel();
     return Notifications.scheduleNotificationAsync({
       content: {
         title: reminder.title || "Reminder",
         body: reminder.notes || "Your reminder is ready.",
+        ...(Platform.OS === "android" ? { sound: "default" } : {}),
         data: {
           type: "reminder",
           reminderId: reminder.id
         }
       },
-      trigger: fireDate
+      trigger: Platform.OS === "android"
+        ? {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: fireDate,
+            channelId: REMINDER_NOTIFICATION_CHANNEL_ID
+          }
+        : fireDate
     });
   }
 
