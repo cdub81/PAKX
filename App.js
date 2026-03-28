@@ -2629,9 +2629,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [mode, setMode] = useState("elapsed");
-  const [durationDays, setDurationDays] = useState("0");
-  const [durationHours, setDurationHours] = useState("1");
-  const [durationMinutes, setDurationMinutes] = useState("0");
+  const [durationValue, setDurationValue] = useState("01:00");
   const [dateKey, setDateKey] = useState(formatReminderDateKey(new Date()));
   const [timeValue, setTimeValue] = useState("09:00");
   const [datePickerTarget, setDatePickerTarget] = useState("");
@@ -2647,22 +2645,20 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       mode,
       title,
       notes,
-      durationDays,
-      durationHours,
-      durationMinutes,
+      durationDays: 0,
+      durationHours: parseReminderTimeValue(durationValue)?.hours || 0,
+      durationMinutes: parseReminderTimeValue(durationValue)?.minutes || 0,
       dateKey,
       timeValue,
       localTimeZone
     });
-  }, [mode, title, notes, durationDays, durationHours, durationMinutes, dateKey, timeValue, localTimeZone]);
+  }, [mode, title, notes, durationValue, dateKey, timeValue, localTimeZone]);
 
   function resetForm() {
     setTitle("");
     setNotes("");
     setMode("elapsed");
-    setDurationDays("0");
-    setDurationHours("1");
-    setDurationMinutes("0");
+    setDurationValue("01:00");
     setDateKey(formatReminderDateKey(new Date()));
     setTimeValue("09:00");
     setDatePickerTarget("");
@@ -2672,7 +2668,8 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
 
   async function handleCreate() {
     if (mode === "elapsed") {
-      const totalMinutes = (Number.parseInt(durationDays, 10) || 0) * 24 * 60 + (Number.parseInt(durationHours, 10) || 0) * 60 + (Number.parseInt(durationMinutes, 10) || 0);
+      const parsedDuration = parseReminderTimeValue(durationValue);
+      const totalMinutes = parsedDuration ? parsedDuration.hours * 60 + parsedDuration.minutes : 0;
       if (totalMinutes <= 0) {
         setError("Choose a future duration.");
         return;
@@ -2696,9 +2693,9 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       title,
       notes,
       mode,
-      durationDays,
-      durationHours,
-      durationMinutes,
+      durationDays: "0",
+      durationHours: String(parseReminderTimeValue(durationValue)?.hours || 0),
+      durationMinutes: String(parseReminderTimeValue(durationValue)?.minutes || 0),
       dateKey,
       timeValue
     });
@@ -2739,9 +2736,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
         <Pressable style={[styles.rankFilterButton, mode === "serverTime" && styles.rankFilterButtonActive]} onPress={() => setMode("serverTime")}><Text style={[styles.rankFilterButtonText, mode === "serverTime" && styles.rankFilterButtonTextActive]}>At server time</Text></Pressable>
       </View>
       {mode === "elapsed" ? <View style={styles.row}>
-        <TextInput value={durationDays} onChangeText={setDurationDays} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Days" />
-        <TextInput value={durationHours} onChangeText={setDurationHours} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Hours" />
-        <TextInput value={durationMinutes} onChangeText={setDurationMinutes} style={[styles.input, styles.third]} keyboardType="number-pad" placeholder="Minutes" />
+        <Pressable style={styles.secondaryButton} onPress={() => setTimePickerTarget("reminderDuration")}><Text style={styles.secondaryButtonText}>Duration: {durationValue}</Text></Pressable>
       </View> : <>
         <Text style={styles.hint}>{mode === "serverTime" ? `Server time is ${serverTimeLabel}.` : `Using your local time zone (${localTimeZone}).`}</Text>
         <View style={styles.row}>
@@ -2766,6 +2761,7 @@ function RemindersView({ reminders, language, onCreateReminder, onCancelReminder
       {pastReminders.map((reminder) => renderReminderCard(reminder, false))}
     </View> : null}
     <CalendarDatePickerModal visible={datePickerTarget === "reminderDate"} title="Select Reminder Date" value={dateKey} onChange={setDateKey} onClose={() => setDatePickerTarget("")} language={language} />
+    <CalendarTimePickerModal visible={timePickerTarget === "reminderDuration"} title="Select Duration" value={durationValue} onChange={setDurationValue} onClose={() => setTimePickerTarget("")} language={language} />
     <CalendarTimePickerModal visible={timePickerTarget === "reminderTime"} title="Select Reminder Time" value={timeValue} onChange={setTimeValue} onClose={() => setTimePickerTarget("")} language={language} />
   </View>;
 }
