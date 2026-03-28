@@ -1265,6 +1265,10 @@ export default function App() {
 
   const handleCreateDesertStormEvent = () => run(async () => {
     const created = await createDesertStormEventRequest(session.backendUrl, session.token, { title: newDesertStormEventTitle });
+    setAlliance((current) => current ? {
+      ...current,
+      desertStormEvents: [created, ...(current.desertStormEvents || []).filter((event) => event.id !== created.id)]
+    } : current);
     setSelectedDesertStormEventId(created.id);
     setNewDesertStormEventTitle("");
     setDesertStormSection("vote");
