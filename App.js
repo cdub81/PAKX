@@ -26,8 +26,11 @@ const CALENDAR_TIME_INPUT_MODES = [
   { id: "local", label: "My Local Time" }
 ];
 const CALENDAR_WHEEL_ITEM_HEIGHT = 40;
+const CALENDAR_MODAL_BACKDROP_STYLE = { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(20, 26, 20, 0.38)" };
+const CALENDAR_MODAL_SHEET_SHELL_STYLE = { width: "100%" };
+const CALENDAR_MODAL_CARD_STYLE = { backgroundColor: "#fbf7ee", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 24, gap: 14, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, borderColor: "#e2d8c5" };
 const CALENDAR_TRANSLATIONS = {
-  en: { title: "Alliance Calendar", hint: "Tap a day to see what is scheduled and what needs attention.", today: "Today", week: "Week", month: "Month", selectedDay: "Selected Day", noEventsScheduled: "No events scheduled", oneEventScheduled: "1 event scheduled", manyEventsScheduled: "{count} events scheduled", allDay: "All day", leaderOnly: "Leader Only", edit: "Edit", delete: "Delete", anchoredTo: "Anchored to {value}", linkedDesertStorm: "Linked to Desert Storm", linkedZombieSiege: "Linked to Zombie Siege", addedBy: "Added by {name}", nothingToday: "Nothing is scheduled for today.", tapAnotherDay: "Tap another day to review what is planned.", editEntry: "Edit Calendar Entry", addEntry: "Add Calendar Entry", manualEvent: "Manual Event", reminder: "Reminder", linkDesertStorm: "Link Desert Storm", linkZombieSiege: "Link Zombie Siege", eventTitle: "Event title", eventDate: "Event Date", chooseDate: "Choose Date", allDayEntry: "All-day entry", timeSpecificEntry: "Time-specific entry", startTime: "Start Time", endTime: "End Time", eventTimezone: "Event timezone (IANA, ex. America/Chicago)", chooseLinkedEvent: "Choose the linked event", repeat: "Repeat", noRepeat: "No Repeat", daily: "Daily", everyOtherDay: "Every Other Day", weekly: "Weekly", customWeekdays: "Custom Weekdays", repeatEndDate: "Repeat End Date", setRepeatEndDate: "Set Repeat End Date", clearRepeatEndDate: "Clear End Date", reminderPlaceholder: "What should members remember to do?", manualPlaceholder: "What should members know or do?", leaderNotes: "Leader-only notes", timezoneHint: "Timed entries are anchored to {value} and shown in each member's local time.", visibleToEveryone: "Visible To Everyone", leaderOnlyEntry: "Leader Only Entry", saveChanges: "Save Changes", addToCalendar: "Add To Calendar", cancelEditing: "Cancel Editing", repeatsDaily: "Repeats daily", repeatsEveryOtherDay: "Repeats every other day", repeatsWeekly: "Repeats weekly", repeatsWeekdays: "Repeats {value}", inputMode: "Enter Time As", inputModeHint: "Choose whether you are entering the time in server time or your own local time.", serverInputMode: "Server Time (UTC-2)", localInputMode: "My Local Time", timePreview: "Before You Save", previewEnteredAs: "Entered as {value}", serverTime: "Server Time", localTime: "My Local Time", memberLocalTime: "Your Local Time", recurringServerAnchor: "Recurring timed entries will follow Server Time (UTC-2).", pickStartTime: "Select Start Time", pickEndTime: "Select End Time", pickDate: "Select Date", chooseMonth: "Month", chooseDay: "Day", chooseYear: "Year", chooseHour: "Hour", chooseMinute: "Minute", done: "Done", dateRequiredError: "Choose a date before saving.", repeatEndDateError: "Choose a valid repeat end date or clear it.", startTimeRequiredError: "Choose a start time before saving.", endTimeRequiredError: "Choose an end time before saving.", endTimeInvalidError: "End time must be after the start time or roll into the next day." },
+  en: { title: "Alliance Calendar", hint: "Tap a day to see what is scheduled and what needs attention.", today: "Today", week: "Week", month: "Month", selectedDay: "Selected Day", noEventsScheduled: "No events scheduled", oneEventScheduled: "1 event scheduled", manyEventsScheduled: "{count} events scheduled", allDay: "All day", leaderOnly: "Leader Only", edit: "Edit", delete: "Delete", anchoredTo: "Anchored to {value}", linkedDesertStorm: "Linked to Desert Storm", linkedZombieSiege: "Linked to Zombie Siege", addedBy: "Added by {name}", nothingToday: "Nothing is scheduled for today.", tapAnotherDay: "Tap another day to review what is planned.", editEntry: "Edit Calendar Entry", addEntry: "Add Calendar Entry", manualEvent: "Manual Event", reminder: "Reminder", linkDesertStorm: "Link Desert Storm", linkZombieSiege: "Link Zombie Siege", eventTitle: "Event title", startDate: "Start Date", endDate: "End Date", chooseDate: "Choose Date", allDayEntry: "All-day entry", timeSpecificEntry: "Time-specific entry", startTime: "Start Time", endTime: "End Time", eventTimezone: "Event timezone (IANA, ex. America/Chicago)", chooseLinkedEvent: "Choose the linked event", repeat: "Repeat", noRepeat: "No Repeat", daily: "Daily", everyOtherDay: "Every Other Day", weekly: "Weekly", customWeekdays: "Custom Weekdays", repeatEndDate: "Repeat End Date", setRepeatEndDate: "Set Repeat End Date", clearRepeatEndDate: "Clear End Date", reminderPlaceholder: "What should members remember to do?", manualPlaceholder: "What should members know or do?", leaderNotes: "Leader-only notes", timezoneHint: "Timed entries are anchored to {value} and shown in each member's local time.", visibleToEveryone: "Visible To Everyone", leaderOnlyEntry: "Leader Only Entry", saveChanges: "Save Changes", addToCalendar: "Add To Calendar", cancelEditing: "Cancel Editing", repeatsDaily: "Repeats daily", repeatsEveryOtherDay: "Repeats every other day", repeatsWeekly: "Repeats weekly", repeatsWeekdays: "Repeats {value}", inputMode: "Enter Time As", inputModeHint: "Choose whether you are entering the time in server time or your own local time.", serverInputMode: "Server Time (UTC-2)", localInputMode: "My Local Time", timePreview: "Before You Save", previewEnteredAs: "Entered as {value}", serverTime: "Server Time", localTime: "My Local Time", memberLocalTime: "Your Local Time", recurringServerAnchor: "Recurring timed entries will follow Server Time (UTC-2).", pickStartTime: "Select Start Time", pickEndTime: "Select End Time", pickDate: "Select Date", chooseMonth: "Month", chooseDay: "Day", chooseYear: "Year", chooseHour: "Hour", chooseMinute: "Minute", done: "Done", dateRequiredError: "Choose a start date before saving.", endDateRequiredError: "Choose an end date before saving.", repeatEndDateError: "Choose a valid repeat end date or clear it.", startTimeRequiredError: "Choose a start time before saving.", endTimeRequiredError: "Choose an end time before saving.", endTimeInvalidError: "End time must be after start time" },
   ko: { title: "얼라이언스 캘린더", hint: "날짜를 눌러 일정과 해야 할 일을 확인하세요.", today: "오늘", week: "주간", month: "월간", selectedDay: "선택한 날짜", noEventsScheduled: "예정된 일정이 없습니다", oneEventScheduled: "일정 1개", manyEventsScheduled: "일정 {count}개", allDay: "하루 종일", leaderOnly: "리더 전용", edit: "수정", delete: "삭제", anchoredTo: "{value} 기준", linkedDesertStorm: "데저트 스톰과 연결됨", linkedZombieSiege: "좀비 시즈와 연결됨", addedBy: "{name} 님이 추가", nothingToday: "오늘 예정된 일정이 없습니다.", tapAnotherDay: "다른 날짜를 눌러 계획을 확인하세요.", editEntry: "캘린더 항목 수정", addEntry: "캘린더 항목 추가", manualEvent: "수동 일정", reminder: "리마인더", linkDesertStorm: "데저트 스톰 연결", linkZombieSiege: "좀비 시즈 연결", eventTitle: "이벤트 제목", allDayEntry: "하루 종일 일정", timeSpecificEntry: "시간 지정 일정", startTime: "시작 HH:MM", endTime: "종료 HH:MM", eventTimezone: "이벤트 시간대 (IANA, 예: America/Chicago)", chooseLinkedEvent: "연결할 이벤트 선택", repeat: "반복", noRepeat: "반복 없음", daily: "매일", everyOtherDay: "격일", weekly: "매주", customWeekdays: "요일 지정", repeatEndDate: "반복 종료일 (선택 YYYY-MM-DD)", reminderPlaceholder: "멤버들이 무엇을 기억해야 하나요?", manualPlaceholder: "멤버들에게 무엇을 알려야 하나요?", leaderNotes: "리더 전용 메모", timezoneHint: "시간 지정 일정은 {value} 기준이며, 각 멤버의 현지 시간으로 표시됩니다.", visibleToEveryone: "전체 공개", leaderOnlyEntry: "리더 전용 일정", saveChanges: "변경 저장", addToCalendar: "캘린더에 추가", cancelEditing: "수정 취소", repeatsDaily: "매일 반복", repeatsEveryOtherDay: "격일 반복", repeatsWeekly: "매주 반복", repeatsWeekdays: "{value} 반복" },
   es: { title: "Calendario de la alianza", hint: "Toca un día para ver lo programado y lo que requiere atención.", today: "Hoy", week: "Semana", month: "Mes", selectedDay: "Día seleccionado", noEventsScheduled: "No hay eventos programados", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Todo el día", leaderOnly: "Solo líderes", edit: "Editar", delete: "Eliminar", anchoredTo: "Anclado a {value}", linkedDesertStorm: "Vinculado a Desert Storm", linkedZombieSiege: "Vinculado a Zombie Siege", addedBy: "Agregado por {name}", nothingToday: "No hay nada programado para hoy.", tapAnotherDay: "Toca otro día para revisar lo planeado.", editEntry: "Editar entrada del calendario", addEntry: "Agregar entrada al calendario", manualEvent: "Evento manual", reminder: "Recordatorio", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "Título del evento", allDayEntry: "Evento de todo el día", timeSpecificEntry: "Evento con hora", startTime: "Inicio HH:MM", endTime: "Fin HH:MM", eventTimezone: "Zona horaria del evento (IANA, ej. America/Chicago)", chooseLinkedEvent: "Elige el evento vinculado", repeat: "Repetir", noRepeat: "No repetir", daily: "Diario", everyOtherDay: "Cada dos días", weekly: "Semanal", customWeekdays: "Días personalizados", repeatEndDate: "Fecha de fin de repetición (opcional YYYY-MM-DD)", reminderPlaceholder: "¿Qué deben recordar hacer los miembros?", manualPlaceholder: "¿Qué deben saber o hacer los miembros?", leaderNotes: "Notas solo para líderes", timezoneHint: "Las entradas con hora se anclan a {value} y se muestran en la hora local de cada miembro.", visibleToEveryone: "Visible para todos", leaderOnlyEntry: "Entrada solo para líderes", saveChanges: "Guardar cambios", addToCalendar: "Agregar al calendario", cancelEditing: "Cancelar edición", repeatsDaily: "Se repite a diario", repeatsEveryOtherDay: "Se repite cada dos días", repeatsWeekly: "Se repite semanalmente", repeatsWeekdays: "Se repite {value}" },
   pt: { title: "Calendário da aliança", hint: "Toque em um dia para ver o que está programado e o que precisa de atenção.", today: "Hoje", week: "Semana", month: "Mês", selectedDay: "Dia selecionado", noEventsScheduled: "Nenhum evento programado", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Dia inteiro", leaderOnly: "Somente líderes", edit: "Editar", delete: "Excluir", anchoredTo: "Ancorado em {value}", linkedDesertStorm: "Vinculado ao Desert Storm", linkedZombieSiege: "Vinculado ao Zombie Siege", addedBy: "Adicionado por {name}", nothingToday: "Nada está programado para hoje.", tapAnotherDay: "Toque em outro dia para revisar o planejamento.", editEntry: "Editar entrada do calendário", addEntry: "Adicionar entrada ao calendário", manualEvent: "Evento manual", reminder: "Lembrete", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "Título do evento", allDayEntry: "Evento de dia inteiro", timeSpecificEntry: "Evento com horário", startTime: "Início HH:MM", endTime: "Fim HH:MM", eventTimezone: "Fuso do evento (IANA, ex. America/Chicago)", chooseLinkedEvent: "Escolha o evento vinculado", repeat: "Repetir", noRepeat: "Não repetir", daily: "Diariamente", everyOtherDay: "Dia sim, dia não", weekly: "Semanal", customWeekdays: "Dias personalizados", repeatEndDate: "Data final da repetição (opcional YYYY-MM-DD)", reminderPlaceholder: "O que os membros precisam lembrar de fazer?", manualPlaceholder: "O que os membros precisam saber ou fazer?", leaderNotes: "Notas apenas para líderes", timezoneHint: "Entradas com horário são ancoradas em {value} e mostradas no horário local de cada membro.", visibleToEveryone: "Visível para todos", leaderOnlyEntry: "Entrada só para líderes", saveChanges: "Salvar alterações", addToCalendar: "Adicionar ao calendário", cancelEditing: "Cancelar edição", repeatsDaily: "Repete diariamente", repeatsEveryOtherDay: "Repete em dias alternados", repeatsWeekly: "Repete semanalmente", repeatsWeekdays: "Repete {value}" }
@@ -632,16 +635,19 @@ function convertUtcIsoToTimeZoneDateAndTime(isoValue, timeZone) {
   };
 }
 
-function buildCalendarTimedPreview(dateKey, startTime, endTime, inputMode, localTimeZone) {
-  if (!dateKey || !startTime) {
+function buildCalendarTimedPreview(startDateKey, startTime, endDateKey, endTime, inputMode, localTimeZone) {
+  if (!startDateKey || !endDateKey || !startTime) {
     return null;
   }
   const sourceTimeZone = inputMode === "server" ? getServerTimeZone() : normalizeCalendarTimeZone(localTimeZone || getDeviceTimeZone());
-  const startIso = toUtcIsoFromTimeZone(dateKey, startTime, sourceTimeZone);
-  const startParts = parseTimeValue(startTime) || { hours: 0, minutes: 0 };
-  const endParts = parseTimeValue(endTime || "");
-  const endDayOffset = endParts && (endParts.hours * 60 + endParts.minutes) < (startParts.hours * 60 + startParts.minutes) ? 1 : 0;
-  const endIso = endTime ? toUtcIsoFromTimeZone(dateKey, endTime, sourceTimeZone, endDayOffset) : null;
+  const startIso = toUtcIsoFromTimeZone(startDateKey, startTime, sourceTimeZone);
+  const endIso = endTime ? toUtcIsoFromTimeZone(endDateKey, endTime, sourceTimeZone) : null;
+  if (!endIso) {
+    return null;
+  }
+  if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
+    return null;
+  }
   const serverStart = convertUtcIsoToTimeZoneDateAndTime(startIso, getServerTimeZone());
   const localStart = convertUtcIsoToTimeZoneDateAndTime(startIso, normalizeCalendarTimeZone(localTimeZone || getDeviceTimeZone()));
   const serverEnd = endIso ? convertUtcIsoToTimeZoneDateAndTime(endIso, getServerTimeZone()) : null;
@@ -651,6 +657,7 @@ function buildCalendarTimedPreview(dateKey, startTime, endTime, inputMode, local
     endAt: endIso,
     serverStartDate: serverStart.dateKey,
     serverStartTime: serverStart.timeValue,
+    serverEndDate: serverEnd ? serverEnd.dateKey : "",
     serverEndTime: serverEnd ? serverEnd.timeValue : "",
     serverDisplay: `${serverStart.dateKey} ${serverStart.timeValue}${serverEnd ? ` - ${serverEnd.dateKey === serverStart.dateKey ? serverEnd.timeValue : `${serverEnd.dateKey} ${serverEnd.timeValue}`}` : ""} (${getServerTimeLabel()})`,
     localDisplay: `${localStart.dateKey} ${localStart.timeValue}${localEnd ? ` - ${localEnd.dateKey === localStart.dateKey ? localEnd.timeValue : `${localEnd.dateKey} ${localEnd.timeValue}`}` : ""}`
@@ -704,6 +711,14 @@ function parseTimeValue(value) {
     return null;
   }
   return { hours, minutes };
+}
+
+function getTimeValueMinutes(value) {
+  const parsed = parseTimeValue(value);
+  if (!parsed) {
+    return null;
+  }
+  return parsed.hours * 60 + parsed.minutes;
 }
 
 function getTimeZoneDateParts(value, timeZone) {
@@ -799,15 +814,12 @@ function buildCalendarOccurrence(entry, occurrenceDateKey) {
   }
   const timeZone = getServerTimeZone();
   const startTime = entry.serverStartTime || entry.startTime || "00:00";
-  const endTime = entry.serverEndTime || entry.endTime || "";
   const baseOccurrenceDateKey = occurrenceDateKey || entry.serverStartDate || entry.startDate || "";
   const startIso = recurrence.repeat === "none" && entry.startsAt ? String(entry.startsAt) : toUtcIsoFromTimeZone(baseOccurrenceDateKey, startTime, timeZone);
-  const startParts = parseTimeValue(startTime) || { hours: 0, minutes: 0 };
-  const endParts = parseTimeValue(endTime);
-  const dayOffset = endParts && (endParts.hours * 60 + endParts.minutes) < (startParts.hours * 60 + startParts.minutes) ? 1 : 0;
-  const endIso = endTime
-    ? (recurrence.repeat === "none" && entry.endAt ? String(entry.endAt) : toUtcIsoFromTimeZone(baseOccurrenceDateKey, endTime, timeZone, dayOffset))
-    : entry.endAt || null;
+  const durationMs = entry.endAt && entry.startsAt ? Math.max(0, new Date(entry.endAt).getTime() - new Date(entry.startsAt).getTime()) : 0;
+  const endIso = entry.endAt
+    ? (recurrence.repeat === "none" && entry.endAt ? String(entry.endAt) : new Date(new Date(startIso).getTime() + durationMs).toISOString())
+    : null;
   const serverStart = convertUtcIsoToTimeZoneDateAndTime(startIso, getServerTimeZone());
   const localStart = convertUtcIsoToTimeZoneDateAndTime(startIso, getDeviceTimeZone());
   const serverEnd = endIso ? convertUtcIsoToTimeZoneDateAndTime(endIso, getServerTimeZone()) : null;
@@ -923,6 +935,7 @@ export default function App() {
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
   const [newCalendarDescription, setNewCalendarDescription] = useState("");
   const [newCalendarDate, setNewCalendarDate] = useState(formatLocalDateKey(new Date()));
+  const [newCalendarEndDate, setNewCalendarEndDate] = useState(formatLocalDateKey(new Date()));
   const [newCalendarStartTime, setNewCalendarStartTime] = useState("09:00");
   const [newCalendarEndTime, setNewCalendarEndTime] = useState("10:00");
   const [newCalendarTimeInputMode, setNewCalendarTimeInputMode] = useState("server");
@@ -1014,13 +1027,28 @@ export default function App() {
       return;
     }
     setCalendarFormError("");
-  }, [newCalendarDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarRepeatEndDate, newCalendarTimeInputMode]);
+  }, [newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarRepeatEndDate, newCalendarTimeInputMode]);
 
   useEffect(() => {
     if (newCalendarAllDay) {
       setCalendarTimePickerTarget("");
     }
   }, [newCalendarAllDay]);
+
+  useEffect(() => {
+    if (newCalendarAllDay) {
+      return;
+    }
+    if (newCalendarEndDate < newCalendarDate) {
+      setNewCalendarEndDate(newCalendarDate);
+      return;
+    }
+    const startMinutes = getTimeValueMinutes(newCalendarStartTime);
+    const endMinutes = getTimeValueMinutes(newCalendarEndTime);
+    if (newCalendarEndDate === newCalendarDate && startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
+      setNewCalendarEndTime(newCalendarStartTime);
+    }
+  }, [newCalendarAllDay, newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime]);
 
   function clearSessionState(message = "") {
     const nextMessage = typeof message === "string" ? message : "";
@@ -1075,6 +1103,7 @@ export default function App() {
     setNewCalendarTitle("");
     setNewCalendarDescription("");
     setNewCalendarDate(formatLocalDateKey(new Date()));
+    setNewCalendarEndDate(formatLocalDateKey(new Date()));
     setNewCalendarStartTime("09:00");
     setNewCalendarEndTime("10:00");
     setNewCalendarTimeInputMode("server");
@@ -1102,6 +1131,7 @@ export default function App() {
     setNewCalendarTitle(entry.title || "");
     setNewCalendarDescription(entry.description || "");
     setNewCalendarDate(entry.allDay !== false ? (entry.startDate || formatLocalDateKey(entry.startsAt || new Date())) : (entry.serverStartDate || entry.startDate || formatLocalDateKey(entry.startsAt || new Date())));
+    setNewCalendarEndDate(entry.allDay !== false ? (entry.endDate || entry.startDate || formatLocalDateKey(entry.endAt || entry.startsAt || new Date())) : (entry.serverEndDate || entry.endDate || entry.serverStartDate || entry.startDate || formatLocalDateKey(entry.endAt || entry.startsAt || new Date())));
     setNewCalendarStartTime(entry.serverStartTime || entry.startTime || "09:00");
     setNewCalendarEndTime(entry.serverEndTime || entry.endTime || "10:00");
     setNewCalendarTimeInputMode("server");
@@ -1359,6 +1389,9 @@ export default function App() {
     if (!isValidDateKey(newCalendarDate)) {
       return calendarT("dateRequiredError");
     }
+    if (!isValidDateKey(newCalendarEndDate)) {
+      return calendarT("endDateRequiredError");
+    }
     if (newCalendarRepeat !== "none" && newCalendarRepeatEndDate && !isValidDateKey(newCalendarRepeatEndDate)) {
       return calendarT("repeatEndDateError");
     }
@@ -1372,9 +1405,15 @@ export default function App() {
       if (!parseTimeValue(newCalendarEndTime || "")) {
         return calendarT("endTimeRequiredError");
       }
-      if (!buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "", newCalendarEndTime || "", newCalendarTimeInputMode, normalizeCalendarTimeZone(newCalendarEventTimeZone))) {
+      const timePreview = buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "", newCalendarEndDate, newCalendarEndTime || "", newCalendarTimeInputMode, normalizeCalendarTimeZone(newCalendarEventTimeZone));
+      if (!timePreview) {
         return calendarT("endTimeInvalidError");
       }
+      if (timePreview.endAt && new Date(timePreview.endAt).getTime() <= new Date(timePreview.startsAt).getTime()) {
+        return calendarT("endTimeInvalidError");
+      }
+    } else if (newCalendarEndDate < newCalendarDate) {
+      return calendarT("endTimeInvalidError");
     }
     return "";
   }
@@ -1389,9 +1428,9 @@ export default function App() {
     const linkedType = entryType === "linked_desert_storm" ? "desertStorm" : entryType === "linked_zombie_siege" ? "zombieSiege" : newCalendarLinkedType;
     const resolvedLinkedEventId = resolveCalendarLinkedEventId(entryType, newCalendarLinkedEventId, desertStormEvents, zombieSiegeEvents, activeDesertStormEvent, selectedZombieSiegeEvent);
     const localTimeZone = normalizeCalendarTimeZone(newCalendarEventTimeZone);
-    const timePreview = newCalendarAllDay ? null : buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "00:00", newCalendarEndTime, newCalendarTimeInputMode, localTimeZone);
+    const timePreview = newCalendarAllDay ? null : buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "00:00", newCalendarEndDate, newCalendarEndTime, newCalendarTimeInputMode, localTimeZone);
     const startIso = newCalendarAllDay ? newCalendarDate : (timePreview?.startsAt || toUtcIsoFromTimeZone(newCalendarDate, newCalendarStartTime || "00:00", getServerTimeZone()));
-    const endIso = newCalendarAllDay ? null : (timePreview?.endAt || null);
+    const endIso = newCalendarAllDay ? newCalendarEndDate : (timePreview?.endAt || null);
     const payload = {
       title: newCalendarTitle,
       description: newCalendarDescription,
@@ -1403,9 +1442,11 @@ export default function App() {
       allDay: newCalendarAllDay,
       eventTimeZone: newCalendarAllDay ? localTimeZone : getServerTimeZone(),
       startDate: newCalendarDate,
+      endDate: newCalendarEndDate,
       startTime: newCalendarAllDay ? "" : (timePreview?.serverStartTime || newCalendarStartTime),
       endTime: newCalendarAllDay ? "" : (timePreview?.serverEndTime || newCalendarEndTime),
       serverStartDate: newCalendarAllDay ? "" : (timePreview?.serverStartDate || newCalendarDate),
+      serverEndDate: newCalendarAllDay ? "" : (timePreview?.serverEndDate || newCalendarEndDate),
       serverStartTime: newCalendarAllDay ? "" : (timePreview?.serverStartTime || newCalendarStartTime),
       serverEndTime: newCalendarAllDay ? "" : (timePreview?.serverEndTime || newCalendarEndTime),
       timeInputMode: newCalendarAllDay ? "server" : newCalendarTimeInputMode,
@@ -1541,7 +1582,7 @@ export default function App() {
               setSearchText("");
             }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
             {activeTab === "players" && leader ? <MembersView players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
-            {activeTab === "calendar" ? <EnhancedCalendarView entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
+            {activeTab === "calendar" ? <EnhancedCalendarView entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
               setNewCalendarEntryType(value);
               if (value === "linked_desert_storm") {
                 const seed = buildDesertStormCalendarLinkSeed(activeDesertStormEvent || getLinkableCalendarEvents(desertStormEvents)[0]);
@@ -1726,31 +1767,49 @@ function CalendarTimeWheelColumn({ value, values, onChange }) {
   </View>;
 }
 
-function CalendarTimePickerModal({ visible, title, value, onChange, onClose, language }) {
+function CalendarTimePickerModal({ visible, title, value, minValue = "", onChange, onClose, language }) {
   const calendarT = getCalendarTranslator(language);
   const parsed = parseTimeValue(value || "00:00") || { hours: 0, minutes: 0 };
   const hourValue = formatTwoDigits(parsed.hours);
   const minuteValue = formatTwoDigits(parsed.minutes);
-  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, index) => formatTwoDigits(index)), []);
-  const minuteOptions = useMemo(() => Array.from({ length: 60 }, (_, index) => formatTwoDigits(index)), []);
+  const minParts = parseTimeValue(minValue || "");
+  const minHour = minParts?.hours ?? 0;
+  const minMinute = minParts?.minutes ?? 0;
+  const hourOptions = useMemo(() => Array.from({ length: 24 - minHour }, (_, index) => formatTwoDigits(index + minHour)), [minHour]);
+  const effectiveHourValue = hourOptions.includes(hourValue) ? hourValue : hourOptions[0] || "00";
+  const minuteOptions = useMemo(() => {
+    const currentHour = Number.parseInt(effectiveHourValue, 10);
+    const startMinute = minParts && currentHour === minHour ? minMinute : 0;
+    return Array.from({ length: 60 - startMinute }, (_, index) => formatTwoDigits(index + startMinute));
+  }, [effectiveHourValue, minHour, minMinute, minParts]);
+  const effectiveMinuteValue = minuteOptions.includes(minuteValue) ? minuteValue : minuteOptions[0] || "00";
+
+  useEffect(() => {
+    const nextValue = `${effectiveHourValue}:${effectiveMinuteValue}`;
+    if (nextValue !== value) {
+      onChange(nextValue);
+    }
+  }, [effectiveHourValue, effectiveMinuteValue, onChange, value]);
 
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={styles.modalBackdrop}>
-      <View style={styles.modalCard}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <View style={styles.calendarWheelHeader}>
-          <Text style={styles.hint}>{calendarT("chooseHour")}</Text>
-          <Text style={styles.hint}>{calendarT("chooseMinute")}</Text>
+    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
+      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
+        <View style={CALENDAR_MODAL_CARD_STYLE}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <View style={styles.calendarWheelHeader}>
+            <Text style={styles.hint}>{calendarT("chooseHour")}</Text>
+            <Text style={styles.hint}>{calendarT("chooseMinute")}</Text>
+          </View>
+          <View style={styles.calendarWheelRow}>
+            <CalendarTimeWheelColumn value={effectiveHourValue} values={hourOptions} onChange={(nextHour) => onChange(`${nextHour}:${effectiveMinuteValue}`)} />
+            <Text style={styles.calendarWheelDivider}>:</Text>
+            <CalendarTimeWheelColumn value={effectiveMinuteValue} values={minuteOptions} onChange={(nextMinute) => onChange(`${effectiveHourValue}:${nextMinute}`)} />
+          </View>
+          <Pressable style={styles.button} onPress={onClose}>
+            <Text style={styles.buttonText}>{calendarT("done")}</Text>
+          </Pressable>
         </View>
-        <View style={styles.calendarWheelRow}>
-          <CalendarTimeWheelColumn value={hourValue} values={hourOptions} onChange={(nextHour) => onChange(`${nextHour}:${minuteValue}`)} />
-          <Text style={styles.calendarWheelDivider}>:</Text>
-          <CalendarTimeWheelColumn value={minuteValue} values={minuteOptions} onChange={(nextMinute) => onChange(`${hourValue}:${nextMinute}`)} />
-        </View>
-        <Pressable style={styles.button} onPress={onClose}>
-          <Text style={styles.buttonText}>{calendarT("done")}</Text>
-        </Pressable>
-      </View>
+      </SafeAreaView>
     </View>
   </Modal>;
 }
@@ -1778,23 +1837,25 @@ function CalendarDatePickerModal({ visible, title, value, onChange, onClose, lan
   }
 
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={styles.modalBackdrop}>
-      <View style={styles.modalCard}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <View style={styles.calendarWheelHeader}>
-          <Text style={styles.hint}>{calendarT("chooseMonth")}</Text>
-          <Text style={styles.hint}>{calendarT("chooseDay")}</Text>
-          <Text style={styles.hint}>{calendarT("chooseYear")}</Text>
+    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
+      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
+        <View style={CALENDAR_MODAL_CARD_STYLE}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <View style={styles.calendarWheelHeader}>
+            <Text style={styles.hint}>{calendarT("chooseMonth")}</Text>
+            <Text style={styles.hint}>{calendarT("chooseDay")}</Text>
+            <Text style={styles.hint}>{calendarT("chooseYear")}</Text>
+          </View>
+          <View style={styles.calendarWheelRow}>
+            <CalendarTimeWheelColumn value={monthValue} values={monthOptions} onChange={(nextMonth) => updateDate(yearValue, nextMonth, dayValue)} />
+            <CalendarTimeWheelColumn value={dayValue} values={dayOptions} onChange={(nextDay) => updateDate(yearValue, monthValue, nextDay)} />
+            <CalendarTimeWheelColumn value={yearValue} values={yearOptions} onChange={(nextYear) => updateDate(nextYear, monthValue, dayValue)} />
+          </View>
+          <Pressable style={styles.button} onPress={onClose}>
+            <Text style={styles.buttonText}>{calendarT("done")}</Text>
+          </Pressable>
         </View>
-        <View style={styles.calendarWheelRow}>
-          <CalendarTimeWheelColumn value={monthValue} values={monthOptions} onChange={(nextMonth) => updateDate(yearValue, nextMonth, dayValue)} />
-          <CalendarTimeWheelColumn value={dayValue} values={dayOptions} onChange={(nextDay) => updateDate(yearValue, monthValue, nextDay)} />
-          <CalendarTimeWheelColumn value={yearValue} values={yearOptions} onChange={(nextYear) => updateDate(nextYear, monthValue, dayValue)} />
-        </View>
-        <Pressable style={styles.button} onPress={onClose}>
-          <Text style={styles.buttonText}>{calendarT("done")}</Text>
-        </Pressable>
-      </View>
+      </SafeAreaView>
     </View>
   </Modal>;
 }
@@ -2124,7 +2185,7 @@ function DesertStormHistoryView({ layouts, currentUserIsLeader, onUpdateResult }
   </View>;
 }
 
-function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, currentUserIsLeader, calendarView, editingCalendarEntryId, language, newCalendarTimeInputMode, calendarTimePickerTarget, calendarDatePickerTarget, calendarFormError, onChangeCalendarView, newCalendarTitle, newCalendarDescription, newCalendarDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarEntryType, newCalendarRepeat, newCalendarRepeatEndDate, newCalendarRepeatWeekdays, newCalendarLinkedType, newCalendarLinkedEventId, newCalendarEventTimeZone, newCalendarLeaderNotes, newCalendarLeaderOnly, onChangeNewCalendarTitle, onChangeNewCalendarDescription, onChangeNewCalendarDate, onChangeNewCalendarStartTime, onChangeNewCalendarEndTime, onChangeNewCalendarTimeInputMode, onChangeCalendarTimePickerTarget, onChangeCalendarDatePickerTarget, onChangeNewCalendarEventTimeZone, onToggleNewCalendarAllDay, onChangeNewCalendarEntryType, onChangeNewCalendarRepeat, onChangeNewCalendarRepeatEndDate, onToggleNewCalendarRepeatWeekday, onChangeNewCalendarLinkedEventId, onChangeNewCalendarLeaderNotes, onToggleLeaderOnly, onCreateEntry, onCancelEdit, onEditEntry, onDeleteEntry, onOpenLinkedEntry }) {
+function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, currentUserIsLeader, calendarView, editingCalendarEntryId, language, newCalendarTimeInputMode, calendarTimePickerTarget, calendarDatePickerTarget, calendarFormError, onChangeCalendarView, newCalendarTitle, newCalendarDescription, newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarEntryType, newCalendarRepeat, newCalendarRepeatEndDate, newCalendarRepeatWeekdays, newCalendarLinkedType, newCalendarLinkedEventId, newCalendarEventTimeZone, newCalendarLeaderNotes, newCalendarLeaderOnly, onChangeNewCalendarTitle, onChangeNewCalendarDescription, onChangeNewCalendarDate, onChangeNewCalendarEndDate, onChangeNewCalendarStartTime, onChangeNewCalendarEndTime, onChangeNewCalendarTimeInputMode, onChangeCalendarTimePickerTarget, onChangeCalendarDatePickerTarget, onChangeNewCalendarEventTimeZone, onToggleNewCalendarAllDay, onChangeNewCalendarEntryType, onChangeNewCalendarRepeat, onChangeNewCalendarRepeatEndDate, onToggleNewCalendarRepeatWeekday, onChangeNewCalendarLinkedEventId, onChangeNewCalendarLeaderNotes, onToggleLeaderOnly, onCreateEntry, onCancelEdit, onEditEntry, onDeleteEntry, onOpenLinkedEntry }) {
   const today = startOfLocalDay();
   const todayKey = formatLocalDateKey(today);
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
@@ -2169,7 +2230,7 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
   const selectedDateShortLabel = selectedDate.toLocaleDateString(language || undefined, { month: "short", day: "numeric" });
   const availableDesertStormEvents = getLinkableCalendarEvents(desertStormEvents);
   const availableZombieSiegeEvents = getLinkableCalendarEvents(zombieSiegeEvents);
-  const timePreview = useMemo(() => newCalendarAllDay ? null : buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "00:00", newCalendarEndTime, newCalendarTimeInputMode, newCalendarEventTimeZone), [newCalendarAllDay, newCalendarDate, newCalendarStartTime, newCalendarEndTime, newCalendarTimeInputMode, newCalendarEventTimeZone]);
+  const timePreview = useMemo(() => newCalendarAllDay ? null : buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "00:00", newCalendarEndDate, newCalendarEndTime, newCalendarTimeInputMode, newCalendarEventTimeZone), [newCalendarAllDay, newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime, newCalendarTimeInputMode, newCalendarEventTimeZone]);
 
   useEffect(() => {
     if (calendarView === "month") {
@@ -2269,7 +2330,8 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
         {[["manual", calendarT("manualEvent")], ["reminder", calendarT("reminder")], ["linked_desert_storm", calendarT("linkDesertStorm")], ["linked_zombie_siege", calendarT("linkZombieSiege")]].map(([value, label]) => <Pressable key={value} style={[styles.rankFilterButton, newCalendarEntryType === value && styles.rankFilterButtonActive]} onPress={() => onChangeNewCalendarEntryType(value)}><Text style={[styles.rankFilterButtonText, newCalendarEntryType === value && styles.rankFilterButtonTextActive]}>{label}</Text></Pressable>)}
       </View>
       <TextInput value={newCalendarTitle} onChangeText={onChangeNewCalendarTitle} style={styles.input} placeholder={calendarT("eventTitle")} />
-      <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("startDate")}><Text style={styles.line}>{calendarT("eventDate")}: {formatCalendarDateButtonLabel(newCalendarDate, language) || calendarT("chooseDate")}</Text></Pressable>
+      <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("startDate")}><Text style={styles.line}>{calendarT("startDate")}: {formatCalendarDateButtonLabel(newCalendarDate, language) || calendarT("chooseDate")}</Text></Pressable>
+      <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("endDate")}><Text style={styles.line}>{calendarT("endDate")}: {formatCalendarDateButtonLabel(newCalendarEndDate, language) || calendarT("chooseDate")}</Text></Pressable>
       <View style={styles.row}>
         <Pressable style={[styles.secondaryButton, styles.half, newCalendarAllDay && styles.modeButtonActive]} onPress={onToggleNewCalendarAllDay}><Text style={[styles.secondaryButtonText, newCalendarAllDay && styles.modeButtonTextActive]}>{newCalendarAllDay ? calendarT("allDayEntry") : calendarT("timeSpecificEntry")}</Text></Pressable>
       </View>
@@ -2322,6 +2384,7 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
       visible={calendarTimePickerTarget === "start" || calendarTimePickerTarget === "end"}
       title={calendarTimePickerTarget === "end" ? calendarT("pickEndTime") : calendarT("pickStartTime")}
       value={calendarTimePickerTarget === "end" ? newCalendarEndTime : newCalendarStartTime}
+      minValue={calendarTimePickerTarget === "end" && newCalendarEndDate === newCalendarDate ? newCalendarStartTime : ""}
       onChange={(nextValue) => {
         if (calendarTimePickerTarget === "end") {
           onChangeNewCalendarEndTime(nextValue);
@@ -2333,12 +2396,14 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
       language={language}
     />
     <CalendarDatePickerModal
-      visible={calendarDatePickerTarget === "startDate" || calendarDatePickerTarget === "repeatEndDate"}
-      title={calendarDatePickerTarget === "repeatEndDate" ? calendarT("repeatEndDate") : calendarT("pickDate")}
-      value={calendarDatePickerTarget === "repeatEndDate" ? (newCalendarRepeatEndDate || newCalendarDate) : newCalendarDate}
+      visible={calendarDatePickerTarget === "startDate" || calendarDatePickerTarget === "endDate" || calendarDatePickerTarget === "repeatEndDate"}
+      title={calendarDatePickerTarget === "repeatEndDate" ? calendarT("repeatEndDate") : calendarDatePickerTarget === "endDate" ? calendarT("endDate") : calendarT("pickDate")}
+      value={calendarDatePickerTarget === "repeatEndDate" ? (newCalendarRepeatEndDate || newCalendarDate) : calendarDatePickerTarget === "endDate" ? newCalendarEndDate : newCalendarDate}
       onChange={(nextValue) => {
         if (calendarDatePickerTarget === "repeatEndDate") {
           onChangeNewCalendarRepeatEndDate(nextValue);
+        } else if (calendarDatePickerTarget === "endDate") {
+          onChangeNewCalendarEndDate(nextValue);
         } else {
           onChangeNewCalendarDate(nextValue);
         }
@@ -2425,5 +2490,4 @@ function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackTex
 }
 function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("allianceTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><Text style={styles.line}>{t("accountLabel", { value: account?.username })}</Text><Text style={styles.line}>{t("allianceLabel", { value: alliance?.name })}</Text><Text style={styles.line}>{t("codeLabel", { value: alliance?.code })}</Text><Text style={styles.line}>{t("signedInAsPlayer", { value: currentUser?.name })}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>{t("pendingJoinRequests")}</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>{t("approve")}</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable></View></View>) : <Text style={styles.hint}>{t("noPendingRequests")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("rotateCode")}</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>{t("updateCode")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("addMember")}</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} /><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>{t("addMember")}</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>{t("memberOptions")}</Text><Text style={styles.hint}>{t("leaveAnyTime")}</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable></View>}</View>; }
 
-const styles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: "#f3efe3" }, keyboardShell: { flex: 1 }, loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 }, screen: { flex: 1, padding: 18, gap: 12 }, title: { fontSize: 28, fontWeight: "700", color: "#1f2a1f" }, hint: { fontSize: 14, color: "#566156" }, line: { color: "#435043", fontSize: 15 }, error: { color: "#8b241f", fontWeight: "700" }, alertBanner: { backgroundColor: "#f2dfc2", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#d9ba84", gap: 4 }, alertBannerTitle: { fontSize: 16, fontWeight: "700", color: "#5d3f11" }, alertBannerText: { fontSize: 14, color: "#72542b" }, voteBanner: { backgroundColor: "#dde9f3", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#b6cade", gap: 4 }, voteBannerTitle: { fontSize: 16, fontWeight: "700", color: "#244a68" }, voteBannerText: { fontSize: 14, color: "#40627d" }, card: { backgroundColor: "#fbf7ee", borderRadius: 18, padding: 16, gap: 10, borderWidth: 1, borderColor: "#e2d8c5" }, cardTitle: { fontSize: 22, fontWeight: "700", color: "#1f2a1f" }, input: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, color: "#243025" }, textArea: { minHeight: 96, textAlignVertical: "top" }, button: { backgroundColor: "#1f5c4d", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, disabledButton: { opacity: 0.55 }, buttonText: { color: "#f7f4ee", fontWeight: "700" }, secondaryButton: { backgroundColor: "#efe5d2", borderRadius: 12, paddingVertical: 12, alignItems: "center" }, secondaryButtonText: { color: "#544636", fontWeight: "700" }, modeButtonActive: { backgroundColor: "#1f5c4d", borderWidth: 1, borderColor: "#1f5c4d" }, modeButtonTextActive: { color: "#f7f4ee" }, dangerButton: { backgroundColor: "#7f221d", borderRadius: 12, paddingVertical: 10, alignItems: "center" }, dangerButtonText: { color: "#fff5f4", fontWeight: "700" }, row: { flexDirection: "row", gap: 10 }, languageRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, languageButton: { backgroundColor: "#efe5d2", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "#d8c6a6" }, languageButtonActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, languageButtonText: { color: "#544636", fontWeight: "700" }, languageButtonTextActive: { color: "#f7f4ee" }, rankSelectorWrap: { gap: 6 }, rankSelectorButton: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, rankDropdown: { backgroundColor: "#fbf7ee", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", overflow: "hidden" }, rankOption: { paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#eee3cf" }, rankOptionActive: { backgroundColor: "#dff0e5" }, rankOptionText: { color: "#243025", fontWeight: "600" }, rankOptionTextActive: { color: "#17352b" }, half: { flex: 1 }, tabs: { flexGrow: 0, minHeight: 52 }, tab: { backgroundColor: "#f5ead8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: "#ccb99a", shadowColor: "#3d3124", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 }, tabActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, tabText: { color: "#3f3429", fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" }, tabTextActive: { color: "#f8f5ef" }, content: { flexGrow: 1, gap: 12, paddingBottom: 96 }, section: { gap: 8, marginTop: 8 }, sectionTitle: { fontSize: 16, fontWeight: "700", color: "#213126" }, disabled: { opacity: 0.55 }, pick: { backgroundColor: "#f3eee1", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, pickText: { color: "#243025", fontWeight: "600" }, selectedPlayerBox: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e", borderWidth: 2 }, selectedPlayerText: { color: "#17352b" }, selectedPlayerHint: { color: "#2a6d52", fontSize: 12, fontWeight: "700", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 }, dangerBox: { borderColor: "#be3e36", backgroundColor: "#f9e1de" }, dashboardShell: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 14, borderWidth: 1, borderColor: "#e2d8c5" }, metricGrid: { flexDirection: "row", gap: 10 }, dashboardMetricA: { flex: 1, backgroundColor: "#dbe9e1", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#c7d9cf" }, dashboardMetricB: { flex: 1, backgroundColor: "#efe4cf", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#deceb2" }, metricLabel: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#587262", marginBottom: 8 }, metricPanelValue: { fontSize: 24, fontWeight: "700", color: "#17352b" }, dashboardCompare: { backgroundColor: "#1f5c4d", borderRadius: 18, padding: 16, gap: 6 }, dashboardCompareValue: { fontSize: 28, fontWeight: "700", color: "#f7f4ee" }, profileCard: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 16, borderWidth: 1, borderColor: "#e2d8c5" }, profileHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }, profileEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, color: "#7a6a55", marginBottom: 6 }, profileRank: { fontSize: 15, color: "#5b665a", marginTop: 4 }, rankBadge: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 }, rankBadgeText: { color: "#f7f4ee", fontWeight: "700" }, metricPanel: { flex: 1, backgroundColor: "#e8f1ea", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#cfe0d5" }, statusCard: { borderRadius: 18, padding: 16, gap: 6, borderWidth: 1 }, statusCardActive: { backgroundColor: "#dff0e5", borderColor: "#9cc8ad" }, statusCardInactive: { backgroundColor: "#f2ecdf", borderColor: "#ddd0b9" }, statusEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: "#5f6d60" }, statusTitle: { fontSize: 22, fontWeight: "700", color: "#1b3327" }, statusLine: { fontSize: 15, color: "#435043" }, todayItem: { backgroundColor: "#fbf7ee", borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "#e3d8c3", gap: 4 }, todayItemTitle: { fontSize: 16, fontWeight: "700", color: "#1f2a1f" }, voteStatusRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 }, voteStatusTitle: { flex: 1, flexShrink: 1, paddingRight: 8 }, votePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "700", flexShrink: 0, alignSelf: "flex-start" }, votePillDone: { backgroundColor: "#d8ecdf", color: "#24523e" }, votePillPending: { backgroundColor: "#f0e3c8", color: "#6b4f20" }, squadCard: { flex: 1, backgroundColor: "#f4efe4", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#e0d4be", gap: 8 }, squadLabel: { fontSize: 13, fontWeight: "700", color: "#5b665a", textTransform: "uppercase", letterSpacing: 0.7 }, voteCard: { backgroundColor: "#f5efe3", borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: "#e0d4be" }, feedbackCommentList: { gap: 8, marginTop: 4 }, feedbackCommentCard: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 10, borderWidth: 1, borderColor: "#e2d8c5", gap: 4 }, feedbackCommentComposer: { gap: 8, marginTop: 4 }, feedbackCommentInput: { minHeight: 72 }, voteOptionWrap: { gap: 4 }, voteOption: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" }, voteOptionSelected: { borderColor: "#4f8a6e", backgroundColor: "#dff0e5" }, voteOptionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }, voteCount: { fontSize: 14, fontWeight: "700", color: "#5b665a" }, voteResponseList: { fontSize: 13, color: "#5c6558", lineHeight: 18 }, inlineSummary: { marginTop: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#e2d8c5" }, memberCard: { backgroundColor: "#f7f1e5", borderRadius: 18, padding: 14, gap: 12, borderWidth: 1, borderColor: "#dfd1b7" }, memberCardSummary: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }, memberSummaryText: { flex: 1, gap: 2 }, memberSummaryRight: { flexDirection: "row", alignItems: "center", gap: 10 }, memberExpandIcon: { fontSize: 24, fontWeight: "700", color: "#5d4b36", width: 22, textAlign: "center" }, memberCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }, memberCardActions: { flexDirection: "row", gap: 8, alignItems: "center" }, memberHeaderText: { flex: 1, gap: 4 }, memberName: { fontSize: 20, fontWeight: "700", color: "#1f2a1f" }, memberNameCompact: { fontSize: 18, fontWeight: "700", color: "#1f2a1f" }, memberSubline: { fontSize: 14, color: "#6a725f" }, memberRankChip: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 }, memberRankChipText: { color: "#f7f4ee", fontWeight: "700" }, memberStatGrid: { flexDirection: "row", gap: 10 }, memberStatCard: { flex: 1, backgroundColor: "#fbf7ee", borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "#e3d8c3", gap: 6 }, memberStatLabel: { fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#6a725f" }, memberStatValue: { fontSize: 18, fontWeight: "700", color: "#1f2a1f" }, memberSection: { gap: 8 }, memberSectionLabel: { fontSize: 13, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#6a725f" }, rankFilterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, rankFilterButton: { backgroundColor: "#efe5d2", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: "#d8c6a6" }, rankFilterButtonActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, rankFilterButtonText: { color: "#544636", fontWeight: "700" }, rankFilterButtonTextActive: { color: "#f7f4ee" }, calendarMonthShell: { backgroundColor: "#f6f0e4", borderRadius: 18, padding: 12, borderWidth: 1, borderColor: "#e1d6c2", gap: 10 }, calendarMonthHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, calendarMonthArrow: { width: 40, height: 40, borderRadius: 999, backgroundColor: "#efe5d2", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#d8c6a6" }, calendarMonthArrowText: { fontSize: 24, fontWeight: "700", color: "#544636", marginTop: -2 }, calendarMonthTitle: { fontSize: 18, fontWeight: "700", color: "#213126" }, calendarWeekdayRow: { flexDirection: "row", justifyContent: "space-between", gap: 6 }, calendarWeekday: { flex: 1, textAlign: "center", fontSize: 12, fontWeight: "700", color: "#7a6a55", textTransform: "uppercase" }, calendarGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 }, calendarStrip: { flexDirection: "row", gap: 8 }, calendarDayCell: { width: "13.3%", minHeight: 88, backgroundColor: "#fbf7ee", borderRadius: 16, borderWidth: 1, borderColor: "#e2d8c5", paddingHorizontal: 6, paddingVertical: 8, alignItems: "center", justifyContent: "space-between" }, calendarDayCellCompact: { flex: 1, width: undefined, minHeight: 82 }, calendarDayCellMuted: { opacity: 0.5 }, calendarDayCellToday: { borderColor: "#6ca88a", borderWidth: 2 }, calendarDayCellSelected: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" }, calendarDayWeekLabel: { fontSize: 11, fontWeight: "700", color: "#6a725f", textTransform: "uppercase" }, calendarDayWeekLabelCompact: { fontSize: 12 }, calendarDayNumber: { fontSize: 26, fontWeight: "700", color: "#213126" }, calendarDayNumberCompact: { fontSize: 24 }, calendarDayTextMuted: { color: "#9b9384" }, calendarDayTextSelected: { color: "#f7f4ee" }, calendarEventBadge: { minWidth: 24, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#e1efe6", alignItems: "center", justifyContent: "center" }, calendarEventBadgeSelected: { backgroundColor: "#f7f4ee" }, calendarEventBadgeText: { fontSize: 12, fontWeight: "700", color: "#21563f" }, calendarEventBadgeTextSelected: { color: "#1f5c4d" }, calendarEventSpacer: { height: 24 }, calendarDetailCard: { backgroundColor: "#f3ede0", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#e1d6c2", gap: 10 }, calendarDetailHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }, calendarTimeButton: { justifyContent: "center" }, calendarWheelHeader: { flexDirection: "row", justifyContent: "space-around" }, calendarWheelRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 }, calendarWheelColumn: { width: 96, height: CALENDAR_WHEEL_ITEM_HEIGHT * 5, overflow: "hidden", borderRadius: 16, backgroundColor: "#f3eee1", borderWidth: 1, borderColor: "#ddd0b9" }, calendarWheelContent: { paddingVertical: CALENDAR_WHEEL_ITEM_HEIGHT * 2 }, calendarWheelItem: { height: CALENDAR_WHEEL_ITEM_HEIGHT, alignItems: "center", justifyContent: "center" }, calendarWheelText: { fontSize: 22, color: "#7a6a55", fontWeight: "600" }, calendarWheelTextActive: { color: "#1f2a1f", fontWeight: "700" }, calendarWheelHighlight: { position: "absolute", left: 0, right: 0, top: CALENDAR_WHEEL_ITEM_HEIGHT * 2, height: CALENDAR_WHEEL_ITEM_HEIGHT, borderTopWidth: 1, borderBottomWidth: 1, borderColor: "#cdbf9f", backgroundColor: "rgba(255,255,255,0.18)" }, calendarWheelDivider: { fontSize: 28, fontWeight: "700", color: "#544636" }, zombieSelectedCard: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e" }, zombiePlanCard: { backgroundColor: "#eef5ef", borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: "#cfe0d5" } });
 

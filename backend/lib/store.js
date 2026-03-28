@@ -230,9 +230,11 @@ function normalizeCalendarEntry(value) {
   const entryType = ["manual", "reminder", "linked_desert_storm", "linked_zombie_siege"].includes(value.entryType) ? value.entryType : "manual";
   const allDay = value.allDay !== false;
   const startDate = String(value.startDate || (typeof value.startsAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.startsAt) ? value.startsAt : value.startsAt ? String(value.startsAt).slice(0, 10) : "")).slice(0, 10);
+  const endDate = String(value.endDate || (typeof value.endAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.endAt) ? value.endAt : value.endAt ? String(value.endAt).slice(0, 10) : startDate)).slice(0, 10);
   const startTime = allDay ? "" : String(value.startTime || "").slice(0, 5);
   const endTime = allDay ? "" : String(value.endTime || "").slice(0, 5);
   const serverStartDate = allDay ? "" : String(value.serverStartDate || startDate).slice(0, 10);
+  const serverEndDate = allDay ? "" : String(value.serverEndDate || endDate || serverStartDate).slice(0, 10);
   const serverStartTime = allDay ? "" : String(value.serverStartTime || startTime).slice(0, 5);
   const serverEndTime = allDay ? "" : String(value.serverEndTime || endTime).slice(0, 5);
   const recurrence = normalizeCalendarRecurrence(value.recurrence);
@@ -248,9 +250,11 @@ function normalizeCalendarEntry(value) {
     allDay,
     eventTimeZone: normalizeCalendarTimeZone(value.eventTimeZone),
     startDate,
+    endDate,
     startTime,
     endTime,
     serverStartDate,
+    serverEndDate,
     serverStartTime,
     serverEndTime,
     timeInputMode: value.timeInputMode === "local" ? "local" : "server",
@@ -550,9 +554,11 @@ function createStore(config = {}) {
       allDay: entry.allDay !== false,
       eventTimeZone: entry.eventTimeZone || "UTC",
       startDate: entry.startDate || "",
+      endDate: entry.endDate || entry.startDate || "",
       startTime: entry.startTime || "",
       endTime: entry.endTime || "",
       serverStartDate: entry.serverStartDate || "",
+      serverEndDate: entry.serverEndDate || "",
       serverStartTime: entry.serverStartTime || "",
       serverEndTime: entry.serverEndTime || "",
       timeInputMode: entry.timeInputMode === "local" ? "local" : "server",
@@ -1404,9 +1410,11 @@ function createStore(config = {}) {
       allDay,
       eventTimeZone: normalizeCalendarTimeZone(payload.eventTimeZone),
       startDate: payload.startDate || "",
+      endDate: payload.endDate || payload.startDate || "",
       startTime: payload.startTime || "",
       endTime: payload.endTime || "",
       serverStartDate: payload.serverStartDate || payload.startDate || "",
+      serverEndDate: payload.serverEndDate || payload.endDate || payload.startDate || "",
       serverStartTime: payload.serverStartTime || payload.startTime || "",
       serverEndTime: payload.serverEndTime || payload.endTime || "",
       timeInputMode: payload.timeInputMode === "local" ? "local" : "server",
@@ -1456,9 +1464,11 @@ function createStore(config = {}) {
       allDay,
       eventTimeZone: normalizeCalendarTimeZone(payload.eventTimeZone || currentEntry.eventTimeZone || "UTC"),
       startDate: payload.startDate || "",
+      endDate: payload.endDate || payload.startDate || currentEntry.endDate || currentEntry.startDate || "",
       startTime: payload.startTime || "",
       endTime: payload.endTime || "",
       serverStartDate: payload.serverStartDate || payload.startDate || currentEntry.serverStartDate || currentEntry.startDate || "",
+      serverEndDate: payload.serverEndDate || payload.endDate || currentEntry.serverEndDate || currentEntry.endDate || currentEntry.serverStartDate || currentEntry.startDate || "",
       serverStartTime: payload.serverStartTime || payload.startTime || currentEntry.serverStartTime || currentEntry.startTime || "",
       serverEndTime: payload.serverEndTime || payload.endTime || currentEntry.serverEndTime || currentEntry.endTime || "",
       timeInputMode: payload.timeInputMode === "local" ? "local" : (currentEntry.timeInputMode === "local" ? "local" : "server"),
