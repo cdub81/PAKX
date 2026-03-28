@@ -232,6 +232,9 @@ function normalizeCalendarEntry(value) {
   const startDate = String(value.startDate || (typeof value.startsAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.startsAt) ? value.startsAt : value.startsAt ? String(value.startsAt).slice(0, 10) : "")).slice(0, 10);
   const startTime = allDay ? "" : String(value.startTime || "").slice(0, 5);
   const endTime = allDay ? "" : String(value.endTime || "").slice(0, 5);
+  const serverStartDate = allDay ? "" : String(value.serverStartDate || startDate).slice(0, 10);
+  const serverStartTime = allDay ? "" : String(value.serverStartTime || startTime).slice(0, 5);
+  const serverEndTime = allDay ? "" : String(value.serverEndTime || endTime).slice(0, 5);
   const recurrence = normalizeCalendarRecurrence(value.recurrence);
   return {
     id: value.id || crypto.randomUUID(),
@@ -243,10 +246,14 @@ function normalizeCalendarEntry(value) {
     linkedType: value.linkedType === "zombieSiege" ? "zombieSiege" : value.linkedType === "desertStorm" ? "desertStorm" : "",
     linkedEventId: String(value.linkedEventId || "").trim(),
     allDay,
-      eventTimeZone: normalizeCalendarTimeZone(value.eventTimeZone),
+    eventTimeZone: normalizeCalendarTimeZone(value.eventTimeZone),
     startDate,
     startTime,
     endTime,
+    serverStartDate,
+    serverStartTime,
+    serverEndTime,
+    timeInputMode: value.timeInputMode === "local" ? "local" : "server",
     recurrence,
     createdAt: value.createdAt || new Date().toISOString(),
     createdByPlayerId: value.createdByPlayerId || "",
@@ -545,6 +552,10 @@ function createStore(config = {}) {
       startDate: entry.startDate || "",
       startTime: entry.startTime || "",
       endTime: entry.endTime || "",
+      serverStartDate: entry.serverStartDate || "",
+      serverStartTime: entry.serverStartTime || "",
+      serverEndTime: entry.serverEndTime || "",
+      timeInputMode: entry.timeInputMode === "local" ? "local" : "server",
       recurrence: normalizeCalendarRecurrence(entry.recurrence),
       createdAt: entry.createdAt,
       createdByPlayerId: entry.createdByPlayerId,
@@ -1395,6 +1406,10 @@ function createStore(config = {}) {
       startDate: payload.startDate || "",
       startTime: payload.startTime || "",
       endTime: payload.endTime || "",
+      serverStartDate: payload.serverStartDate || payload.startDate || "",
+      serverStartTime: payload.serverStartTime || payload.startTime || "",
+      serverEndTime: payload.serverEndTime || payload.endTime || "",
+      timeInputMode: payload.timeInputMode === "local" ? "local" : "server",
       recurrence,
       createdByPlayerId: player.id,
       createdByName: player.name,
@@ -1443,6 +1458,10 @@ function createStore(config = {}) {
       startDate: payload.startDate || "",
       startTime: payload.startTime || "",
       endTime: payload.endTime || "",
+      serverStartDate: payload.serverStartDate || payload.startDate || currentEntry.serverStartDate || currentEntry.startDate || "",
+      serverStartTime: payload.serverStartTime || payload.startTime || currentEntry.serverStartTime || currentEntry.startTime || "",
+      serverEndTime: payload.serverEndTime || payload.endTime || currentEntry.serverEndTime || currentEntry.endTime || "",
+      timeInputMode: payload.timeInputMode === "local" ? "local" : (currentEntry.timeInputMode === "local" ? "local" : "server"),
       recurrence,
       leaderNotes: payload.leaderNotes || "",
       leaderOnly: payload.leaderOnly,
