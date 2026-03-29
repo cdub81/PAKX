@@ -20,6 +20,7 @@ export function DesertStormScreen({
   onCreateEvent,
   newEventTitle,
   onChangeNewEventTitle,
+  canCreateEvent,
   onSubmitVote,
   onOpenVote,
   onCloseVote,
@@ -67,7 +68,8 @@ export function DesertStormScreen({
     <AppCard styles={styles}>
       <SectionHeader eyebrow="Events" title="Active events" detail="Select a live event or create a new one without changing the event workflow." styles={styles} />
       {eventOptions.length ? <View style={styles.zombieEventList}>{eventOptions.map((event) => <Pressable key={event.id} style={[styles.voteCard, selectedEventId === event.id && styles.cardInfo]} onPress={() => onSelectEvent(event.id)}><View style={styles.cardHeaderRow}><View style={styles.listRowContent}><Text style={styles.cardTitle}>{event.title}</Text><Text style={styles.hint}>Created {String(event.createdAt || "").slice(0, 10)}</Text></View><StatusBadge label={getDesertStormStatusLabel(event.status)} tone={event.vote?.status === "open" ? "warning" : event.status === "published" ? "success" : "info"} styles={styles} /></View></Pressable>)}</View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>No active Desert Storm event</Text><Text style={styles.hint}>Create one to open voting and organize task forces.</Text></AppCard>}
-      {currentUserIsLeader ? <><TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Event title" /><PrimaryButton label="Create Event" onPress={onCreateEvent} styles={styles} /></> : null}
+      {currentUserIsLeader && canCreateEvent ? <><TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Event title" /><PrimaryButton label="Create Event" onPress={onCreateEvent} styles={styles} /></> : null}
+      {currentUserIsLeader && !canCreateEvent ? <Text style={styles.hint}>Finish or archive the current Desert Storm event before creating a new one.</Text> : null}
     </AppCard>
 
     {selectedEvent ? <>

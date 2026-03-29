@@ -1848,6 +1848,10 @@ function createStore(config = {}) {
       throw new Error("Alliance not found.");
     }
     alliance.desertStormEvents = Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents : [];
+    const activeEvent = alliance.desertStormEvents.find((entry) => entry && entry.status !== "completed" && entry.status !== "archived");
+    if (activeEvent) {
+      throw new Error("Finish or archive the current Desert Storm event before creating a new one.");
+    }
     const title = String(payload.title || "").trim() || `Desert Storm ${new Date().toISOString().slice(0, 10)}`;
     const event = normalizeDesertStormEvent({
       title,

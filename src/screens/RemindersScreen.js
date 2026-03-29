@@ -53,7 +53,7 @@ export function RemindersScreen({
     } catch {
       return null;
     }
-  }, [mode, title, notes, durationSeconds, dateKey, timeValue, localTimeZone]);
+  }, [mode, title, notes, durationSeconds, dateKey, timeValue, localTimeZone, now]);
 
   function getReminderModeLabel(value) {
     if (value === "serverTime") return `Server Time (${getReminderServerTimeLabel()})`;
@@ -141,7 +141,10 @@ export function RemindersScreen({
         <Pressable style={[styles.rankFilterButton, mode === "localTime" && styles.rankFilterButtonActive]} onPress={() => setMode("localTime")}><Text style={[styles.rankFilterButtonText, mode === "localTime" && styles.rankFilterButtonTextActive]}>At Local Time</Text></Pressable>
         <Pressable style={[styles.rankFilterButton, mode === "serverTime" && styles.rankFilterButtonActive]} onPress={() => setMode("serverTime")}><Text style={[styles.rankFilterButtonText, mode === "serverTime" && styles.rankFilterButtonTextActive]}>At Server Time</Text></Pressable>
       </View>
-      {mode === "elapsed" ? <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setDurationPickerVisible(true)}><Text style={styles.line}>Duration: {formatReminderDuration(durationSeconds)}</Text></Pressable> : null}
+      {mode === "elapsed" ? <>
+        <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setDurationPickerVisible(true)}><Text style={styles.line}>Duration: {formatReminderDuration(durationSeconds)}</Text></Pressable>
+        <Text style={styles.hint}>The countdown starts when you tap Create Reminder.</Text>
+      </> : null}
       {(mode === "localTime" || mode === "serverTime") ? <>
         <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setDatePickerVisible(true)}><Text style={styles.line}>Date: {dateKey}</Text></Pressable>
         <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setTimePickerVisible(true)}><Text style={styles.line}>Time: {timeValue}</Text></Pressable>

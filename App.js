@@ -11,8 +11,10 @@ import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankS
 import { FeedbackScreen } from "./src/screens/FeedbackScreen";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { DesertStormScreen } from "./src/screens/DesertStormScreen";
+import { EventsHubScreen } from "./src/screens/EventsHubScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
 import { MembersScreen } from "./src/screens/MembersScreen";
+import { MoreScreen } from "./src/screens/MoreScreen";
 import { RemindersScreen } from "./src/screens/RemindersScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { ZombieSiegeScreen } from "./src/screens/ZombieSiegeScreen";
@@ -28,7 +30,7 @@ const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
 const SESSION_STORAGE_KEY = "lwadmin-session";
 const LANGUAGE_STORAGE_KEY = "lwadmin-language";
 const PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY = "lwadmin-push-notifications-prompt-dismissed";
-const ALL_TABS = ["myInfo", "desertStorm", "players", "calendar", "reminders", "zombieSiege", "alliance", "feedback"];
+const ALL_TABS = ["home", "calendar", "events", "reminders", "more"];
 const emptyTaskForces = () => ({ taskForceA: { key: "taskForceA", label: "Task Force A", squads: [] }, taskForceB: { key: "taskForceB", label: "Task Force B", squads: [] } });
 const isLeader = (rank) => rank === "R5" || rank === "R4";
 const APP_VERSION = Application.nativeApplicationVersion || Constants.expoConfig?.version || "0.1.0";
@@ -457,14 +459,11 @@ function getCalendarWeekdayLabel(code, language) {
 }
 
 function tabLabel(tab, leader, joinRequests, t) {
-  if (tab === "myInfo") return t("tabMyInfo");
-  if (tab === "players") return t("tabMembers");
-  if (tab === "alliance") return `${t("tabAlliance")}${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
-  if (tab === "desertStorm") return "Desert Storm";
+  if (tab === "home") return "Home";
   if (tab === "calendar") return "Calendar";
+  if (tab === "events") return "Events";
   if (tab === "reminders") return t("tabReminders");
-  if (tab === "zombieSiege") return "Zombie Siege";
-  if (tab === "feedback") return t("tabFeedback");
+  if (tab === "more") return `More${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
   return t("tabDashboard");
 }
 
@@ -597,7 +596,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [joinRequest, setJoinRequest] = useState(null);
   const [joinRequests, setJoinRequests] = useState([]);
-  const [activeTab, setActiveTab] = useState("myInfo");
+  const [activeTab, setActiveTab] = useState("home");
+  const [eventsSelection, setEventsSelection] = useState("");
+  const [moreSelection, setMoreSelection] = useState("");
   const [alliancePreview, setAlliancePreview] = useState(null);
   const [playerModal, setPlayerModal] = useState(null);
   const [playerPickerMode, setPlayerPickerMode] = useState("voted");
@@ -659,7 +660,27 @@ export default function App() {
   const feedbackEntries = alliance?.feedbackEntries || [];
   const zombieSiegeEvents = alliance?.zombieSiegeEvents || [];
   const leader = currentUser ? isLeader(currentUser.rank) : false;
-  const tabs = leader ? ALL_TABS : ALL_TABS.filter((tab) => tab !== "players");
+  const tabs = ALL_TABS;
+
+  function openEventsDestination(destination) {
+    setActiveTab("events");
+    setEventsSelection(destination);
+  }
+
+  function openMoreDestination(destination) {
+    setActiveTab("more");
+    setMoreSelection(destination);
+  }
+
+  function handleTabPress(nextTab) {
+    setActiveTab(nextTab);
+    if (nextTab !== "events") {
+      setEventsSelection("");
+    }
+    if (nextTab !== "more") {
+      setMoreSelection("");
+    }
+  }
   const options = useMemo(() => createPlayerOptions(players), [players]);
   const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
   const archivedDesertStormEvents = useMemo(() => desertStormEvents.filter((event) => event.status === "archived"), [desertStormEvents]);
@@ -744,7 +765,9 @@ export default function App() {
     setAuthMode("");
     setSetupMode("join");
     setAlliancePreview(null);
-    setActiveTab("myInfo");
+    setActiveTab("home");
+    setEventsSelection("");
+    setMoreSelection("");
     setNewAllianceCode("");
     if (nextMessage) {
       setErrorMessage(nextMessage);
@@ -752,7 +775,7 @@ export default function App() {
   }
 
   function openDesertStormVoteArea(eventId = "") {
-    setActiveTab("desertStorm");
+    openEventsDestination("desertStorm");
     setDesertStormSection("vote");
     if (eventId) {
       setSelectedDesertStormEventId(eventId);
@@ -766,7 +789,7 @@ export default function App() {
       return;
     }
     if (entry.linkedType === "desertStorm") {
-      setActiveTab("desertStorm");
+      openEventsDestination("desertStorm");
       setDesertStormSection("vote");
       if (entry.linkedEventId) {
         setSelectedDesertStormEventId(entry.linkedEventId);
@@ -774,7 +797,7 @@ export default function App() {
       return;
     }
     if (entry.linkedType === "zombieSiege") {
-      setActiveTab("zombieSiege");
+      openEventsDestination("zombieSiege");
       if (entry.linkedEventId) {
         setSelectedZombieSiegeEventId(entry.linkedEventId);
       }
@@ -982,7 +1005,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!session.token || !session.backendUrl || !alliance || activeTab === "players") return undefined;
+    if (!session.token || !session.backendUrl || !alliance) return undefined;
     const intervalId = setInterval(() => {
       refresh().catch((error) => {
         handleRequestError(error).catch(() => {});
@@ -997,7 +1020,7 @@ export default function App() {
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
       } else if (data?.type === "reminder") {
-        setActiveTab("reminders");
+        handleTabPress("reminders");
       }
     }).catch(() => {});
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -1005,7 +1028,7 @@ export default function App() {
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
       } else if (data?.type === "reminder") {
-        setActiveTab("reminders");
+        handleTabPress("reminders");
       }
     });
     return () => subscription.remove();
@@ -1166,11 +1189,14 @@ export default function App() {
       },
       trigger: Platform.OS === "android"
         ? {
-            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            type: "date",
             date: fireDate,
             channelId: REMINDER_NOTIFICATION_CHANNEL_ID
           }
-        : fireDate
+        : {
+            type: "date",
+            date: fireDate
+          }
     });
   }
 
@@ -1196,6 +1222,7 @@ export default function App() {
         durationDays: draft.durationDays,
         durationHours: draft.durationHours,
         durationMinutes: draft.durationMinutes,
+        durationSeconds: draft.durationSeconds,
         dateKey: draft.dateKey,
         timeValue: draft.timeValue,
         localTimeZone: getReminderDeviceTimeZone()
@@ -1431,16 +1458,14 @@ export default function App() {
   return (
     <ScreenContainer>
         <View style={styles.screen}>
-          <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />
-          {leader && joinRequests.length ? <AppCard variant="warning" onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></AppCard> : null}
-          {activeTab === "myInfo" && desertStormVoteNeedsResponse ? <AppCard variant="info" onPress={() => openDesertStormVoteArea()}><View style={styles.bannerHeader}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><StatusBadge label="Response Needed" tone="warning" /></View><Text style={styles.voteBannerText}>Open the Desert Storm tab to submit your vote.</Text></AppCard> : null}
-          {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
-          {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
-            {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text></Pressable>)}
-          </ScrollView>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
-            {activeTab === "myInfo" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => setActiveTab("calendar")} onOpenReminders={() => setActiveTab("reminders")} onOpenZombieSiege={() => setActiveTab("zombieSiege")} onOpenFeedback={() => setActiveTab("feedback")} onOpenSettings={() => setActiveTab("alliance")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+          <View style={styles.screenContent}>
+            <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />
+            {leader && joinRequests.length ? <AppCard variant="warning" onPress={() => openMoreDestination("settings")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></AppCard> : null}
+            {activeTab === "home" && desertStormVoteNeedsResponse ? <AppCard variant="info" onPress={() => openDesertStormVoteArea()}><View style={styles.bannerHeader}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><StatusBadge label="Response Needed" tone="warning" /></View><Text style={styles.voteBannerText}>Open the Desert Storm event to submit your vote.</Text></AppCard> : null}
+            {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
+            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
+            {activeTab === "home" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => handleTabPress("calendar")} onOpenReminders={() => handleTabPress("reminders")} onOpenZombieSiege={() => openEventsDestination("zombieSiege")} onOpenFeedback={() => openMoreDestination("feedback")} onOpenSettings={() => openMoreDestination("settings")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
               const enabled = await syncPushNotifications({ requestPermission: true });
               if (!enabled) {
                 Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
@@ -1448,13 +1473,6 @@ export default function App() {
             })} onDismissPushNotificationsPrompt={() => run(async () => {
               await dismissPushNotificationsPrompt();
             })} t={t} /> : null}
-            {activeTab === "desertStorm" ? <DesertStormScreen styles={styles} section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
-              if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
-              setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
-              setPlayerPickerMode("voted");
-              setSearchText("");
-            }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
-            {activeTab === "players" && leader ? <MembersScreen styles={styles} players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
             {activeTab === "calendar" ? <CalendarScreen styles={styles} entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
               setNewCalendarEntryType(value);
               if (value === "linked_desert_storm") {
@@ -1469,18 +1487,37 @@ export default function App() {
                 setNewCalendarLinkedType("");
                 setNewCalendarLinkedEventId("");
               }
-            }} onChangeNewCalendarRepeat={setNewCalendarRepeat} onChangeNewCalendarRepeatEndDate={setNewCalendarRepeatEndDate} onToggleNewCalendarRepeatWeekday={(code) => setNewCalendarRepeatWeekdays((current) => toggleWeekdaySelection(current, code))} onChangeNewCalendarLinkedEventId={setNewCalendarLinkedEventId} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={handleSubmitCalendarEntry} onCancelEdit={resetCalendarForm} onEditEntry={beginCalendarEntryEdit} onDeleteEntry={(entryId) => run(async () => { if (editingCalendarEntryId === entryId) { resetCalendarForm(); } await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} onOpenLinkedEntry={openLinkedCalendarEntry} /> : null}
-            {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} /> : null}
-            {activeTab === "zombieSiege" ? <ZombieSiegeScreen styles={styles} events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
-            {activeTab === "alliance" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
-              const enabled = await syncPushNotifications({ requestPermission: true });
-              if (!enabled) {
-                Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
-              }
-            })} /> : null}
-            {activeTab === "feedback" ? <FeedbackScreen styles={styles} feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} t={t} /> : null}
-          </ScrollView>
-        </View>`r`n      <BottomSheetModal visible={Boolean(playerModal)} onClose={() => setPlayerModal(null)}>
+            }} onChangeNewCalendarRepeat={setNewCalendarRepeat} onChangeNewCalendarRepeatEndDate={setNewCalendarRepeatEndDate} onToggleNewCalendarRepeatWeekday={(code) => setNewCalendarRepeatWeekdays((current) => toggleWeekdaySelection(current, code))} onChangeNewCalendarLinkedEventId={setNewCalendarLinkedEventId} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={handleSubmitCalendarEntry} onCancelEdit={resetCalendarForm} onEditEntry={beginCalendarEntryEdit} onDeleteEntry={(entryId) => run(async () => { if (editingCalendarEntryId === entryId) { resetCalendarForm(); } await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} onOpenLinkedEntry={openLinkedCalendarEntry} helpers={{ startOfLocalDay, formatLocalDateKey, addLocalDays, parseLocalDateKey, isSameLocalDay, expandCalendarEntries, getCalendarTranslator, getLinkableCalendarEvents, buildCalendarTimedPreview, normalizeCalendarTimeZone, getServerTimeLabel, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_TIME_INPUT_MODES, formatCalendarDateButtonLabel, getCalendarWeekdayLabel, normalizeCalendarRecurrence }} CalendarTimePickerModal={CalendarTimePickerModal} CalendarDatePickerModal={CalendarDatePickerModal} /> : null}
+            {activeTab === "events" ? <EventsHubScreen styles={styles} selection={eventsSelection} onSelectDesertStorm={() => setEventsSelection("desertStorm")} onSelectZombieSiege={() => setEventsSelection("zombieSiege")} onBack={() => setEventsSelection("")} desertStormTitle={activeDesertStormEvent?.title || ""} zombieSiegeTitle={selectedZombieSiegeEvent?.title || zombieSiegeEvents[0]?.title || ""}>
+              {eventsSelection === "desertStorm" ? <DesertStormScreen styles={styles} section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
+                if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
+                setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
+                setPlayerPickerMode("voted");
+                setSearchText("");
+              }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} canCreateEvent={!desertStormEvents.length} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} helpers={{ getDesertStormStatusLabel, getDesertStormVoteOptionLabel }} /> : null}
+              {eventsSelection === "zombieSiege" ? <ZombieSiegeScreen styles={styles} events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
+            </EventsHubScreen> : null}
+            {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} /> : null}
+            {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} joinRequests={joinRequests} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
+              {moreSelection === "members" && leader ? <MembersScreen styles={styles} players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} RankSelector={RankSelector} rankOptions={RANK_OPTIONS} /> : null}
+              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+                const enabled = await syncPushNotifications({ requestPermission: true });
+                if (!enabled) {
+                  Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
+                }
+              })} LanguageSelector={LanguageSelector} RankSelector={RankSelector} powerInputHint={POWER_INPUT_HINT} /> : null}
+              {moreSelection === "feedback" ? <FeedbackScreen styles={styles} feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} appVersion={APP_VERSION} appBuild={APP_BUILD} t={t} /> : null}
+            </MoreScreen> : null}
+            </ScrollView>
+          </View>
+          <View style={styles.bottomTabBar}>
+            {tabs.map((tab) => <Pressable key={tab} style={[styles.bottomTabButton, activeTab === tab && styles.bottomTabButtonActive]} onPress={() => handleTabPress(tab)}>
+              <View style={[styles.bottomTabIndicator, activeTab === tab && styles.bottomTabIndicatorActive]} />
+              <Text style={[styles.bottomTabLabel, activeTab === tab && styles.bottomTabLabelActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text>
+            </Pressable>)}
+          </View>
+        </View>
+      <BottomSheetModal visible={Boolean(playerModal)} onClose={() => setPlayerModal(null)}>
         <KeyboardAvoidingView style={styles.modalKeyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
           <SectionHeader eyebrow="Assignment" title={t("choosePlayer")} detail="Choose from voted members or the full alliance without leaving the Desert Storm workflow." />
           {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
@@ -1511,7 +1548,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.bg },
   keyboardShell: { flex: 1 },
   loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: DESIGN_TOKENS.spacing.sm, padding: DESIGN_TOKENS.spacing.xl },
-  screen: { flex: 1, padding: DESIGN_TOKENS.spacing.md, gap: DESIGN_TOKENS.spacing.sm, backgroundColor: DESIGN_TOKENS.colors.bg },
+  screen: { flex: 1, paddingHorizontal: DESIGN_TOKENS.spacing.md, paddingTop: DESIGN_TOKENS.spacing.md, paddingBottom: DESIGN_TOKENS.spacing.sm, gap: DESIGN_TOKENS.spacing.sm, backgroundColor: DESIGN_TOKENS.colors.bg },
+  screenContent: { flex: 1, gap: DESIGN_TOKENS.spacing.sm },
   title: { fontSize: DESIGN_TOKENS.type.title, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
   hint: { fontSize: 14, color: DESIGN_TOKENS.colors.textMuted },
   line: { color: DESIGN_TOKENS.colors.textSoft, fontSize: DESIGN_TOKENS.type.body },
@@ -1570,7 +1608,14 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: DESIGN_TOKENS.colors.blue },
   tabText: { color: DESIGN_TOKENS.colors.textMuted, fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" },
   tabTextActive: { color: DESIGN_TOKENS.colors.text },
-  content: { flexGrow: 1, gap: 12, paddingBottom: 96 },
+  bottomTabBar: { flexDirection: "row", alignItems: "stretch", justifyContent: "space-between", gap: 8, backgroundColor: DESIGN_TOKENS.colors.bgElevated, borderRadius: DESIGN_TOKENS.radius.xl, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, paddingHorizontal: 8, paddingTop: 8, paddingBottom: Platform.OS === "ios" ? 10 : 8, shadowColor: "#000", shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: -4 }, elevation: 10 },
+  bottomTabButton: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6, minHeight: 58, borderRadius: DESIGN_TOKENS.radius.lg, paddingHorizontal: 4, paddingVertical: 8, backgroundColor: "transparent" },
+  bottomTabButtonActive: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt },
+  bottomTabIndicator: { width: 24, height: 3, borderRadius: DESIGN_TOKENS.radius.pill, backgroundColor: "transparent" },
+  bottomTabIndicatorActive: { backgroundColor: DESIGN_TOKENS.colors.green },
+  bottomTabLabel: { color: DESIGN_TOKENS.colors.textMuted, fontWeight: "700", fontSize: 11, textAlign: "center" },
+  bottomTabLabelActive: { color: DESIGN_TOKENS.colors.text },
+  content: { flexGrow: 1, gap: 12, paddingBottom: 24 },
   section: { gap: 8, marginTop: 8 },
   sectionTitle: { fontSize: 16, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
   disabled: { opacity: 0.55 },
@@ -1762,6 +1807,14 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
+
+
+
+
+
+
+
+
 
 
 

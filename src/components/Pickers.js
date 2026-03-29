@@ -21,7 +21,15 @@ function CalendarTimeWheelColumn({ value, values, onChange, styles, itemHeight }
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ y: index * itemHeight, animated: false });
     });
-  }, [itemHeight, value, values]);
+  }, [itemHeight, value]);
+
+  function commitScrollValue(offsetY) {
+    const index = Math.max(0, Math.min(values.length - 1, Math.round(offsetY / itemHeight)));
+    const nextValue = values[index]?.value;
+    if (nextValue !== undefined && nextValue !== value) {
+      onChange(nextValue);
+    }
+  }
 
   return <View style={styles.calendarWheelColumn}>
     <ScrollView
@@ -29,14 +37,10 @@ function CalendarTimeWheelColumn({ value, values, onChange, styles, itemHeight }
       showsVerticalScrollIndicator={false}
       snapToInterval={itemHeight}
       decelerationRate="fast"
+      scrollEventThrottle={16}
       contentContainerStyle={styles.calendarWheelContent}
-      onMomentumScrollEnd={(event) => {
-        const index = Math.max(0, Math.min(values.length - 1, Math.round(event.nativeEvent.contentOffset.y / itemHeight)));
-        const nextValue = values[index]?.value;
-        if (nextValue !== undefined && nextValue !== value) {
-          onChange(nextValue);
-        }
-      }}
+      onMomentumScrollEnd={(event) => commitScrollValue(event.nativeEvent.contentOffset.y)}
+      onScrollEndDrag={(event) => commitScrollValue(event.nativeEvent.contentOffset.y)}
     >
       {values.map((entry) => <Pressable key={`${entry.value}`} style={styles.calendarWheelItem} onPress={() => onChange(entry.value)}>
         <Text style={[styles.calendarWheelText, entry.value === value && styles.calendarWheelTextActive]}>{entry.label}</Text>
