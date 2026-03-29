@@ -996,6 +996,34 @@ function createStore(config = {}) {
     return messages;
   }
 
+  function buildAllianceBroadcastMessages(alliance, message, triggeringPlayerId = "") {
+    const normalizedMessage = String(message || "").trim();
+    if (!normalizedMessage) {
+      return [];
+    }
+    const uniqueTokens = new Set();
+    const messages = [];
+    alliance.players.forEach((member) => {
+      normalizeExpoPushTokens(member.expoPushTokens).forEach((expoPushToken) => {
+        if (uniqueTokens.has(expoPushToken)) {
+          return;
+        }
+        uniqueTokens.add(expoPushToken);
+        messages.push({
+          to: expoPushToken,
+          sound: "default",
+          title: `${alliance.name} Broadcast`,
+          body: normalizedMessage,
+          data: {
+            type: "allianceBroadcast",
+            playerId: triggeringPlayerId || ""
+          }
+        });
+      });
+    });
+    return messages;
+  }
+
   function isPlayerAssignedToDesertStorm(alliance, playerName) {
     return Object.values(alliance.taskForces || {}).some((taskForce) =>
       (taskForce.squads || []).some((squad) =>
@@ -1885,6 +1913,26 @@ function createStore(config = {}) {
     return publicPlayer(member, alliance.desertStormLayouts, alliance.desertStormEvents);
   }
 
+  function sendAllianceBroadcastPush(allianceId, player, message) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const normalizedMessage = String(message || "").trim();
+    if (!normalizedMessage) {
+      throw new Error("message is required.");
+    }
+    const messages = buildAllianceBroadcastMessages(alliance, normalizedMessage, player?.id || "");
+    if (messages.length) {
+      queueExpoPushMessages(messages);
+    }
+    return {
+      ok: true,
+      targetedDevices: messages.length,
+      message: normalizedMessage
+    };
+  }
+
   function setDesertStormVoteState(allianceId, eventId, player, status) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) throw new Error("Alliance not found.");
@@ -2289,6 +2337,7 @@ function createStore(config = {}) {
     listDesertStormEventsForAlliance,
     createDesertStormEvent,
     registerExpoPushToken,
+    sendAllianceBroadcastPush,
     submitDesertStormVote,
     setDesertStormVoteState,
     updateDesertStormEventSlot,

@@ -183,6 +183,20 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/leader-controls/broadcast-push") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      if (!body.message) {
+        sendError(response, 400, "message is required.");
+        return;
+      }
+      sendJson(response, 200, store.sendAllianceBroadcastPush(context.alliance.id, context.player, body.message));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/account/join-request") {
       const context = requireAuth(request, response);
       if (!context) {

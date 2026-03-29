@@ -331,6 +331,17 @@ export function registerExpoPushToken(baseUrl, token, expoPushToken) {
   });
 }
 
+export function sendAllianceBroadcastPush(baseUrl, token, message) {
+  return request(baseUrl, "/api/leader-controls/broadcast-push", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ message })
+  });
+}
+
 export function addFeedback(baseUrl, token, message) {
   return request(baseUrl, "/api/feedback", {
     method: "POST",
