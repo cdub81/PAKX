@@ -20,8 +20,8 @@ import { DESIGN_TOKENS } from "./src/theme/designSystem";
 import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createReminder as createReminderRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteReminder as deleteReminderRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, getReminders as getRemindersRequest, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateReminder as updateReminderRequest, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
-import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, findCurrentDesertStormEvent, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getAssignedPlayerNames, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
-import { getDesertStormStatusLabel, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
+import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
+import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormStatusLabel, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
 import { formatReminderCountdown, formatReminderDuration } from "./src/lib/uiFormatters";
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
@@ -38,15 +38,15 @@ const POWER_INPUT_HINT = "Please enter power value in millions. Ex. 12,700,000 =
 const REMINDER_NOTIFICATION_CHANNEL_ID = "reminders";
 const CALENDAR_TRANSLATIONS = {
   en: { title: "Alliance Calendar", hint: "Tap a day to see what is scheduled and what needs attention.", today: "Today", week: "Week", month: "Month", selectedDay: "Selected Day", noEventsScheduled: "No events scheduled", oneEventScheduled: "1 event scheduled", manyEventsScheduled: "{count} events scheduled", allDay: "All day", leaderOnly: "Leader Only", edit: "Edit", delete: "Delete", anchoredTo: "Anchored to {value}", linkedDesertStorm: "Linked to Desert Storm", linkedZombieSiege: "Linked to Zombie Siege", addedBy: "Added by {name}", nothingToday: "Nothing is scheduled for today.", tapAnotherDay: "Tap another day to review what is planned.", editEntry: "Edit Calendar Entry", addEntry: "Add Calendar Entry", manualEvent: "Manual Event", reminder: "Reminder", linkDesertStorm: "Link Desert Storm", linkZombieSiege: "Link Zombie Siege", eventTitle: "Event title", startDate: "Start Date", endDate: "End Date", chooseDate: "Choose Date", allDayEntry: "All-day entry", timeSpecificEntry: "Time-specific entry", startTime: "Start Time", endTime: "End Time", eventTimezone: "Event timezone (IANA, ex. America/Chicago)", chooseLinkedEvent: "Choose the linked event", repeat: "Repeat", noRepeat: "No Repeat", daily: "Daily", everyOtherDay: "Every Other Day", weekly: "Weekly", customWeekdays: "Custom Weekdays", repeatEndDate: "Repeat End Date", setRepeatEndDate: "Set Repeat End Date", clearRepeatEndDate: "Clear End Date", reminderPlaceholder: "What should members remember to do?", manualPlaceholder: "What should members know or do?", leaderNotes: "Leader-only notes", timezoneHint: "Timed entries are anchored to {value} and shown in each member's local time.", visibleToEveryone: "Visible To Everyone", leaderOnlyEntry: "Leader Only Entry", saveChanges: "Save Changes", addToCalendar: "Add To Calendar", cancelEditing: "Cancel Editing", repeatsDaily: "Repeats daily", repeatsEveryOtherDay: "Repeats every other day", repeatsWeekly: "Repeats weekly", repeatsWeekdays: "Repeats {value}", inputMode: "Enter Time As", inputModeHint: "Choose whether you are entering the time in server time or your own local time.", serverInputMode: "Server Time (UTC-2)", localInputMode: "My Local Time", timePreview: "Before You Save", previewEnteredAs: "Entered as {value}", serverTime: "Server Time", localTime: "My Local Time", memberLocalTime: "Your Local Time", recurringServerAnchor: "Recurring timed entries will follow Server Time (UTC-2).", pickStartTime: "Select Start Time", pickEndTime: "Select End Time", pickDate: "Select Date", chooseMonth: "Month", chooseDay: "Day", chooseYear: "Year", chooseHour: "Hour", chooseMinute: "Minute", done: "Done", dateRequiredError: "Choose a start date before saving.", endDateRequiredError: "Choose an end date before saving.", repeatEndDateError: "Choose a valid repeat end date or clear it.", startTimeRequiredError: "Choose a start time before saving.", endTimeRequiredError: "Choose an end time before saving.", endTimeInvalidError: "End time must be after start time" },
-  ko: { title: "얼라이언스 캘린더", hint: "날짜를 눌러 일정과 해야 할 일을 확인하세요.", today: "오늘", week: "주간", month: "월간", selectedDay: "선택한 날짜", noEventsScheduled: "예정된 일정이 없습니다", oneEventScheduled: "일정 1개", manyEventsScheduled: "일정 {count}개", allDay: "하루 종일", leaderOnly: "리더 전용", edit: "수정", delete: "삭제", anchoredTo: "{value} 기준", linkedDesertStorm: "데저트 스톰과 연결됨", linkedZombieSiege: "좀비 시즈와 연결됨", addedBy: "{name} 님이 추가", nothingToday: "오늘 예정된 일정이 없습니다.", tapAnotherDay: "다른 날짜를 눌러 계획을 확인하세요.", editEntry: "캘린더 항목 수정", addEntry: "캘린더 항목 추가", manualEvent: "수동 일정", reminder: "리마인더", linkDesertStorm: "데저트 스톰 연결", linkZombieSiege: "좀비 시즈 연결", eventTitle: "이벤트 제목", allDayEntry: "하루 종일 일정", timeSpecificEntry: "시간 지정 일정", startTime: "시작 HH:MM", endTime: "종료 HH:MM", eventTimezone: "이벤트 시간대 (IANA, 예: America/Chicago)", chooseLinkedEvent: "연결할 이벤트 선택", repeat: "반복", noRepeat: "반복 없음", daily: "매일", everyOtherDay: "격일", weekly: "매주", customWeekdays: "요일 지정", repeatEndDate: "반복 종료일 (선택 YYYY-MM-DD)", reminderPlaceholder: "멤버들이 무엇을 기억해야 하나요?", manualPlaceholder: "멤버들에게 무엇을 알려야 하나요?", leaderNotes: "리더 전용 메모", timezoneHint: "시간 지정 일정은 {value} 기준이며, 각 멤버의 현지 시간으로 표시됩니다.", visibleToEveryone: "전체 공개", leaderOnlyEntry: "리더 전용 일정", saveChanges: "변경 저장", addToCalendar: "캘린더에 추가", cancelEditing: "수정 취소", repeatsDaily: "매일 반복", repeatsEveryOtherDay: "격일 반복", repeatsWeekly: "매주 반복", repeatsWeekdays: "{value} 반복" },
-  es: { title: "Calendario de la alianza", hint: "Toca un día para ver lo programado y lo que requiere atención.", today: "Hoy", week: "Semana", month: "Mes", selectedDay: "Día seleccionado", noEventsScheduled: "No hay eventos programados", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Todo el día", leaderOnly: "Solo líderes", edit: "Editar", delete: "Eliminar", anchoredTo: "Anclado a {value}", linkedDesertStorm: "Vinculado a Desert Storm", linkedZombieSiege: "Vinculado a Zombie Siege", addedBy: "Agregado por {name}", nothingToday: "No hay nada programado para hoy.", tapAnotherDay: "Toca otro día para revisar lo planeado.", editEntry: "Editar entrada del calendario", addEntry: "Agregar entrada al calendario", manualEvent: "Evento manual", reminder: "Recordatorio", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "Título del evento", allDayEntry: "Evento de todo el día", timeSpecificEntry: "Evento con hora", startTime: "Inicio HH:MM", endTime: "Fin HH:MM", eventTimezone: "Zona horaria del evento (IANA, ej. America/Chicago)", chooseLinkedEvent: "Elige el evento vinculado", repeat: "Repetir", noRepeat: "No repetir", daily: "Diario", everyOtherDay: "Cada dos días", weekly: "Semanal", customWeekdays: "Días personalizados", repeatEndDate: "Fecha de fin de repetición (opcional YYYY-MM-DD)", reminderPlaceholder: "¿Qué deben recordar hacer los miembros?", manualPlaceholder: "¿Qué deben saber o hacer los miembros?", leaderNotes: "Notas solo para líderes", timezoneHint: "Las entradas con hora se anclan a {value} y se muestran en la hora local de cada miembro.", visibleToEveryone: "Visible para todos", leaderOnlyEntry: "Entrada solo para líderes", saveChanges: "Guardar cambios", addToCalendar: "Agregar al calendario", cancelEditing: "Cancelar edición", repeatsDaily: "Se repite a diario", repeatsEveryOtherDay: "Se repite cada dos días", repeatsWeekly: "Se repite semanalmente", repeatsWeekdays: "Se repite {value}" },
-  pt: { title: "Calendário da aliança", hint: "Toque em um dia para ver o que está programado e o que precisa de atenção.", today: "Hoje", week: "Semana", month: "Mês", selectedDay: "Dia selecionado", noEventsScheduled: "Nenhum evento programado", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Dia inteiro", leaderOnly: "Somente líderes", edit: "Editar", delete: "Excluir", anchoredTo: "Ancorado em {value}", linkedDesertStorm: "Vinculado ao Desert Storm", linkedZombieSiege: "Vinculado ao Zombie Siege", addedBy: "Adicionado por {name}", nothingToday: "Nada está programado para hoje.", tapAnotherDay: "Toque em outro dia para revisar o planejamento.", editEntry: "Editar entrada do calendário", addEntry: "Adicionar entrada ao calendário", manualEvent: "Evento manual", reminder: "Lembrete", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "Título do evento", allDayEntry: "Evento de dia inteiro", timeSpecificEntry: "Evento com horário", startTime: "Início HH:MM", endTime: "Fim HH:MM", eventTimezone: "Fuso do evento (IANA, ex. America/Chicago)", chooseLinkedEvent: "Escolha o evento vinculado", repeat: "Repetir", noRepeat: "Não repetir", daily: "Diariamente", everyOtherDay: "Dia sim, dia não", weekly: "Semanal", customWeekdays: "Dias personalizados", repeatEndDate: "Data final da repetição (opcional YYYY-MM-DD)", reminderPlaceholder: "O que os membros precisam lembrar de fazer?", manualPlaceholder: "O que os membros precisam saber ou fazer?", leaderNotes: "Notas apenas para líderes", timezoneHint: "Entradas com horário são ancoradas em {value} e mostradas no horário local de cada membro.", visibleToEveryone: "Visível para todos", leaderOnlyEntry: "Entrada só para líderes", saveChanges: "Salvar alterações", addToCalendar: "Adicionar ao calendário", cancelEditing: "Cancelar edição", repeatsDaily: "Repete diariamente", repeatsEveryOtherDay: "Repete em dias alternados", repeatsWeekly: "Repete semanalmente", repeatsWeekdays: "Repete {value}" }
+  ko: { title: "ì¼ë¼ì´ì¸ì¤ ìºë¦°ë", hint: "ë ì§ë¥¼ ëë¬ ì¼ì ê³¼ í´ì¼ í  ì¼ì íì¸íì¸ì.", today: "ì¤ë", week: "ì£¼ê°", month: "ìê°", selectedDay: "ì íí ë ì§", noEventsScheduled: "ìì ë ì¼ì ì´ ììµëë¤", oneEventScheduled: "ì¼ì  1ê°", manyEventsScheduled: "ì¼ì  {count}ê°", allDay: "íë£¨ ì¢ì¼", leaderOnly: "ë¦¬ë ì ì©", edit: "ìì ", delete: "ì­ì ", anchoredTo: "{value} ê¸°ì¤", linkedDesertStorm: "ë°ì í¸ ì¤í°ê³¼ ì°ê²°ë¨", linkedZombieSiege: "ì¢ë¹ ìì¦ì ì°ê²°ë¨", addedBy: "{name} ëì´ ì¶ê°", nothingToday: "ì¤ë ìì ë ì¼ì ì´ ììµëë¤.", tapAnotherDay: "ë¤ë¥¸ ë ì§ë¥¼ ëë¬ ê³íì íì¸íì¸ì.", editEntry: "ìºë¦°ë í­ëª© ìì ", addEntry: "ìºë¦°ë í­ëª© ì¶ê°", manualEvent: "ìë ì¼ì ", reminder: "ë¦¬ë§ì¸ë", linkDesertStorm: "ë°ì í¸ ì¤í° ì°ê²°", linkZombieSiege: "ì¢ë¹ ìì¦ ì°ê²°", eventTitle: "ì´ë²¤í¸ ì ëª©", allDayEntry: "íë£¨ ì¢ì¼ ì¼ì ", timeSpecificEntry: "ìê° ì§ì  ì¼ì ", startTime: "ìì HH:MM", endTime: "ì¢ë£ HH:MM", eventTimezone: "ì´ë²¤í¸ ìê°ë (IANA, ì: America/Chicago)", chooseLinkedEvent: "ì°ê²°í  ì´ë²¤í¸ ì í", repeat: "ë°ë³µ", noRepeat: "ë°ë³µ ìì", daily: "ë§¤ì¼", everyOtherDay: "ê²©ì¼", weekly: "ë§¤ì£¼", customWeekdays: "ìì¼ ì§ì ", repeatEndDate: "ë°ë³µ ì¢ë£ì¼ (ì í YYYY-MM-DD)", reminderPlaceholder: "ë©¤ë²ë¤ì´ ë¬´ìì ê¸°ìµí´ì¼ íëì?", manualPlaceholder: "ë©¤ë²ë¤ìê² ë¬´ìì ìë ¤ì¼ íëì?", leaderNotes: "ë¦¬ë ì ì© ë©ëª¨", timezoneHint: "ìê° ì§ì  ì¼ì ì {value} ê¸°ì¤ì´ë©°, ê° ë©¤ë²ì íì§ ìê°ì¼ë¡ íìë©ëë¤.", visibleToEveryone: "ì ì²´ ê³µê°", leaderOnlyEntry: "ë¦¬ë ì ì© ì¼ì ", saveChanges: "ë³ê²½ ì ì¥", addToCalendar: "ìºë¦°ëì ì¶ê°", cancelEditing: "ìì  ì·¨ì", repeatsDaily: "ë§¤ì¼ ë°ë³µ", repeatsEveryOtherDay: "ê²©ì¼ ë°ë³µ", repeatsWeekly: "ë§¤ì£¼ ë°ë³µ", repeatsWeekdays: "{value} ë°ë³µ" },
+  es: { title: "Calendario de la alianza", hint: "Toca un dÃ­a para ver lo programado y lo que requiere atenciÃ³n.", today: "Hoy", week: "Semana", month: "Mes", selectedDay: "DÃ­a seleccionado", noEventsScheduled: "No hay eventos programados", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Todo el dÃ­a", leaderOnly: "Solo lÃ­deres", edit: "Editar", delete: "Eliminar", anchoredTo: "Anclado a {value}", linkedDesertStorm: "Vinculado a Desert Storm", linkedZombieSiege: "Vinculado a Zombie Siege", addedBy: "Agregado por {name}", nothingToday: "No hay nada programado para hoy.", tapAnotherDay: "Toca otro dÃ­a para revisar lo planeado.", editEntry: "Editar entrada del calendario", addEntry: "Agregar entrada al calendario", manualEvent: "Evento manual", reminder: "Recordatorio", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃ­tulo del evento", allDayEntry: "Evento de todo el dÃ­a", timeSpecificEntry: "Evento con hora", startTime: "Inicio HH:MM", endTime: "Fin HH:MM", eventTimezone: "Zona horaria del evento (IANA, ej. America/Chicago)", chooseLinkedEvent: "Elige el evento vinculado", repeat: "Repetir", noRepeat: "No repetir", daily: "Diario", everyOtherDay: "Cada dos dÃ­as", weekly: "Semanal", customWeekdays: "DÃ­as personalizados", repeatEndDate: "Fecha de fin de repeticiÃ³n (opcional YYYY-MM-DD)", reminderPlaceholder: "Â¿QuÃ© deben recordar hacer los miembros?", manualPlaceholder: "Â¿QuÃ© deben saber o hacer los miembros?", leaderNotes: "Notas solo para lÃ­deres", timezoneHint: "Las entradas con hora se anclan a {value} y se muestran en la hora local de cada miembro.", visibleToEveryone: "Visible para todos", leaderOnlyEntry: "Entrada solo para lÃ­deres", saveChanges: "Guardar cambios", addToCalendar: "Agregar al calendario", cancelEditing: "Cancelar ediciÃ³n", repeatsDaily: "Se repite a diario", repeatsEveryOtherDay: "Se repite cada dos dÃ­as", repeatsWeekly: "Se repite semanalmente", repeatsWeekdays: "Se repite {value}" },
+  pt: { title: "CalendÃ¡rio da alianÃ§a", hint: "Toque em um dia para ver o que estÃ¡ programado e o que precisa de atenÃ§Ã£o.", today: "Hoje", week: "Semana", month: "MÃªs", selectedDay: "Dia selecionado", noEventsScheduled: "Nenhum evento programado", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Dia inteiro", leaderOnly: "Somente lÃ­deres", edit: "Editar", delete: "Excluir", anchoredTo: "Ancorado em {value}", linkedDesertStorm: "Vinculado ao Desert Storm", linkedZombieSiege: "Vinculado ao Zombie Siege", addedBy: "Adicionado por {name}", nothingToday: "Nada estÃ¡ programado para hoje.", tapAnotherDay: "Toque em outro dia para revisar o planejamento.", editEntry: "Editar entrada do calendÃ¡rio", addEntry: "Adicionar entrada ao calendÃ¡rio", manualEvent: "Evento manual", reminder: "Lembrete", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃ­tulo do evento", allDayEntry: "Evento de dia inteiro", timeSpecificEntry: "Evento com horÃ¡rio", startTime: "InÃ­cio HH:MM", endTime: "Fim HH:MM", eventTimezone: "Fuso do evento (IANA, ex. America/Chicago)", chooseLinkedEvent: "Escolha o evento vinculado", repeat: "Repetir", noRepeat: "NÃ£o repetir", daily: "Diariamente", everyOtherDay: "Dia sim, dia nÃ£o", weekly: "Semanal", customWeekdays: "Dias personalizados", repeatEndDate: "Data final da repetiÃ§Ã£o (opcional YYYY-MM-DD)", reminderPlaceholder: "O que os membros precisam lembrar de fazer?", manualPlaceholder: "O que os membros precisam saber ou fazer?", leaderNotes: "Notas apenas para lÃ­deres", timezoneHint: "Entradas com horÃ¡rio sÃ£o ancoradas em {value} e mostradas no horÃ¡rio local de cada membro.", visibleToEveryone: "VisÃ­vel para todos", leaderOnlyEntry: "Entrada sÃ³ para lÃ­deres", saveChanges: "Salvar alteraÃ§Ãµes", addToCalendar: "Adicionar ao calendÃ¡rio", cancelEditing: "Cancelar ediÃ§Ã£o", repeatsDaily: "Repete diariamente", repeatsEveryOtherDay: "Repete em dias alternados", repeatsWeekly: "Repete semanalmente", repeatsWeekdays: "Repete {value}" }
 };
 const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English" },
   { code: "ko", label: "???" },
-  { code: "es", label: "Espa�ol" },
-  { code: "pt", label: "Portugu�s" }
+  { code: "es", label: "Español" },
+  { code: "pt", label: "Português" }
 ];
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -106,7 +106,7 @@ const TRANSLATIONS = {
     submitFeedback: "Submit Feedback",
     allianceFeedback: "Alliance Feedback",
     noFeedback: "No feedback has been submitted yet.",
-    feedbackFrom: "From {name} • {date}",
+    feedbackFrom: "From {name} â¢ {date}",
     allianceTitle: "Alliance",
     accountLabel: "Account: {value}",
     allianceLabel: "Alliance: {value}",
@@ -153,131 +153,131 @@ const TRANSLATIONS = {
     resultLoss: "Loss"
   },
   ko: {
-    appTitle: "PAKX 얼라이언스 앱",
-    authSignIn: "로그인",
-    authCreateAccount: "계정 만들기",
-    username: "사용자 이름",
-    password: "비밀번호",
-    welcome: "{name}님, 환영합니다",
-    notInAlliance: "이 계정은 아직 얼라이언스에 연결되어 있지 않습니다.",
-    joinAlliance: "얼라이언스 가입",
-    createAlliance: "얼라이언스 생성",
-    allianceName: "얼라이언스 이름",
-    allianceCode: "얼라이언스 코드",
-    previewAlliance: "얼라이언스 미리보기",
-    foundAlliance: "찾음: {name}",
-    signOut: "로그아웃",
-    joinRequestPending: "가입 요청 대기 중",
-    pendingApproval: "R4 또는 R5의 승인을 기다리고 있습니다.",
-    refreshStatus: "상태 새로고침",
-    language: "언어",
-    signedInAs: "{name} ({rank})로 로그인됨",
-    playersWaiting: "{count}명의 플레이어가 승인 대기 중입니다",
-    onePlayerWaiting: "1명의 플레이어가 승인 대기 중입니다",
-    tapReviewRequests: "얼라이언스 탭에서 가입 요청을 확인하세요.",
-    restoringSession: "세션을 복원하는 중...",
-    sessionExpired: "세션이 만료되었습니다. 다시 로그인해 주세요.",
-    choosePlayer: "플레이어 선택",
-    votedMembers: "투표한 멤버",
-    entireAlliance: "전체 얼라이언스",
-    showingAllAlliance: "이 슬롯에 대해 얼라이언스 전체 멤버를 표시합니다.",
-    searchNameOrRank: "이름 또는 등급 검색",
-    clearSelection: "선택 해제",
-    noPlayersMatchSearch: "검색과 일치하는 플레이어가 없습니다.",
-    noMembersMatchVoteFilter: "디저트 스톰 투표 조건에 맞는 멤버가 없습니다.",
-    tabMyInfo: "내 정보",
-    tabMembers: "멤버",
-    tabAlliance: "설정",
-    tabTaskForceA: "태스크포스 A",
-    tabTaskForceB: "태스크포스 B",
-    tabDSHistory: "DS 기록",
-    tabFeedback: "피드백",
-    tabDashboard: "대시보드",
-    feedbackTitle: "앱 피드백",
-    feedbackHint: "앱에 대한 의견, 버그, 업데이트 제안을 남겨주세요.",
-    feedbackExample: "예시:\n디저트 스톰 기록 탭에 전투력 합계도 표시되면 좋겠습니다.",
-    submitFeedback: "피드백 보내기",
-    allianceFeedback: "얼라이언스 피드백",
-    noFeedback: "아직 등록된 피드백이 없습니다.",
-    feedbackFrom: "{name} • {date}",
-    allianceTitle: "얼라이언스",
-    accountLabel: "계정: {value}",
-    allianceLabel: "얼라이언스: {value}",
-    codeLabel: "코드: {value}",
-    signedInAsPlayer: "로그인 플레이어: {value}",
-    pendingJoinRequests: "대기 중인 가입 요청",
-    noPendingRequests: "대기 중인 가입 요청이 없습니다.",
-    requestedWithCode: "요청 코드: {code}",
-    approve: "승인",
-    reject: "거절",
-    rotateCode: "코드 변경",
-    updateCode: "코드 업데이트",
-    addMember: "멤버 추가",
-    name: "이름",
-    rank: "등급",
-    power: "전투력",
-    memberOptions: "멤버 옵션",
-    leaveAnyTime: "언제든지 얼라이언스를 떠날 수 있습니다.",
-    leaveAlliance: "얼라이언스 탈퇴",
-    leaveAllianceTitle: "얼라이언스 탈퇴",
-    leaveAllianceConfirm: "정말 이 얼라이언스를 떠나시겠습니까?",
-    cancel: "취소",
-    leave: "탈퇴",
-    signedInPlayer: "로그인한 플레이어",
-    totalBasePower: "총 기본 전투력",
-    totalSquadPower: "총 분대 전투력",
-    desertStormTitle: "디저트 스톰",
-    selectedForDesertStorm: "디저트 스톰에 선택됨",
-    notCurrentlyAssigned: "현재 배정되지 않음",
-    taskForceLabel: "태스크포스: {value}",
-    squadLabel: "분대: {value}",
-    slotLabel: "슬롯: {value}",
-    notListedInTaskForces: "현재 Task Force A 또는 Task Force B에 배정되어 있지 않습니다.",
-    desertStormRecord: "디저트 스톰 기록",
-    lockInsPlayed: "디저트 스톰 {count}회 플레이",
-    noLockedHistoryYet: "아직 잠긴 디저트 스톰 기록이 없습니다",
-    appearancesWillShow: "리더가 디저트 스톰 배치를 잠그면 여기에 참여 기록이 표시됩니다.",
-    basePowerSection: "기본 전투력",
-    squadPowerBreakdown: "분대 전투력 세부",
-    squadNumber: "{number} 분대",
-    resultPending: "대기 중",
-    resultWin: "승리",
-    resultLoss: "패배"
+    appTitle: "PAKX ì¼ë¼ì´ì¸ì¤ ì±",
+    authSignIn: "ë¡ê·¸ì¸",
+    authCreateAccount: "ê³ì  ë§ë¤ê¸°",
+    username: "ì¬ì©ì ì´ë¦",
+    password: "ë¹ë°ë²í¸",
+    welcome: "{name}ë, íìí©ëë¤",
+    notInAlliance: "ì´ ê³ì ì ìì§ ì¼ë¼ì´ì¸ì¤ì ì°ê²°ëì´ ìì§ ììµëë¤.",
+    joinAlliance: "ì¼ë¼ì´ì¸ì¤ ê°ì",
+    createAlliance: "ì¼ë¼ì´ì¸ì¤ ìì±",
+    allianceName: "ì¼ë¼ì´ì¸ì¤ ì´ë¦",
+    allianceCode: "ì¼ë¼ì´ì¸ì¤ ì½ë",
+    previewAlliance: "ì¼ë¼ì´ì¸ì¤ ë¯¸ë¦¬ë³´ê¸°",
+    foundAlliance: "ì°¾ì: {name}",
+    signOut: "ë¡ê·¸ìì",
+    joinRequestPending: "ê°ì ìì²­ ëê¸° ì¤",
+    pendingApproval: "R4 ëë R5ì ì¹ì¸ì ê¸°ë¤ë¦¬ê³  ììµëë¤.",
+    refreshStatus: "ìí ìë¡ê³ ì¹¨",
+    language: "ì¸ì´",
+    signedInAs: "{name} ({rank})ë¡ ë¡ê·¸ì¸ë¨",
+    playersWaiting: "{count}ëªì íë ì´ì´ê° ì¹ì¸ ëê¸° ì¤ìëë¤",
+    onePlayerWaiting: "1ëªì íë ì´ì´ê° ì¹ì¸ ëê¸° ì¤ìëë¤",
+    tapReviewRequests: "ì¼ë¼ì´ì¸ì¤ í­ìì ê°ì ìì²­ì íì¸íì¸ì.",
+    restoringSession: "ì¸ìì ë³µìíë ì¤...",
+    sessionExpired: "ì¸ìì´ ë§ë£ëììµëë¤. ë¤ì ë¡ê·¸ì¸í´ ì£¼ì¸ì.",
+    choosePlayer: "íë ì´ì´ ì í",
+    votedMembers: "í¬íí ë©¤ë²",
+    entireAlliance: "ì ì²´ ì¼ë¼ì´ì¸ì¤",
+    showingAllAlliance: "ì´ ì¬ë¡¯ì ëí´ ì¼ë¼ì´ì¸ì¤ ì ì²´ ë©¤ë²ë¥¼ íìí©ëë¤.",
+    searchNameOrRank: "ì´ë¦ ëë ë±ê¸ ê²ì",
+    clearSelection: "ì í í´ì ",
+    noPlayersMatchSearch: "ê²ìê³¼ ì¼ì¹íë íë ì´ì´ê° ììµëë¤.",
+    noMembersMatchVoteFilter: "ëì í¸ ì¤í° í¬í ì¡°ê±´ì ë§ë ë©¤ë²ê° ììµëë¤.",
+    tabMyInfo: "ë´ ì ë³´",
+    tabMembers: "ë©¤ë²",
+    tabAlliance: "ì¤ì ",
+    tabTaskForceA: "íì¤í¬í¬ì¤ A",
+    tabTaskForceB: "íì¤í¬í¬ì¤ B",
+    tabDSHistory: "DS ê¸°ë¡",
+    tabFeedback: "í¼ëë°±",
+    tabDashboard: "ëìë³´ë",
+    feedbackTitle: "ì± í¼ëë°±",
+    feedbackHint: "ì±ì ëí ìê²¬, ë²ê·¸, ìë°ì´í¸ ì ìì ë¨ê²¨ì£¼ì¸ì.",
+    feedbackExample: "ìì:\nëì í¸ ì¤í° ê¸°ë¡ í­ì ì í¬ë ¥ í©ê³ë íìëë©´ ì¢ê² ìµëë¤.",
+    submitFeedback: "í¼ëë°± ë³´ë´ê¸°",
+    allianceFeedback: "ì¼ë¼ì´ì¸ì¤ í¼ëë°±",
+    noFeedback: "ìì§ ë±ë¡ë í¼ëë°±ì´ ììµëë¤.",
+    feedbackFrom: "{name} â¢ {date}",
+    allianceTitle: "ì¼ë¼ì´ì¸ì¤",
+    accountLabel: "ê³ì : {value}",
+    allianceLabel: "ì¼ë¼ì´ì¸ì¤: {value}",
+    codeLabel: "ì½ë: {value}",
+    signedInAsPlayer: "ë¡ê·¸ì¸ íë ì´ì´: {value}",
+    pendingJoinRequests: "ëê¸° ì¤ì¸ ê°ì ìì²­",
+    noPendingRequests: "ëê¸° ì¤ì¸ ê°ì ìì²­ì´ ììµëë¤.",
+    requestedWithCode: "ìì²­ ì½ë: {code}",
+    approve: "ì¹ì¸",
+    reject: "ê±°ì ",
+    rotateCode: "ì½ë ë³ê²½",
+    updateCode: "ì½ë ìë°ì´í¸",
+    addMember: "ë©¤ë² ì¶ê°",
+    name: "ì´ë¦",
+    rank: "ë±ê¸",
+    power: "ì í¬ë ¥",
+    memberOptions: "ë©¤ë² ìµì",
+    leaveAnyTime: "ì¸ì ë ì§ ì¼ë¼ì´ì¸ì¤ë¥¼ ë ë  ì ììµëë¤.",
+    leaveAlliance: "ì¼ë¼ì´ì¸ì¤ íí´",
+    leaveAllianceTitle: "ì¼ë¼ì´ì¸ì¤ íí´",
+    leaveAllianceConfirm: "ì ë§ ì´ ì¼ë¼ì´ì¸ì¤ë¥¼ ë ëìê² ìµëê¹?",
+    cancel: "ì·¨ì",
+    leave: "íí´",
+    signedInPlayer: "ë¡ê·¸ì¸í íë ì´ì´",
+    totalBasePower: "ì´ ê¸°ë³¸ ì í¬ë ¥",
+    totalSquadPower: "ì´ ë¶ë ì í¬ë ¥",
+    desertStormTitle: "ëì í¸ ì¤í°",
+    selectedForDesertStorm: "ëì í¸ ì¤í°ì ì íë¨",
+    notCurrentlyAssigned: "íì¬ ë°°ì ëì§ ìì",
+    taskForceLabel: "íì¤í¬í¬ì¤: {value}",
+    squadLabel: "ë¶ë: {value}",
+    slotLabel: "ì¬ë¡¯: {value}",
+    notListedInTaskForces: "íì¬ Task Force A ëë Task Force Bì ë°°ì ëì´ ìì§ ììµëë¤.",
+    desertStormRecord: "ëì í¸ ì¤í° ê¸°ë¡",
+    lockInsPlayed: "ëì í¸ ì¤í° {count}í íë ì´",
+    noLockedHistoryYet: "ìì§ ì ê¸´ ëì í¸ ì¤í° ê¸°ë¡ì´ ììµëë¤",
+    appearancesWillShow: "ë¦¬ëê° ëì í¸ ì¤í° ë°°ì¹ë¥¼ ì ê·¸ë©´ ì¬ê¸°ì ì°¸ì¬ ê¸°ë¡ì´ íìë©ëë¤.",
+    basePowerSection: "ê¸°ë³¸ ì í¬ë ¥",
+    squadPowerBreakdown: "ë¶ë ì í¬ë ¥ ì¸ë¶",
+    squadNumber: "{number} ë¶ë",
+    resultPending: "ëê¸° ì¤",
+    resultWin: "ì¹ë¦¬",
+    resultLoss: "í¨ë°°"
   },
   es: {
     appTitle: "App de Alianza PAKX",
-    authSignIn: "Iniciar sesión",
+    authSignIn: "Iniciar sesiÃ³n",
     authCreateAccount: "Crear cuenta",
     username: "Usuario",
-    password: "Contraseña",
+    password: "ContraseÃ±a",
     welcome: "Bienvenido, {name}",
-    notInAlliance: "Esta cuenta todavía no está asociada a una alianza.",
+    notInAlliance: "Esta cuenta todavÃ­a no estÃ¡ asociada a una alianza.",
     joinAlliance: "Unirse a alianza",
     createAlliance: "Crear alianza",
     allianceName: "Nombre de la alianza",
-    allianceCode: "Código de alianza",
+    allianceCode: "CÃ³digo de alianza",
     previewAlliance: "Ver alianza",
     foundAlliance: "Encontrada: {name}",
-    signOut: "Cerrar sesión",
+    signOut: "Cerrar sesiÃ³n",
     joinRequestPending: "Solicitud de ingreso pendiente",
-    pendingApproval: "Tu solicitud está esperando la aprobación de un R4 o R5.",
+    pendingApproval: "Tu solicitud estÃ¡ esperando la aprobaciÃ³n de un R4 o R5.",
     refreshStatus: "Actualizar estado",
     language: "Idioma",
-    signedInAs: "Sesión iniciada como {name} ({rank})",
-    playersWaiting: "{count} jugadores esperan aprobación",
-    onePlayerWaiting: "1 jugador espera aprobación",
-    tapReviewRequests: "Toca para revisar solicitudes en la pestaña Alianza.",
-    restoringSession: "Restaurando tu sesión...",
-    sessionExpired: "Tu sesión expiró. Vuelve a iniciar sesión.",
+    signedInAs: "SesiÃ³n iniciada como {name} ({rank})",
+    playersWaiting: "{count} jugadores esperan aprobaciÃ³n",
+    onePlayerWaiting: "1 jugador espera aprobaciÃ³n",
+    tapReviewRequests: "Toca para revisar solicitudes en la pestaÃ±a Alianza.",
+    restoringSession: "Restaurando tu sesiÃ³n...",
+    sessionExpired: "Tu sesiÃ³n expirÃ³. Vuelve a iniciar sesiÃ³n.",
     choosePlayer: "Elegir jugador",
     votedMembers: "Miembros que votaron",
     entireAlliance: "Toda la alianza",
     showingAllAlliance: "Mostrando todos los miembros de la alianza para este puesto.",
     searchNameOrRank: "Buscar por nombre o rango",
-    clearSelection: "Quitar selección",
-    noPlayersMatchSearch: "No hay jugadores que coincidan con la búsqueda.",
+    clearSelection: "Quitar selecciÃ³n",
+    noPlayersMatchSearch: "No hay jugadores que coincidan con la bÃºsqueda.",
     noMembersMatchVoteFilter: "No hay miembros que coincidan con ese filtro de voto de Desert Storm.",
-    tabMyInfo: "Mi información",
+    tabMyInfo: "Mi informaciÃ³n",
     tabMembers: "Miembros",
     tabAlliance: "Configuracion",
     tabTaskForceA: "Task Force A",
@@ -287,23 +287,23 @@ const TRANSLATIONS = {
     tabDashboard: "Panel",
     feedbackTitle: "Comentarios de la app",
     feedbackHint: "Comparte comentarios, errores y mejoras recomendadas con la alianza.",
-    feedbackExample: "Ejemplo:\nCreo que el historial de Desert Storm debería mostrar también el poder total.",
+    feedbackExample: "Ejemplo:\nCreo que el historial de Desert Storm deberÃ­a mostrar tambiÃ©n el poder total.",
     submitFeedback: "Enviar comentario",
     allianceFeedback: "Comentarios de la alianza",
-    noFeedback: "Todavía no hay comentarios.",
-    feedbackFrom: "De {name} • {date}",
+    noFeedback: "TodavÃ­a no hay comentarios.",
+    feedbackFrom: "De {name} â¢ {date}",
     allianceTitle: "Alianza",
     accountLabel: "Cuenta: {value}",
     allianceLabel: "Alianza: {value}",
-    codeLabel: "Código: {value}",
-    signedInAsPlayer: "Sesión iniciada como: {value}",
+    codeLabel: "CÃ³digo: {value}",
+    signedInAsPlayer: "SesiÃ³n iniciada como: {value}",
     pendingJoinRequests: "Solicitudes pendientes",
     noPendingRequests: "No hay solicitudes pendientes.",
-    requestedWithCode: "Solicitó con el código {code}",
+    requestedWithCode: "SolicitÃ³ con el cÃ³digo {code}",
     approve: "Aprobar",
     reject: "Rechazar",
-    rotateCode: "Cambiar código",
-    updateCode: "Actualizar código",
+    rotateCode: "Cambiar cÃ³digo",
+    updateCode: "Actualizar cÃ³digo",
     addMember: "Agregar miembro",
     name: "Nombre",
     rank: "Rango",
@@ -312,7 +312,7 @@ const TRANSLATIONS = {
     leaveAnyTime: "Puedes salir de esta alianza en cualquier momento.",
     leaveAlliance: "Salir de la alianza",
     leaveAllianceTitle: "Salir de la alianza",
-    leaveAllianceConfirm: "¿Seguro que quieres salir de esta alianza?",
+    leaveAllianceConfirm: "Â¿Seguro que quieres salir de esta alianza?",
     cancel: "Cancelar",
     leave: "Salir",
     signedInPlayer: "Jugador conectado",
@@ -327,8 +327,8 @@ const TRANSLATIONS = {
     notListedInTaskForces: "No apareces actualmente en Task Force A ni Task Force B.",
     desertStormRecord: "Historial de Desert Storm",
     lockInsPlayed: "{count} Desert Storm jugados",
-    noLockedHistoryYet: "Todavía no hay historial bloqueado de Desert Storm",
-    appearancesWillShow: "Cuando los líderes bloqueen una alineación de Desert Storm, tus apariciones se mostrarán aquí.",
+    noLockedHistoryYet: "TodavÃ­a no hay historial bloqueado de Desert Storm",
+    appearancesWillShow: "Cuando los lÃ­deres bloqueen una alineaciÃ³n de Desert Storm, tus apariciones se mostrarÃ¡n aquÃ­.",
     basePowerSection: "Poder Base",
     squadPowerBreakdown: "Desglose de poder por escuadra",
     squadNumber: "Escuadra {number}",
@@ -337,95 +337,95 @@ const TRANSLATIONS = {
     resultLoss: "Derrota"
   },
   pt: {
-    appTitle: "App da Aliança PAKX",
+    appTitle: "App da AlianÃ§a PAKX",
     authSignIn: "Entrar",
     authCreateAccount: "Criar conta",
-    username: "Usuário",
+    username: "UsuÃ¡rio",
     password: "Senha",
     welcome: "Bem-vindo, {name}",
-    notInAlliance: "Esta conta ainda não está associada a uma aliança.",
-    joinAlliance: "Entrar na aliança",
-    createAlliance: "Criar aliança",
-    allianceName: "Nome da aliança",
-    allianceCode: "Código da aliança",
-    previewAlliance: "Ver aliança",
+    notInAlliance: "Esta conta ainda nÃ£o estÃ¡ associada a uma alianÃ§a.",
+    joinAlliance: "Entrar na alianÃ§a",
+    createAlliance: "Criar alianÃ§a",
+    allianceName: "Nome da alianÃ§a",
+    allianceCode: "CÃ³digo da alianÃ§a",
+    previewAlliance: "Ver alianÃ§a",
     foundAlliance: "Encontrada: {name}",
     signOut: "Sair",
     joinRequestPending: "Pedido de entrada pendente",
-    pendingApproval: "Seu pedido está aguardando aprovação de um R4 ou R5.",
+    pendingApproval: "Seu pedido estÃ¡ aguardando aprovaÃ§Ã£o de um R4 ou R5.",
     refreshStatus: "Atualizar status",
     language: "Idioma",
     signedInAs: "Conectado como {name} ({rank})",
-    playersWaiting: "{count} jogadores aguardando aprovação",
-    onePlayerWaiting: "1 jogador aguardando aprovação",
-    tapReviewRequests: "Toque para revisar pedidos na aba Aliança.",
-    restoringSession: "Restaurando sua sessão...",
-    sessionExpired: "Sua sessão expirou. Entre novamente.",
+    playersWaiting: "{count} jogadores aguardando aprovaÃ§Ã£o",
+    onePlayerWaiting: "1 jogador aguardando aprovaÃ§Ã£o",
+    tapReviewRequests: "Toque para revisar pedidos na aba AlianÃ§a.",
+    restoringSession: "Restaurando sua sessÃ£o...",
+    sessionExpired: "Sua sessÃ£o expirou. Entre novamente.",
     choosePlayer: "Escolher jogador",
     votedMembers: "Membros que votaram",
-    entireAlliance: "Aliança inteira",
-    showingAllAlliance: "Mostrando todos os membros da aliança para esta vaga.",
+    entireAlliance: "AlianÃ§a inteira",
+    showingAllAlliance: "Mostrando todos os membros da alianÃ§a para esta vaga.",
     searchNameOrRank: "Buscar por nome ou patente",
-    clearSelection: "Limpar seleção",
-    noPlayersMatchSearch: "Nenhum jogador corresponde à busca.",
+    clearSelection: "Limpar seleÃ§Ã£o",
+    noPlayersMatchSearch: "Nenhum jogador corresponde Ã  busca.",
     noMembersMatchVoteFilter: "Nenhum membro corresponde a esse filtro de voto do Desert Storm.",
-    tabMyInfo: "Minhas informações",
+    tabMyInfo: "Minhas informaÃ§Ãµes",
     tabMembers: "Membros",
     tabAlliance: "Configuracoes",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
-    tabDSHistory: "Histórico DS",
+    tabDSHistory: "HistÃ³rico DS",
     tabFeedback: "Feedback",
     tabDashboard: "Painel",
     feedbackTitle: "Feedback do app",
-    feedbackHint: "Compartilhe comentários, bugs e melhorias sugeridas com a aliança.",
-    feedbackExample: "Exemplo:\nAcho que o histórico do Desert Storm deveria mostrar também o poder total.",
+    feedbackHint: "Compartilhe comentÃ¡rios, bugs e melhorias sugeridas com a alianÃ§a.",
+    feedbackExample: "Exemplo:\nAcho que o histÃ³rico do Desert Storm deveria mostrar tambÃ©m o poder total.",
     submitFeedback: "Enviar feedback",
-    allianceFeedback: "Feedback da aliança",
+    allianceFeedback: "Feedback da alianÃ§a",
     noFeedback: "Nenhum feedback foi enviado ainda.",
-    feedbackFrom: "De {name} • {date}",
-    allianceTitle: "Aliança",
+    feedbackFrom: "De {name} â¢ {date}",
+    allianceTitle: "AlianÃ§a",
     accountLabel: "Conta: {value}",
-    allianceLabel: "Aliança: {value}",
-    codeLabel: "Código: {value}",
+    allianceLabel: "AlianÃ§a: {value}",
+    codeLabel: "CÃ³digo: {value}",
     signedInAsPlayer: "Conectado como: {value}",
     pendingJoinRequests: "Pedidos pendentes",
-    noPendingRequests: "Não há pedidos pendentes.",
-    requestedWithCode: "Solicitado com o código {code}",
+    noPendingRequests: "NÃ£o hÃ¡ pedidos pendentes.",
+    requestedWithCode: "Solicitado com o cÃ³digo {code}",
     approve: "Aprovar",
     reject: "Rejeitar",
-    rotateCode: "Alterar código",
-    updateCode: "Atualizar código",
+    rotateCode: "Alterar cÃ³digo",
+    updateCode: "Atualizar cÃ³digo",
     addMember: "Adicionar membro",
     name: "Nome",
     rank: "Patente",
     power: "Poder",
-    memberOptions: "Opções do membro",
-    leaveAnyTime: "Você pode sair desta aliança a qualquer momento.",
-    leaveAlliance: "Sair da aliança",
-    leaveAllianceTitle: "Sair da aliança",
-    leaveAllianceConfirm: "Tem certeza de que deseja sair desta aliança?",
+    memberOptions: "OpÃ§Ãµes do membro",
+    leaveAnyTime: "VocÃª pode sair desta alianÃ§a a qualquer momento.",
+    leaveAlliance: "Sair da alianÃ§a",
+    leaveAllianceTitle: "Sair da alianÃ§a",
+    leaveAllianceConfirm: "Tem certeza de que deseja sair desta alianÃ§a?",
     cancel: "Cancelar",
     leave: "Sair",
     signedInPlayer: "Jogador conectado",
     totalBasePower: "Poder Base Total",
-    totalSquadPower: "Poder Total de Esquadrão",
+    totalSquadPower: "Poder Total de EsquadrÃ£o",
     desertStormTitle: "Desert Storm",
     selectedForDesertStorm: "Selecionado para Desert Storm",
-    notCurrentlyAssigned: "Não atribuído no momento",
+    notCurrentlyAssigned: "NÃ£o atribuÃ­do no momento",
     taskForceLabel: "Task Force: {value}",
-    squadLabel: "Esquadrão: {value}",
-    slotLabel: "Posição: {value}",
-    notListedInTaskForces: "Você não está listado atualmente na Task Force A ou Task Force B.",
-    desertStormRecord: "Histórico do Desert Storm",
+    squadLabel: "EsquadrÃ£o: {value}",
+    slotLabel: "PosiÃ§Ã£o: {value}",
+    notListedInTaskForces: "VocÃª nÃ£o estÃ¡ listado atualmente na Task Force A ou Task Force B.",
+    desertStormRecord: "HistÃ³rico do Desert Storm",
     lockInsPlayed: "{count} Desert Storm jogados",
-    noLockedHistoryYet: "Ainda não há histórico travado de Desert Storm",
-    appearancesWillShow: "Quando os líderes travarem uma formação do Desert Storm, suas participações aparecerão aqui.",
+    noLockedHistoryYet: "Ainda nÃ£o hÃ¡ histÃ³rico travado de Desert Storm",
+    appearancesWillShow: "Quando os lÃ­deres travarem uma formaÃ§Ã£o do Desert Storm, suas participaÃ§Ãµes aparecerÃ£o aqui.",
     basePowerSection: "Poder Base",
-    squadPowerBreakdown: "Detalhamento do poder dos esquadrões",
-    squadNumber: "Esquadrão {number}",
+    squadPowerBreakdown: "Detalhamento do poder dos esquadrÃµes",
+    squadNumber: "EsquadrÃ£o {number}",
     resultPending: "Pendente",
-    resultWin: "Vitória",
+    resultWin: "VitÃ³ria",
     resultLoss: "Derrota"
   }
 };
@@ -580,6 +580,931 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
       </AppCard>
     </View>
   </ScreenContainer>;
+}
+
+export default function App() {
+  const [backendUrlInput, setBackendUrlInput] = useState(DEFAULT_BACKEND_URL);
+  const [language, setLanguage] = useState("en");
+  const [authMode, setAuthMode] = useState("");
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [setupMode, setSetupMode] = useState("join");
+  const [allianceCodeInput, setAllianceCodeInput] = useState("PAKX2023");
+  const [allianceNameInput, setAllianceNameInput] = useState("");
+  const [session, setSession] = useState({ backendUrl: "", token: "" });
+  const [account, setAccount] = useState(null);
+  const [alliance, setAlliance] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [joinRequest, setJoinRequest] = useState(null);
+  const [joinRequests, setJoinRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState("myInfo");
+  const [alliancePreview, setAlliancePreview] = useState(null);
+  const [playerModal, setPlayerModal] = useState(null);
+  const [playerPickerMode, setPlayerPickerMode] = useState("voted");
+  const [searchText, setSearchText] = useState("");
+  const [memberSearchText, setMemberSearchText] = useState("");
+  const [memberSortMode, setMemberSortMode] = useState("rankDesc");
+  const [memberRankFilter, setMemberRankFilter] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberRank, setNewMemberRank] = useState("R1");
+  const [newMemberPower, setNewMemberPower] = useState("");
+  const [reminders, setReminders] = useState([]);
+  const [calendarView, setCalendarView] = useState("today");
+  const [newCalendarTitle, setNewCalendarTitle] = useState("");
+  const [newCalendarDescription, setNewCalendarDescription] = useState("");
+  const [newCalendarDate, setNewCalendarDate] = useState(formatLocalDateKey(new Date()));
+  const [newCalendarEndDate, setNewCalendarEndDate] = useState(formatLocalDateKey(new Date()));
+  const [newCalendarStartTime, setNewCalendarStartTime] = useState("09:00");
+  const [newCalendarEndTime, setNewCalendarEndTime] = useState("10:00");
+  const [newCalendarTimeInputMode, setNewCalendarTimeInputMode] = useState("server");
+  const [newCalendarAllDay, setNewCalendarAllDay] = useState(true);
+  const [newCalendarEntryType, setNewCalendarEntryType] = useState("manual");
+  const [newCalendarRepeat, setNewCalendarRepeat] = useState("none");
+  const [newCalendarRepeatEndDate, setNewCalendarRepeatEndDate] = useState("");
+  const [newCalendarRepeatWeekdays, setNewCalendarRepeatWeekdays] = useState([]);
+  const [newCalendarLinkedType, setNewCalendarLinkedType] = useState("");
+  const [newCalendarLinkedEventId, setNewCalendarLinkedEventId] = useState("");
+  const [newCalendarEventTimeZone, setNewCalendarEventTimeZone] = useState(getDeviceTimeZone());
+  const [newCalendarLeaderNotes, setNewCalendarLeaderNotes] = useState("");
+  const [newCalendarLeaderOnly, setNewCalendarLeaderOnly] = useState(false);
+  const [editingCalendarEntryId, setEditingCalendarEntryId] = useState("");
+  const [newAllianceCode, setNewAllianceCode] = useState("");
+  const [newFeedbackText, setNewFeedbackText] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
+  const [pushPromptDismissed, setPushPromptDismissed] = useState(false);
+  const [notificationPermissionStatus, setNotificationPermissionStatus] = useState("unknown");
+  const [notificationSetupInFlight, setNotificationSetupInFlight] = useState(false);
+  const [selectedDesertStormEventId, setSelectedDesertStormEventId] = useState("");
+  const [desertStormSection, setDesertStormSection] = useState("vote");
+  const [newDesertStormEventTitle, setNewDesertStormEventTitle] = useState("");
+  const [desertStormMoveSource, setDesertStormMoveSource] = useState(null);
+  const [selectedZombieSiegeEventId, setSelectedZombieSiegeEventId] = useState("");
+  const [newZombieSiegeTitle, setNewZombieSiegeTitle] = useState("");
+  const [newZombieSiegeStartAt, setNewZombieSiegeStartAt] = useState(formatLocalDateTimeInput(new Date()));
+  const [newZombieSiegeEndAt, setNewZombieSiegeEndAt] = useState(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000)));
+  const [newZombieSiegeVoteClosesAt, setNewZombieSiegeVoteClosesAt] = useState(formatLocalDateTimeInput(new Date()));
+  const [newZombieSiegeThreshold, setNewZombieSiegeThreshold] = useState("");
+  const [calendarTimePickerTarget, setCalendarTimePickerTarget] = useState("");
+  const [calendarDatePickerTarget, setCalendarDatePickerTarget] = useState("");
+  const [calendarFormError, setCalendarFormError] = useState("");
+  const reminderSyncInFlight = useRef(false);
+  const t = useMemo(() => getTranslator(language), [language]);
+
+  const players = alliance?.players || [];
+  const calendarEntries = alliance?.calendarEntries || [];
+  const desertStormEvents = alliance?.desertStormEvents || [];
+  const feedbackEntries = alliance?.feedbackEntries || [];
+  const zombieSiegeEvents = alliance?.zombieSiegeEvents || [];
+  const leader = currentUser ? isLeader(currentUser.rank) : false;
+  const tabs = leader ? ALL_TABS : ALL_TABS.filter((tab) => tab !== "players");
+  const options = useMemo(() => createPlayerOptions(players), [players]);
+  const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
+  const archivedDesertStormEvents = useMemo(() => desertStormEvents.filter((event) => event.status === "archived"), [desertStormEvents]);
+  const selectedDesertStormEvent = useMemo(() => {
+    if (!desertStormEvents.length) return null;
+    return desertStormEvents.find((event) => event.id === selectedDesertStormEventId) || activeDesertStormEvent || desertStormEvents[0];
+  }, [desertStormEvents, selectedDesertStormEventId, activeDesertStormEvent]);
+  const desertStormLeaderTaskForces = selectedDesertStormEvent?.draftTaskForces || emptyTaskForces();
+  const desertStormMemberTaskForces = selectedDesertStormEvent?.publishedTaskForces || emptyTaskForces();
+  const desertStormVisibleTaskForces = leader ? desertStormLeaderTaskForces : desertStormMemberTaskForces;
+  const desertStormDashboard = useMemo(() => buildDashboard(desertStormVisibleTaskForces, options), [desertStormVisibleTaskForces, options]);
+  const taskForceA = useMemo(() => buildTaskForceView(desertStormVisibleTaskForces.taskForceA || emptyTaskForces().taskForceA, "Task Force A", options, desertStormDashboard.duplicatePlayers), [desertStormVisibleTaskForces, options, desertStormDashboard.duplicatePlayers]);
+  const taskForceB = useMemo(() => buildTaskForceView(desertStormVisibleTaskForces.taskForceB || emptyTaskForces().taskForceB, "Task Force B", options, desertStormDashboard.duplicatePlayers), [desertStormVisibleTaskForces, options, desertStormDashboard.duplicatePlayers]);
+  const selectedTaskForce = desertStormSection === "taskForceB" ? taskForceB : taskForceA;
+  const desertStormAssignment = useMemo(() => activeDesertStormEvent?.myAssignment || null, [activeDesertStormEvent]);
+  const assignedPlayerNames = useMemo(() => getAssignedPlayerNames(desertStormLeaderTaskForces, playerModal), [desertStormLeaderTaskForces, playerModal]);
+  const selectedZombieSiegeEvent = useMemo(() => {
+    if (!zombieSiegeEvents.length) return null;
+    return zombieSiegeEvents.find((event) => event.id === selectedZombieSiegeEventId) || zombieSiegeEvents[0];
+  }, [zombieSiegeEvents, selectedZombieSiegeEventId]);
+  const filteredOptions = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    const unassignedOptions = options.filter((player) => !assignedPlayerNames.has(player.name));
+    const roleFiltered = !playerModal || playerPickerMode === "all" ? unassignedOptions : unassignedOptions.filter((player) => {
+      const response = selectedDesertStormEvent?.vote?.responses?.find((entry) => entry.playerId === player.id);
+      if (!response) return false;
+      if (playerModal.memberType === "Sub") return response.optionId === "sub";
+      return response.optionId === "play";
+    });
+    return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
+  }, [options, searchText, playerModal, playerPickerMode, selectedDesertStormEvent, assignedPlayerNames]);
+  const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); const rankWeight = { R5: 5, R4: 4, R3: 3, R2: 2, R1: 1 }; const rankFilteredPlayers = memberRankFilter === "all" ? players : players.filter((p) => p.rank === memberRankFilter); const matchingPlayers = !q ? rankFilteredPlayers : rankFilteredPlayers.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); return [...matchingPlayers].sort((a, b) => memberSortMode === "name" ? a.name.localeCompare(b.name) : (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0) || a.name.localeCompare(b.name)); }, [players, memberSearchText, memberSortMode, memberRankFilter]);
+  const activeDesertStormVote = activeDesertStormEvent?.vote?.status === "open" ? activeDesertStormEvent.vote : null;
+  const desertStormVoteNeedsResponse = Boolean(activeDesertStormVote && !activeDesertStormVote.didVote);
+  const desertStormVoteSubmitted = Boolean(activeDesertStormVote && activeDesertStormVote.didVote);
+  const androidPushTemporarilyDisabled = Platform.OS === "android";
+  const shouldShowPushNotificationsPrompt = Boolean(session.token && alliance && currentUser && !androidPushTemporarilyDisabled && currentUser.desertStormVoteNotificationsEnabled !== false && !currentUser.hasExpoPushToken && notificationPermissionStatus !== "granted" && !pushPromptDismissed);
+  const todayCalendarEntries = useMemo(() => {
+    const todayKey = formatLocalDateKey(new Date());
+    return expandCalendarEntries(calendarEntries, todayKey, todayKey);
+  }, [calendarEntries]);
+  const editingCalendarEntry = useMemo(() => calendarEntries.find((entry) => entry.id === editingCalendarEntryId) || null, [calendarEntries, editingCalendarEntryId]);
+  const currentZombieSiegeAssignment = selectedZombieSiegeEvent?.myAssignment || null;
+
+  useEffect(() => {
+    if (!calendarFormError) {
+      return;
+    }
+    setCalendarFormError("");
+  }, [newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarRepeatEndDate, newCalendarTimeInputMode]);
+
+  useEffect(() => {
+    if (newCalendarAllDay) {
+      setCalendarTimePickerTarget("");
+    }
+  }, [newCalendarAllDay]);
+
+  useEffect(() => {
+    if (newCalendarAllDay) {
+      return;
+    }
+    if (newCalendarEndDate < newCalendarDate) {
+      setNewCalendarEndDate(newCalendarDate);
+      return;
+    }
+    const startMinutes = getTimeValueMinutes(newCalendarStartTime);
+    const endMinutes = getTimeValueMinutes(newCalendarEndTime);
+    if (newCalendarEndDate === newCalendarDate && startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
+      setNewCalendarEndTime(newCalendarStartTime);
+    }
+  }, [newCalendarAllDay, newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime]);
+
+  function clearSessionState(message = "") {
+    const nextMessage = typeof message === "string" ? message : "";
+    setSession({ backendUrl: "", token: "" });
+    setAccount(null);
+    setAlliance(null);
+    setCurrentUser(null);
+    setReminders([]);
+    setJoinRequest(null);
+    setJoinRequests([]);
+    setAuthMode("");
+    setSetupMode("join");
+    setAlliancePreview(null);
+    setActiveTab("myInfo");
+    setNewAllianceCode("");
+    if (nextMessage) {
+      setErrorMessage(nextMessage);
+    }
+  }
+
+  function openDesertStormVoteArea(eventId = "") {
+    setActiveTab("desertStorm");
+    setDesertStormSection("vote");
+    if (eventId) {
+      setSelectedDesertStormEventId(eventId);
+    } else if (activeDesertStormEvent?.id) {
+      setSelectedDesertStormEventId(activeDesertStormEvent.id);
+    }
+  }
+
+  function openLinkedCalendarEntry(entry) {
+    if (!entry?.linkedType) {
+      return;
+    }
+    if (entry.linkedType === "desertStorm") {
+      setActiveTab("desertStorm");
+      setDesertStormSection("vote");
+      if (entry.linkedEventId) {
+        setSelectedDesertStormEventId(entry.linkedEventId);
+      }
+      return;
+    }
+    if (entry.linkedType === "zombieSiege") {
+      setActiveTab("zombieSiege");
+      if (entry.linkedEventId) {
+        setSelectedZombieSiegeEventId(entry.linkedEventId);
+      }
+    }
+  }
+
+  function resetCalendarForm() {
+    setEditingCalendarEntryId("");
+    setNewCalendarTitle("");
+    setNewCalendarDescription("");
+    setNewCalendarDate(formatLocalDateKey(new Date()));
+    setNewCalendarEndDate(formatLocalDateKey(new Date()));
+    setNewCalendarStartTime("09:00");
+    setNewCalendarEndTime("10:00");
+    setNewCalendarTimeInputMode("server");
+    setNewCalendarAllDay(true);
+    setNewCalendarEntryType("manual");
+    setNewCalendarRepeat("none");
+    setNewCalendarRepeatEndDate("");
+    setNewCalendarRepeatWeekdays([]);
+    setNewCalendarLinkedType("");
+    setNewCalendarLinkedEventId("");
+    setNewCalendarEventTimeZone(getDeviceTimeZone());
+    setNewCalendarLeaderNotes("");
+    setNewCalendarLeaderOnly(false);
+    setCalendarTimePickerTarget("");
+    setCalendarDatePickerTarget("");
+    setCalendarFormError("");
+  }
+
+  function beginCalendarEntryEdit(entry) {
+    if (!entry) {
+      return;
+    }
+    const recurrence = normalizeCalendarRecurrence(entry);
+    setEditingCalendarEntryId(entry.sourceEntryId || entry.id || "");
+    setNewCalendarTitle(entry.title || "");
+    setNewCalendarDescription(entry.description || "");
+    setNewCalendarDate(entry.allDay !== false ? (entry.startDate || formatLocalDateKey(entry.startsAt || new Date())) : (entry.serverStartDate || entry.startDate || formatLocalDateKey(entry.startsAt || new Date())));
+    setNewCalendarEndDate(entry.allDay !== false ? (entry.endDate || entry.startDate || formatLocalDateKey(entry.endAt || entry.startsAt || new Date())) : (entry.serverEndDate || entry.endDate || entry.serverStartDate || entry.startDate || formatLocalDateKey(entry.endAt || entry.startsAt || new Date())));
+    setNewCalendarStartTime(entry.serverStartTime || entry.startTime || "09:00");
+    setNewCalendarEndTime(entry.serverEndTime || entry.endTime || "10:00");
+    setNewCalendarTimeInputMode("server");
+    setNewCalendarAllDay(entry.allDay !== false);
+    setNewCalendarEntryType(entry.entryType || "manual");
+    setNewCalendarRepeat(recurrence.repeat || "none");
+    setNewCalendarRepeatEndDate(recurrence.endDate || "");
+    setNewCalendarRepeatWeekdays(recurrence.weekdays || []);
+    setNewCalendarLinkedType(entry.linkedType || "");
+    setNewCalendarLinkedEventId(entry.linkedEventId || "");
+    setNewCalendarEventTimeZone(getDeviceTimeZone());
+    setNewCalendarLeaderNotes(entry.leaderNotes || "");
+    setNewCalendarLeaderOnly(Boolean(entry.leaderOnly));
+    setCalendarDatePickerTarget("");
+    setCalendarFormError("");
+    setActiveTab("calendar");
+  }
+
+  async function persistSession(nextSession) {
+    setSession(nextSession);
+    setBackendUrlInput(nextSession?.backendUrl || DEFAULT_BACKEND_URL);
+    if (nextSession?.token && nextSession?.backendUrl) {
+      await AsyncStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+      return;
+    }
+    await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+
+  async function changeLanguage(nextLanguage) {
+    setLanguage(nextLanguage);
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+  }
+
+  async function signOut(message = "") {
+    const nextMessage = typeof message === "string" ? message : "";
+    await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
+    clearSessionState(nextMessage);
+  }
+
+  async function dismissPushNotificationsPrompt() {
+    setPushPromptDismissed(true);
+    await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
+  }
+
+  async function syncPushNotifications({ requestPermission = false } = {}) {
+    if (!session.token || !session.backendUrl || !currentUser || !alliance) {
+      return false;
+    }
+    if (Platform.OS === "android") {
+      return false;
+    }
+    try {
+      setNotificationSetupInFlight(true);
+      let permission = await Notifications.getPermissionsAsync();
+      let status = permission.status || "undetermined";
+      if (status !== "granted" && requestPermission) {
+        permission = await Notifications.requestPermissionsAsync();
+        status = permission.status || "undetermined";
+      }
+      setNotificationPermissionStatus(status);
+      if (status !== "granted") {
+        return false;
+      }
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
+      if (!projectId) {
+        throw new Error("Expo project ID is missing for push notifications.");
+      }
+      const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+      const expoPushToken = String(tokenResponse?.data || "");
+      if (!expoPushToken) {
+        throw new Error("Unable to get an Expo push token for this device.");
+      }
+      await registerExpoPushTokenRequest(session.backendUrl, session.token, expoPushToken);
+      setPushPromptDismissed(true);
+      await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
+      await refresh();
+      return true;
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to enable push notifications.");
+      return false;
+    } finally {
+      setNotificationSetupInFlight(false);
+    }
+  }
+
+  async function handleRequestError(error) {
+    if (error?.status === 401) {
+      await signOut(t("sessionExpired"));
+      return;
+    }
+    setErrorMessage(error.message || "Request failed.");
+  }
+
+  async function run(work) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      await work();
+    } catch (error) {
+      await handleRequestError(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function refresh(token = session.token, backendUrl = session.backendUrl) {
+    const me = await getMe(backendUrl, token);
+    const reminderResponse = me.player ? await getRemindersRequest(backendUrl, token) : { reminders: [] };
+    setAccount(me.account);
+    setAlliance(me.alliance);
+    setCurrentUser(me.player);
+    setReminders(reminderResponse.reminders || []);
+    setJoinRequest(me.joinRequest || null);
+    setAlliancePreview(me.alliance ? { id: me.alliance.id, name: me.alliance.name, code: me.alliance.code, players: me.alliance.players } : null);
+    setNewAllianceCode(me.alliance?.code || "");
+    if (me.alliance && me.player && isLeader(me.player.rank)) {
+      const jr = await getJoinRequests(backendUrl, token);
+      setJoinRequests(jr.joinRequests || []);
+    } else {
+      setJoinRequests([]);
+    }
+  }
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(SESSION_STORAGE_KEY);
+        const storedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+        const storedPushPromptDismissed = await AsyncStorage.getItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY);
+        if (storedLanguage && TRANSLATIONS[storedLanguage]) {
+          setLanguage(storedLanguage);
+        }
+        if (alive) {
+          setPushPromptDismissed(storedPushPromptDismissed === "true");
+        }
+        try {
+          const permission = await Notifications.getPermissionsAsync();
+          if (alive) {
+            setNotificationPermissionStatus(permission.status || "undetermined");
+          }
+        } catch {
+          if (alive) {
+            setNotificationPermissionStatus("unknown");
+          }
+        }
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        if (!(parsed?.token && parsed?.backendUrl)) return;
+        if (!alive) return;
+        setSession(parsed);
+        setBackendUrlInput(parsed.backendUrl);
+        await refresh(parsed.token, parsed.backendUrl);
+      } catch (error) {
+        if (!alive) return;
+        await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
+        clearSessionState(error?.status === 401 ? t("sessionExpired") : "");
+      } finally {
+        if (alive) setSessionReady(true);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !alliance || activeTab === "players") return undefined;
+    const intervalId = setInterval(() => {
+      refresh().catch((error) => {
+        handleRequestError(error).catch(() => {});
+      });
+    }, 30000);
+    return () => clearInterval(intervalId);
+  }, [session.token, session.backendUrl, alliance, activeTab]);
+
+  useEffect(() => {
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      const data = response?.notification?.request?.content?.data || {};
+      if (data?.type === "desertStormVote") {
+        openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "reminder") {
+        setActiveTab("reminders");
+      }
+    }).catch(() => {});
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response?.notification?.request?.content?.data || {};
+      if (data?.type === "desertStormVote") {
+        openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "reminder") {
+        setActiveTab("reminders");
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !alliance || !currentUser) {
+      return;
+    }
+    if (Platform.OS === "android" || notificationPermissionStatus !== "granted" || currentUser.hasExpoPushToken) {
+      return;
+    }
+    syncPushNotifications().catch(() => {});
+  }, [session.token, session.backendUrl, alliance, currentUser?.id, currentUser?.hasExpoPushToken, notificationPermissionStatus]);
+
+  useEffect(() => {
+    if (!session.token || !session.backendUrl || !currentUser?.id || !reminders.length || reminderSyncInFlight.current) {
+      return;
+    }
+    let alive = true;
+    (async () => {
+      const permissionGranted = await ensureReminderNotificationPermission();
+      if (!alive || !permissionGranted || reminderSyncInFlight.current) {
+        return;
+      }
+      reminderSyncInFlight.current = true;
+      try {
+        for (const reminder of reminders) {
+          const fireAt = new Date(reminder.scheduledForUtc).getTime();
+          const isFuture = !Number.isNaN(fireAt) && fireAt > Date.now();
+          if (reminder.status === "active" && isFuture && !reminder.notificationId) {
+            const notificationId = await scheduleReminderNotification(reminder);
+            if (!alive) return;
+            await updateReminderRequest(session.backendUrl, session.token, reminder.id, { notificationId });
+          } else if ((!isFuture || reminder.status !== "active") && reminder.notificationId) {
+            await cancelReminderNotification(reminder.notificationId);
+            if (!alive) return;
+            await updateReminderRequest(session.backendUrl, session.token, reminder.id, { notificationId: "" });
+          }
+        }
+        if (alive) {
+          const reminderResponse = await getRemindersRequest(session.backendUrl, session.token);
+          if (alive) {
+            setReminders(reminderResponse.reminders || []);
+          }
+        }
+      } catch {
+        // Leave reminders intact if local notification reconciliation fails on a device.
+      } finally {
+        reminderSyncInFlight.current = false;
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [session.token, session.backendUrl, currentUser?.id, reminders]);
+
+  useEffect(() => {
+    if (!desertStormEvents.length) {
+      setSelectedDesertStormEventId("");
+      setDesertStormSection("vote");
+      setDesertStormMoveSource(null);
+      return;
+    }
+    if (!selectedDesertStormEventId || !desertStormEvents.some((event) => event.id === selectedDesertStormEventId)) {
+      setSelectedDesertStormEventId(activeDesertStormEvent?.id || desertStormEvents[0].id);
+    }
+  }, [desertStormEvents, selectedDesertStormEventId, activeDesertStormEvent]);
+
+  useEffect(() => {
+    setDesertStormMoveSource(null);
+  }, [selectedDesertStormEventId]);
+
+  useEffect(() => {
+    if (!zombieSiegeEvents.length) {
+      setSelectedZombieSiegeEventId("");
+      return;
+    }
+    if (!selectedZombieSiegeEventId || !zombieSiegeEvents.some((event) => event.id === selectedZombieSiegeEventId)) {
+      setSelectedZombieSiegeEventId(zombieSiegeEvents[0].id);
+    }
+  }, [zombieSiegeEvents, selectedZombieSiegeEventId]);
+
+  function saveMember(playerId, field, value) {
+    if (!(currentUser && (leader || currentUser.id === playerId))) return;
+    const payload = field === "overallPower"
+      ? { overallPower: Number.parseFloat(value) || 0 }
+      : field === "heroPower"
+        ? { heroPower: Number.parseFloat(value) || 0 }
+        : field === "squadPowers"
+          ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
+          : leader ? { [field]: value } : null;
+    if (!payload) return;
+    run(async () => { await updateMember(session.backendUrl, session.token, playerId, payload); await refresh(); });
+  }
+
+  function saveMyInfo(field, value) {
+    if (!currentUser) return;
+    const payload = field === "overallPower"
+      ? { overallPower: Number.parseFloat(value) || 0 }
+      : field === "heroPower"
+        ? { heroPower: Number.parseFloat(value) || 0 }
+      : field === "desertStormVoteNotificationsEnabled"
+        ? { desertStormVoteNotificationsEnabled: Boolean(value) }
+        : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
+    run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
+  }
+
+  const handleSetDesertStormVoteNotificationsEnabled = (enabled) => run(async () => {
+    if (enabled) {
+      setPushPromptDismissed(false);
+      await AsyncStorage.removeItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY);
+    }
+    await updateMember(session.backendUrl, session.token, currentUser.id, { desertStormVoteNotificationsEnabled: Boolean(enabled) });
+    await refresh();
+  });
+
+  async function ensureReminderNotificationPermission({ requestPermission = false } = {}) {
+    let permission = await Notifications.getPermissionsAsync();
+    let status = permission.status || "undetermined";
+    if (status !== "granted" && requestPermission) {
+      permission = await Notifications.requestPermissionsAsync();
+      status = permission.status || "undetermined";
+    }
+    return status === "granted";
+  }
+
+  async function ensureReminderNotificationChannel() {
+    if (Platform.OS !== "android") {
+      return;
+    }
+    await Notifications.setNotificationChannelAsync(REMINDER_NOTIFICATION_CHANNEL_ID, {
+      name: "Reminders",
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: DESIGN_TOKENS.colors.green
+    });
+  }
+
+  async function scheduleReminderNotification(reminder) {
+    if (!reminder?.scheduledForUtc) {
+      throw new Error("Reminder is missing a scheduled time.");
+    }
+    const fireDate = new Date(reminder.scheduledForUtc);
+    if (Number.isNaN(fireDate.getTime()) || fireDate.getTime() <= Date.now()) {
+      throw new Error("Reminder time must be in the future.");
+    }
+    await ensureReminderNotificationChannel();
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: reminder.title || "Reminder",
+        body: reminder.notes || "Your reminder is ready.",
+        ...(Platform.OS === "android" ? { sound: "default" } : {}),
+        data: {
+          type: "reminder",
+          reminderId: reminder.id
+        }
+      },
+      trigger: Platform.OS === "android"
+        ? {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: fireDate,
+            channelId: REMINDER_NOTIFICATION_CHANNEL_ID
+          }
+        : fireDate
+    });
+  }
+
+  async function cancelReminderNotification(notificationId) {
+    if (!notificationId) {
+      return;
+    }
+    try {
+      await Notifications.cancelScheduledNotificationAsync(notificationId);
+    } catch {
+      // Swallow device-specific notification cancellation failures.
+    }
+  }
+
+  async function handleCreateReminder(draft) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      const schedule = buildReminderSchedule({
+        mode: draft.mode,
+        title: draft.title,
+        notes: draft.notes,
+        durationDays: draft.durationDays,
+        durationHours: draft.durationHours,
+        durationMinutes: draft.durationMinutes,
+        dateKey: draft.dateKey,
+        timeValue: draft.timeValue,
+        localTimeZone: getReminderDeviceTimeZone()
+      });
+      const scheduledAt = new Date(schedule.scheduledForUtc).getTime();
+      if (Number.isNaN(scheduledAt) || scheduledAt <= Date.now()) {
+        throw new Error("Reminder time must be in the future.");
+      }
+      const permissionGranted = await ensureReminderNotificationPermission({ requestPermission: true });
+      if (!permissionGranted) {
+        throw new Error("Enable notifications on this device to create reminders.");
+      }
+      const created = await createReminderRequest(session.backendUrl, session.token, schedule);
+      try {
+        const notificationId = await scheduleReminderNotification(created);
+        await updateReminderRequest(session.backendUrl, session.token, created.id, { notificationId });
+      } catch (error) {
+        await deleteReminderRequest(session.backendUrl, session.token, created.id).catch(() => {});
+        throw error;
+      }
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelReminder(reminder) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      await cancelReminderNotification(reminder?.notificationId);
+      await updateReminderRequest(session.backendUrl, session.token, reminder.id, {
+        status: "cancelled",
+        notificationId: ""
+      });
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteReminder(reminder) {
+    try {
+      setLoading(true);
+      setErrorMessage("");
+      await cancelReminderNotification(reminder?.notificationId);
+      await deleteReminderRequest(session.backendUrl, session.token, reminder.id);
+      await refresh();
+      return true;
+    } catch (error) {
+      await handleRequestError(error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function validateCalendarForm() {
+    const calendarT = getCalendarTranslator(language);
+    if (!isValidDateKey(newCalendarDate)) {
+      return calendarT("dateRequiredError");
+    }
+    if (!isValidDateKey(newCalendarEndDate)) {
+      return calendarT("endDateRequiredError");
+    }
+    if (newCalendarRepeat !== "none" && newCalendarRepeatEndDate && !isValidDateKey(newCalendarRepeatEndDate)) {
+      return calendarT("repeatEndDateError");
+    }
+    if (newCalendarRepeat !== "none" && newCalendarRepeatEndDate && newCalendarRepeatEndDate < newCalendarDate) {
+      return calendarT("repeatEndDateError");
+    }
+    if (!newCalendarAllDay) {
+      if (!parseTimeValue(newCalendarStartTime || "")) {
+        return calendarT("startTimeRequiredError");
+      }
+      if (!parseTimeValue(newCalendarEndTime || "")) {
+        return calendarT("endTimeRequiredError");
+      }
+      const timePreview = buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "", newCalendarEndDate, newCalendarEndTime || "", newCalendarTimeInputMode, normalizeCalendarTimeZone(newCalendarEventTimeZone));
+      if (!timePreview) {
+        return calendarT("endTimeInvalidError");
+      }
+      if (timePreview.endAt && new Date(timePreview.endAt).getTime() <= new Date(timePreview.startsAt).getTime()) {
+        return calendarT("endTimeInvalidError");
+      }
+    } else if (newCalendarEndDate < newCalendarDate) {
+      return calendarT("endTimeInvalidError");
+    }
+    return "";
+  }
+
+  const handleSubmitCalendarEntry = () => run(async () => {
+    const validationError = validateCalendarForm();
+    if (validationError) {
+      setCalendarFormError(validationError);
+      return;
+    }
+    const entryType = newCalendarEntryType;
+    const linkedType = entryType === "linked_desert_storm" ? "desertStorm" : entryType === "linked_zombie_siege" ? "zombieSiege" : newCalendarLinkedType;
+    const resolvedLinkedEventId = resolveCalendarLinkedEventId(entryType, newCalendarLinkedEventId, desertStormEvents, zombieSiegeEvents, activeDesertStormEvent, selectedZombieSiegeEvent);
+    const localTimeZone = normalizeCalendarTimeZone(newCalendarEventTimeZone);
+    const timePreview = newCalendarAllDay ? null : buildCalendarTimedPreview(newCalendarDate, newCalendarStartTime || "00:00", newCalendarEndDate, newCalendarEndTime, newCalendarTimeInputMode, localTimeZone);
+    const startIso = newCalendarAllDay ? newCalendarDate : (timePreview?.startsAt || toUtcIsoFromTimeZone(newCalendarDate, newCalendarStartTime || "00:00", getServerTimeZone()));
+    const endIso = newCalendarAllDay ? newCalendarEndDate : (timePreview?.endAt || null);
+    const payload = {
+      title: newCalendarTitle,
+      description: newCalendarDescription,
+      startsAt: startIso,
+      endAt: endIso,
+      entryType,
+      linkedType,
+      linkedEventId: resolvedLinkedEventId,
+      allDay: newCalendarAllDay,
+      eventTimeZone: newCalendarAllDay ? localTimeZone : getServerTimeZone(),
+      startDate: newCalendarDate,
+      endDate: newCalendarEndDate,
+      startTime: newCalendarAllDay ? "" : (timePreview?.serverStartTime || newCalendarStartTime),
+      endTime: newCalendarAllDay ? "" : (timePreview?.serverEndTime || newCalendarEndTime),
+      serverStartDate: newCalendarAllDay ? "" : (timePreview?.serverStartDate || newCalendarDate),
+      serverEndDate: newCalendarAllDay ? "" : (timePreview?.serverEndDate || newCalendarEndDate),
+      serverStartTime: newCalendarAllDay ? "" : (timePreview?.serverStartTime || newCalendarStartTime),
+      serverEndTime: newCalendarAllDay ? "" : (timePreview?.serverEndTime || newCalendarEndTime),
+      timeInputMode: newCalendarAllDay ? "server" : newCalendarTimeInputMode,
+      recurrence: {
+        repeat: newCalendarRepeat,
+        weekdays: newCalendarRepeat === "custom_weekdays" ? newCalendarRepeatWeekdays : [],
+        endDate: newCalendarRepeatEndDate
+      },
+      leaderNotes: newCalendarLeaderNotes,
+      leaderOnly: newCalendarLeaderOnly
+    };
+    if (editingCalendarEntryId) {
+      await updateCalendarEntryRequest(session.backendUrl, session.token, editingCalendarEntryId, payload);
+    } else {
+      await createCalendarEntryRequest(session.backendUrl, session.token, payload);
+    }
+    resetCalendarForm();
+    await refresh();
+  });
+
+  async function handlePullToRefresh() {
+    if (!session.token || !alliance) return;
+    try {
+      setRefreshing(true);
+      setErrorMessage("");
+      await refresh();
+    } catch (error) {
+      await handleRequestError(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  const handleCreateDesertStormEvent = () => run(async () => {
+    const created = await createDesertStormEventRequest(session.backendUrl, session.token, { title: newDesertStormEventTitle });
+    setAlliance((current) => current ? {
+      ...current,
+      desertStormEvents: [created, ...(current.desertStormEvents || []).filter((event) => event.id !== created.id)]
+    } : current);
+    setSelectedDesertStormEventId(created.id);
+    setNewDesertStormEventTitle("");
+    setDesertStormSection("vote");
+    await refresh();
+  });
+
+  const handleDesertStormVote = (eventId, optionId) => run(async () => {
+    await submitDesertStormVoteRequest(session.backendUrl, session.token, eventId, optionId);
+    await refresh();
+  });
+
+  const handleDesertStormVoteState = (eventId, nextState) => run(async () => {
+    if (nextState === "open") {
+      await openDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    } else if (nextState === "closed") {
+      await closeDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    } else {
+      await reopenDesertStormVoteRequest(session.backendUrl, session.token, eventId);
+    }
+    await refresh();
+  });
+
+  const handleDesertStormPublish = (eventId) => run(async () => {
+    await publishDesertStormEventRequest(session.backendUrl, session.token, eventId);
+    await refresh();
+  });
+
+  const handleDesertStormEdit = (eventId) => run(async () => {
+    await beginDesertStormEditingRequest(session.backendUrl, session.token, eventId);
+    await refresh();
+  });
+
+  const handleDesertStormEnd = (eventId, result) => run(async () => {
+    await endDesertStormEventRequest(session.backendUrl, session.token, eventId, result);
+    await refresh();
+  });
+
+  const handleDesertStormArchive = (eventId) => run(async () => {
+    await archiveDesertStormEventRequest(session.backendUrl, session.token, eventId);
+    setSelectedDesertStormEventId("");
+    setDesertStormSection("vote");
+    setDesertStormMoveSource(null);
+    await refresh();
+  });
+
+  const handleDesertStormMove = (target) => run(async () => {
+    if (!selectedDesertStormEvent || !desertStormMoveSource) return;
+    await moveDesertStormEventPlayerRequest(session.backendUrl, session.token, selectedDesertStormEvent.id, {
+      sourceTaskForceKey: desertStormMoveSource.taskForceKey,
+      sourceSquadId: desertStormMoveSource.squadId,
+      sourceSlotId: desertStormMoveSource.slotId,
+      taskForceKey: target.taskForceKey,
+      squadId: target.squadId,
+      slotId: target.slotId
+    });
+    setDesertStormMoveSource(null);
+    await refresh();
+  });
+
+  if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="light" /><StatusBar barStyle="light-content" /><View style={styles.loadingScreen}><ActivityIndicator color={DESIGN_TOKENS.colors.green} size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
+
+  if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
+
+  if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => { const result = await joinAlliance(session.backendUrl, session.token, allianceCodeInput); setAccount(result.account); setJoinRequest(result.joinRequest); setAlliance(null); setCurrentUser(null); setAlliancePreview(result.alliance); setSetupMode("join"); })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
+
+  return (
+    <ScreenContainer>
+        <View style={styles.screen}>
+          <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />
+          {leader && joinRequests.length ? <AppCard variant="warning" onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></AppCard> : null}
+          {activeTab === "myInfo" && desertStormVoteNeedsResponse ? <AppCard variant="info" onPress={() => openDesertStormVoteArea()}><View style={styles.bannerHeader}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><StatusBadge label="Response Needed" tone="warning" /></View><Text style={styles.voteBannerText}>Open the Desert Storm tab to submit your vote.</Text></AppCard> : null}
+          {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
+          {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
+            {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text></Pressable>)}
+          </ScrollView>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
+            {activeTab === "myInfo" ? <HomeScreen currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => setActiveTab("calendar")} onOpenReminders={() => setActiveTab("reminders")} onOpenZombieSiege={() => setActiveTab("zombieSiege")} onOpenFeedback={() => setActiveTab("feedback")} onOpenSettings={() => setActiveTab("alliance")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              const enabled = await syncPushNotifications({ requestPermission: true });
+              if (!enabled) {
+                Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
+              }
+            })} onDismissPushNotificationsPrompt={() => run(async () => {
+              await dismissPushNotificationsPrompt();
+            })} t={t} /> : null}
+            {activeTab === "desertStorm" ? <DesertStormScreen section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
+              if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
+              setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
+              setPlayerPickerMode("voted");
+              setSearchText("");
+            }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} /> : null}
+            {activeTab === "players" && leader ? <MembersScreen players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} /> : null}
+            {activeTab === "calendar" ? <CalendarScreen entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
+              setNewCalendarEntryType(value);
+              if (value === "linked_desert_storm") {
+                const seed = buildDesertStormCalendarLinkSeed(activeDesertStormEvent || getLinkableCalendarEvents(desertStormEvents)[0]);
+                setNewCalendarLinkedType(seed.linkedType);
+                setNewCalendarLinkedEventId(seed.linkedEventId);
+              } else if (value === "linked_zombie_siege") {
+                const seed = buildZombieSiegeCalendarLinkSeed(selectedZombieSiegeEvent || getLinkableCalendarEvents(zombieSiegeEvents)[0]);
+                setNewCalendarLinkedType(seed.linkedType);
+                setNewCalendarLinkedEventId(seed.linkedEventId);
+              } else {
+                setNewCalendarLinkedType("");
+                setNewCalendarLinkedEventId("");
+              }
+            }} onChangeNewCalendarRepeat={setNewCalendarRepeat} onChangeNewCalendarRepeatEndDate={setNewCalendarRepeatEndDate} onToggleNewCalendarRepeatWeekday={(code) => setNewCalendarRepeatWeekdays((current) => toggleWeekdaySelection(current, code))} onChangeNewCalendarLinkedEventId={setNewCalendarLinkedEventId} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={handleSubmitCalendarEntry} onCancelEdit={resetCalendarForm} onEditEntry={beginCalendarEntryEdit} onDeleteEntry={(entryId) => run(async () => { if (editingCalendarEntryId === entryId) { resetCalendarForm(); } await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} onOpenLinkedEntry={openLinkedCalendarEntry} /> : null}
+            {activeTab === "reminders" ? <RemindersScreen reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} /> : null}
+            {activeTab === "zombieSiege" ? <ZombieSiegeScreen events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
+            {activeTab === "alliance" ? <SettingsScreen alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              const enabled = await syncPushNotifications({ requestPermission: true });
+              if (!enabled) {
+                Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
+              }
+            })} /> : null}
+            {activeTab === "feedback" ? <FeedbackScreen feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} t={t} /> : null}
+          </ScrollView>
+        </View>`r`n      <BottomSheetModal visible={Boolean(playerModal)} onClose={() => setPlayerModal(null)}>
+        <KeyboardAvoidingView style={styles.modalKeyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+          <SectionHeader eyebrow="Assignment" title={t("choosePlayer")} detail="Choose from voted members or the full alliance without leaving the Desert Storm workflow." />
+          {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
+          {playerModal && selectedDesertStormEvent?.vote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent.title}.` : `Showing members who voted "Play" for ${selectedDesertStormEvent.title}.`}</Text> : null}
+          {playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}
+          <TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
+          <ScrollView style={styles.modalListScroll} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+            <Pressable style={styles.pick} onPress={() => run(async () => {
+              await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });
+              setPlayerModal(null);
+              await refresh();
+            })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
+            {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => {
+              await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name });
+              setPlayerModal(null);
+              await refresh();
+            })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
+            {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && selectedDesertStormEvent?.vote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
+          </ScrollView>
+          <SecondaryButton label="Close" onPress={() => setPlayerModal(null)} />
+        </KeyboardAvoidingView>
+      </BottomSheetModal>
+    </ScreenContainer>
+  );
 }
 
 const styles = StyleSheet.create({
