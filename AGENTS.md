@@ -32,4 +32,19 @@ Read these files first:
 - Summarize changed files after implementation.
 - Include a concise manual verification checklist.
 
+## UI refactor guidance
+- Refactor the app toward a dark tactical design style.
+- Keep the existing navigation structure unless explicitly asked to change it.
+- Do not invent a Tools tab if one does not already exist.
+- If calculators exist, refactor their existing screen or entry point instead of creating new navigation.
+- Prefer a clean command-center feel: dark surfaces, high contrast, restrained accent colors, clear hierarchy.
+- Use card-based layouts instead of dense screen dumps.
+- Prefer one primary action per screen.
+- Status should be communicated visually with badges, color, and spacing, not long text blocks.
+- Preserve existing logic, permissions, and workflows during UI refactors.
+- Do not change business logic unless explicitly required by the UI task.
+- When adding pickers or modals, use anchored modal/bottom-sheet presentation rather than floating inline controls.
+- Preserve existing event workflows for Desert Storm, Zombie Siege, calendar, calculators, reminders, members, feedback, and settings while improving layout and presentation.
+- Refactor in milestones with validation after each milestone.
+
 Do not modify any other files.

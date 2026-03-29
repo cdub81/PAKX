@@ -28,9 +28,53 @@ const CALENDAR_TIME_INPUT_MODES = [
   { id: "local", label: "My Local Time" }
 ];
 const CALENDAR_WHEEL_ITEM_HEIGHT = 40;
-const CALENDAR_MODAL_BACKDROP_STYLE = { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(20, 26, 20, 0.38)" };
-const CALENDAR_MODAL_SHEET_SHELL_STYLE = { width: "100%" };
-const CALENDAR_MODAL_CARD_STYLE = { backgroundColor: "#fbf7ee", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 24, gap: 14, borderTopWidth: 1, borderLeftWidth: 1, borderRightWidth: 1, borderColor: "#e2d8c5" };
+const DESIGN_TOKENS = {
+  colors: {
+    bg: "#0b1116",
+    bgElevated: "#111a22",
+    surface: "#141f29",
+    surfaceAlt: "#1a2631",
+    surfaceSoft: "#1f2d39",
+    border: "#273847",
+    borderStrong: "#355064",
+    text: "#eef5f7",
+    textMuted: "#95a8b5",
+    textSoft: "#b8c7d0",
+    green: "#4fc38a",
+    greenSoft: "#153426",
+    yellow: "#e3bf57",
+    yellowSoft: "#3a3116",
+    blue: "#56a4e8",
+    blueSoft: "#162d42",
+    red: "#e36d6d",
+    redSoft: "#3e1f24",
+    purple: "#a783f2",
+    purpleSoft: "#2d2147",
+    overlay: "rgba(4, 10, 15, 0.76)"
+  },
+  spacing: {
+    xxs: 4,
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24
+  },
+  radius: {
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    pill: 999
+  },
+  type: {
+    title: 30,
+    cardTitle: 22,
+    sectionTitle: 16,
+    body: 15,
+    meta: 12
+  }
+};
 const CALENDAR_TRANSLATIONS = {
   en: { title: "Alliance Calendar", hint: "Tap a day to see what is scheduled and what needs attention.", today: "Today", week: "Week", month: "Month", selectedDay: "Selected Day", noEventsScheduled: "No events scheduled", oneEventScheduled: "1 event scheduled", manyEventsScheduled: "{count} events scheduled", allDay: "All day", leaderOnly: "Leader Only", edit: "Edit", delete: "Delete", anchoredTo: "Anchored to {value}", linkedDesertStorm: "Linked to Desert Storm", linkedZombieSiege: "Linked to Zombie Siege", addedBy: "Added by {name}", nothingToday: "Nothing is scheduled for today.", tapAnotherDay: "Tap another day to review what is planned.", editEntry: "Edit Calendar Entry", addEntry: "Add Calendar Entry", manualEvent: "Manual Event", reminder: "Reminder", linkDesertStorm: "Link Desert Storm", linkZombieSiege: "Link Zombie Siege", eventTitle: "Event title", startDate: "Start Date", endDate: "End Date", chooseDate: "Choose Date", allDayEntry: "All-day entry", timeSpecificEntry: "Time-specific entry", startTime: "Start Time", endTime: "End Time", eventTimezone: "Event timezone (IANA, ex. America/Chicago)", chooseLinkedEvent: "Choose the linked event", repeat: "Repeat", noRepeat: "No Repeat", daily: "Daily", everyOtherDay: "Every Other Day", weekly: "Weekly", customWeekdays: "Custom Weekdays", repeatEndDate: "Repeat End Date", setRepeatEndDate: "Set Repeat End Date", clearRepeatEndDate: "Clear End Date", reminderPlaceholder: "What should members remember to do?", manualPlaceholder: "What should members know or do?", leaderNotes: "Leader-only notes", timezoneHint: "Timed entries are anchored to {value} and shown in each member's local time.", visibleToEveryone: "Visible To Everyone", leaderOnlyEntry: "Leader Only Entry", saveChanges: "Save Changes", addToCalendar: "Add To Calendar", cancelEditing: "Cancel Editing", repeatsDaily: "Repeats daily", repeatsEveryOtherDay: "Repeats every other day", repeatsWeekly: "Repeats weekly", repeatsWeekdays: "Repeats {value}", inputMode: "Enter Time As", inputModeHint: "Choose whether you are entering the time in server time or your own local time.", serverInputMode: "Server Time (UTC-2)", localInputMode: "My Local Time", timePreview: "Before You Save", previewEnteredAs: "Entered as {value}", serverTime: "Server Time", localTime: "My Local Time", memberLocalTime: "Your Local Time", recurringServerAnchor: "Recurring timed entries will follow Server Time (UTC-2).", pickStartTime: "Select Start Time", pickEndTime: "Select End Time", pickDate: "Select Date", chooseMonth: "Month", chooseDay: "Day", chooseYear: "Year", chooseHour: "Hour", chooseMinute: "Minute", done: "Done", dateRequiredError: "Choose a start date before saving.", endDateRequiredError: "Choose an end date before saving.", repeatEndDateError: "Choose a valid repeat end date or clear it.", startTimeRequiredError: "Choose a start time before saving.", endTimeRequiredError: "Choose an end time before saving.", endTimeInvalidError: "End time must be after start time" },
   ko: { title: "얼라이언스 캘린더", hint: "날짜를 눌러 일정과 해야 할 일을 확인하세요.", today: "오늘", week: "주간", month: "월간", selectedDay: "선택한 날짜", noEventsScheduled: "예정된 일정이 없습니다", oneEventScheduled: "일정 1개", manyEventsScheduled: "일정 {count}개", allDay: "하루 종일", leaderOnly: "리더 전용", edit: "수정", delete: "삭제", anchoredTo: "{value} 기준", linkedDesertStorm: "데저트 스톰과 연결됨", linkedZombieSiege: "좀비 시즈와 연결됨", addedBy: "{name} 님이 추가", nothingToday: "오늘 예정된 일정이 없습니다.", tapAnotherDay: "다른 날짜를 눌러 계획을 확인하세요.", editEntry: "캘린더 항목 수정", addEntry: "캘린더 항목 추가", manualEvent: "수동 일정", reminder: "리마인더", linkDesertStorm: "데저트 스톰 연결", linkZombieSiege: "좀비 시즈 연결", eventTitle: "이벤트 제목", allDayEntry: "하루 종일 일정", timeSpecificEntry: "시간 지정 일정", startTime: "시작 HH:MM", endTime: "종료 HH:MM", eventTimezone: "이벤트 시간대 (IANA, 예: America/Chicago)", chooseLinkedEvent: "연결할 이벤트 선택", repeat: "반복", noRepeat: "반복 없음", daily: "매일", everyOtherDay: "격일", weekly: "매주", customWeekdays: "요일 지정", repeatEndDate: "반복 종료일 (선택 YYYY-MM-DD)", reminderPlaceholder: "멤버들이 무엇을 기억해야 하나요?", manualPlaceholder: "멤버들에게 무엇을 알려야 하나요?", leaderNotes: "리더 전용 메모", timezoneHint: "시간 지정 일정은 {value} 기준이며, 각 멤버의 현지 시간으로 표시됩니다.", visibleToEveryone: "전체 공개", leaderOnlyEntry: "리더 전용 일정", saveChanges: "변경 저장", addToCalendar: "캘린더에 추가", cancelEditing: "수정 취소", repeatsDaily: "매일 반복", repeatsEveryOtherDay: "격일 반복", repeatsWeekly: "매주 반복", repeatsWeekdays: "{value} 반복" },
@@ -467,6 +511,113 @@ function tabLabel(tab, leader, joinRequests, t) {
   if (tab === "zombieSiege") return "Zombie Siege";
   if (tab === "feedback") return t("tabFeedback");
   return t("tabDashboard");
+}
+
+function ScreenContainer({ children }) {
+  return <SafeAreaView style={styles.safeArea}>
+    <ExpoStatusBar style="light" />
+    <StatusBar barStyle="light-content" />
+    <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+      {children}
+    </KeyboardAvoidingView>
+  </SafeAreaView>;
+}
+
+function SectionHeader({ eyebrow, title, detail }) {
+  return <View style={styles.sectionHeader}>
+    {eyebrow ? <Text style={styles.sectionEyebrow}>{eyebrow}</Text> : null}
+    <Text style={styles.sectionHeaderTitle}>{title}</Text>
+    {detail ? <Text style={styles.sectionHeaderDetail}>{detail}</Text> : null}
+  </View>;
+}
+
+function AppCard({ children, variant = "default", style, onPress, disabled = false }) {
+  const variantStyle = variant === "active"
+    ? styles.cardActive
+    : variant === "info"
+      ? styles.cardInfo
+      : variant === "warning"
+        ? styles.cardWarning
+        : variant === "danger"
+          ? styles.cardDanger
+          : variant === "purple"
+            ? styles.cardPurple
+            : styles.card;
+  if (onPress) {
+    return <Pressable disabled={disabled} onPress={onPress} style={[variantStyle, disabled && styles.disabled, style]}>{children}</Pressable>;
+  }
+  return <View style={[variantStyle, style]}>{children}</View>;
+}
+
+function StatusBadge({ label, tone = "neutral", style }) {
+  const toneStyle = tone === "success"
+    ? styles.statusBadgeSuccess
+    : tone === "warning"
+      ? styles.statusBadgeWarning
+      : tone === "info"
+        ? styles.statusBadgeInfo
+        : tone === "danger"
+          ? styles.statusBadgeDanger
+          : tone === "purple"
+            ? styles.statusBadgePurple
+            : styles.statusBadgeNeutral;
+  const textStyle = tone === "success"
+    ? styles.statusBadgeTextSuccess
+    : tone === "warning"
+      ? styles.statusBadgeTextWarning
+      : tone === "info"
+        ? styles.statusBadgeTextInfo
+        : tone === "danger"
+          ? styles.statusBadgeTextDanger
+          : tone === "purple"
+            ? styles.statusBadgeTextPurple
+            : styles.statusBadgeTextNeutral;
+  return <View style={[styles.statusBadge, toneStyle, style]}>
+    <Text style={[styles.statusBadgeText, textStyle]}>{label}</Text>
+  </View>;
+}
+
+function PrimaryButton({ label, onPress, disabled = false, style, tone = "green" }) {
+  const toneStyle = tone === "blue" ? styles.primaryButtonBlue : tone === "purple" ? styles.primaryButtonPurple : tone === "red" ? styles.primaryButtonRed : styles.primaryButton;
+  return <Pressable onPress={onPress} disabled={disabled} style={[styles.buttonBase, toneStyle, disabled && styles.disabledButton, style]}>
+    <Text style={styles.buttonText}>{label}</Text>
+  </Pressable>;
+}
+
+function SecondaryButton({ label, onPress, disabled = false, style }) {
+  return <Pressable onPress={onPress} disabled={disabled} style={[styles.buttonBase, styles.secondaryButton, disabled && styles.disabledButton, style]}>
+    <Text style={styles.secondaryButtonText}>{label}</Text>
+  </Pressable>;
+}
+
+function ListRow({ title, detail, right, style }) {
+  return <View style={[styles.listRow, style]}>
+    <View style={styles.listRowContent}>
+      <Text style={styles.listRowTitle}>{title}</Text>
+      {detail ? <Text style={styles.listRowDetail}>{detail}</Text> : null}
+    </View>
+    {right ? <View style={styles.listRowRight}>{right}</View> : null}
+  </View>;
+}
+
+function BottomSheetModal({ visible, onClose, children }) {
+  if (!visible) {
+    return null;
+  }
+
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <View style={styles.modalBackdrop}>
+      <Pressable style={styles.modalBackdropDismissArea} onPress={onClose} />
+      <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
+        <View style={styles.modalSheetShell}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalCard}>
+            {children}
+          </View>
+        </View>
+      </SafeAreaView>
+    </View>
+  </Modal>;
 }
 
 function getAssignedPlayerNames(taskForces, currentSelection) {
@@ -1466,7 +1617,7 @@ export default function App() {
       name: "Reminders",
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#1f5c4d"
+      lightColor: DESIGN_TOKENS.colors.green
     });
   }
 
@@ -1747,29 +1898,25 @@ export default function App() {
     await refresh();
   });
 
-  if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><View style={styles.loadingScreen}><ActivityIndicator color="#1f5c4d" size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
+  if (!sessionReady) return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="light" /><StatusBar barStyle="light-content" /><View style={styles.loadingScreen}><ActivityIndicator color={DESIGN_TOKENS.colors.green} size="large" /><Text style={styles.hint}>{t("restoringSession")}</Text></View></SafeAreaView>;
 
   if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
 
   if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => { const result = await joinAlliance(session.backendUrl, session.token, allianceCodeInput); setAccount(result.account); setJoinRequest(result.joinRequest); setAlliance(null); setCurrentUser(null); setAlliancePreview(result.alliance); setSetupMode("join"); })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ExpoStatusBar style="dark" />
-      <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+    <ScreenContainer>
         <View style={styles.screen}>
-          <Text style={styles.title}>{alliance?.name}</Text>
-          <Text style={styles.hint}>{t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })}</Text>
-          {leader && joinRequests.length ? <Pressable style={styles.alertBanner} onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></Pressable> : null}
-          {activeTab === "myInfo" && desertStormVoteNeedsResponse ? <Pressable style={styles.voteBanner} onPress={() => openDesertStormVoteArea()}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><Text style={styles.voteBannerText}>Open the Desert Storm tab to submit your vote.</Text></Pressable> : null}
-          {loading ? <ActivityIndicator color="#1f5c4d" /> : null}
+          <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />
+          {leader && joinRequests.length ? <AppCard variant="warning" onPress={() => setActiveTab("alliance")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></AppCard> : null}
+          {activeTab === "myInfo" && desertStormVoteNeedsResponse ? <AppCard variant="info" onPress={() => openDesertStormVoteArea()}><View style={styles.bannerHeader}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><StatusBadge label="Response Needed" tone="warning" /></View><Text style={styles.voteBannerText}>Open the Desert Storm tab to submit your vote.</Text></AppCard> : null}
+          {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
           {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabs}>
             {tabs.map((tab) => <Pressable key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)}><Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text></Pressable>)}
           </ScrollView>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor="#1f5c4d" colors={["#1f5c4d"]} />}>
-            {activeTab === "myInfo" ? <MyInfoViewV2 currentUser={currentUser} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
+            {activeTab === "myInfo" ? <MyInfoViewV2 currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => setActiveTab("calendar")} onOpenReminders={() => setActiveTab("reminders")} onOpenZombieSiege={() => setActiveTab("zombieSiege")} onOpenFeedback={() => setActiveTab("feedback")} onOpenSettings={() => setActiveTab("alliance")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
               const enabled = await syncPushNotifications({ requestPermission: true });
               if (!enabled) {
                 Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
@@ -1801,740 +1948,69 @@ export default function App() {
             }} onChangeNewCalendarRepeat={setNewCalendarRepeat} onChangeNewCalendarRepeatEndDate={setNewCalendarRepeatEndDate} onToggleNewCalendarRepeatWeekday={(code) => setNewCalendarRepeatWeekdays((current) => toggleWeekdaySelection(current, code))} onChangeNewCalendarLinkedEventId={setNewCalendarLinkedEventId} onChangeNewCalendarLeaderNotes={setNewCalendarLeaderNotes} onToggleLeaderOnly={() => setNewCalendarLeaderOnly((value) => !value)} onCreateEntry={handleSubmitCalendarEntry} onCancelEdit={resetCalendarForm} onEditEntry={beginCalendarEntryEdit} onDeleteEntry={(entryId) => run(async () => { if (editingCalendarEntryId === entryId) { resetCalendarForm(); } await deleteCalendarEntryRequest(session.backendUrl, session.token, entryId); await refresh(); })} onOpenLinkedEntry={openLinkedCalendarEntry} /> : null}
             {activeTab === "reminders" ? <RemindersView reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} /> : null}
             {activeTab === "zombieSiege" ? <ZombieSiegeView events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
-            {activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} /> : null}
+            {activeTab === "alliance" ? <AllianceView alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("myInfo"); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              const enabled = await enablePushNotifications();
+              if (!enabled) {
+                Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
+              }
+            })} /> : null}
             {activeTab === "feedback" ? <FeedbackView feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} t={t} /> : null}
           </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
-      <Modal visible={Boolean(playerModal)} animationType="slide" onRequestClose={() => setPlayerModal(null)}>
-        <SafeAreaView style={styles.safeArea}>
-          <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
-            <View style={styles.screen}>
-              <Text style={styles.title}>{t("choosePlayer")}</Text>
-              {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
-              {playerModal && selectedDesertStormEvent?.vote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent.title}.` : `Showing members who voted "Play" for ${selectedDesertStormEvent.title}.`}</Text> : null}
-              {playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}
-              <TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
-              <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
-                <Pressable style={styles.pick} onPress={() => run(async () => {
-                  await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });
-                  setPlayerModal(null);
-                  await refresh();
-                })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
-                {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => {
-                  await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name });
-                  setPlayerModal(null);
-                  await refresh();
-                })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
-                {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && selectedDesertStormEvent?.vote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
-              </ScrollView>
-            </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+        </View>`r`n      <BottomSheetModal visible={Boolean(playerModal)} onClose={() => setPlayerModal(null)}>
+        <KeyboardAvoidingView style={styles.modalKeyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+          <SectionHeader eyebrow="Assignment" title={t("choosePlayer")} detail="Choose from voted members or the full alliance without leaving the Desert Storm workflow." />
+          {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
+          {playerModal && selectedDesertStormEvent?.vote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent.title}.` : `Showing members who voted "Play" for ${selectedDesertStormEvent.title}.`}</Text> : null}
+          {playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}
+          <TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
+          <ScrollView style={styles.modalListScroll} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+            <Pressable style={styles.pick} onPress={() => run(async () => {
+              await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });
+              setPlayerModal(null);
+              await refresh();
+            })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
+            {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => {
+              await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name });
+              setPlayerModal(null);
+              await refresh();
+            })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
+            {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && selectedDesertStormEvent?.vote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
+          </ScrollView>
+          <SecondaryButton label="Close" onPress={() => setPlayerModal(null)} />
+        </KeyboardAvoidingView>
+      </BottomSheetModal>
+    </ScreenContainer>
   );
 }
 
 function LanguageSelector({ language, onChangeLanguage, t }) {
-  return <View style={styles.section}><Text style={styles.sectionTitle}>{t("language")}</Text><View style={styles.languageRow}>{SUPPORTED_LANGUAGES.map((entry) => <Pressable key={entry.code} style={[styles.languageButton, language === entry.code && styles.languageButtonActive]} onPress={() => onChangeLanguage(entry.code)}><Text style={[styles.languageButtonText, language === entry.code && styles.languageButtonTextActive]}>{entry.label}</Text></Pressable>)}</View></View>;
-}
-
-function AuthScreen(props) {
-  const { authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, onSignIn, onCreate, language, onChangeLanguage, t } = props;
-  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>{t("appTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setAuthMode("signIn")}><Text style={styles.buttonText}>{t("authSignIn")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setAuthMode("create")}><Text style={styles.secondaryButtonText}>{t("authCreateAccount")}</Text></Pressable></View>{authMode ? <View style={styles.card}><Text style={styles.cardTitle}>{authMode === "signIn" ? t("authSignIn") : t("authCreateAccount")}</Text><TextInput value={authUsername} onChangeText={setAuthUsername} style={styles.input} placeholder={t("username")} autoCapitalize="none" /><TextInput value={authPassword} onChangeText={setAuthPassword} style={styles.input} placeholder={t("password")} secureTextEntry /><Pressable style={styles.button} onPress={authMode === "signIn" ? onSignIn : onCreate}><Text style={styles.buttonText}>{authMode === "signIn" ? t("authSignIn") : t("authCreateAccount")}</Text></Pressable></View> : null}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
-}
-
-function AllianceSetupScreen(props) {
-  const { account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, onPreview, onJoin, onCreateAlliance, onRefreshStatus, onSignOut, language, onChangeLanguage, t } = props;
-  const mode = setupMode === "create" ? "create" : "join";
-  return <SafeAreaView style={styles.safeArea}><ExpoStatusBar style="dark" /><StatusBar barStyle="dark-content" /><ScrollView contentContainerStyle={styles.screen}><Text style={styles.title}>{t("welcome", { name: account?.displayName })}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} />{joinRequest ? <View style={styles.card}><Text style={styles.cardTitle}>{t("joinRequestPending")}</Text><Text style={styles.line}>{t("codeLabel", { value: joinRequest.allianceCode })}</Text><Text style={styles.line}>{t("pendingApproval")}</Text><Pressable style={styles.button} onPress={onRefreshStatus}><Text style={styles.buttonText}>{t("refreshStatus")}</Text></Pressable></View> : <><Text style={styles.hint}>{t("notInAlliance")}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => setSetupMode("join")}><Text style={styles.buttonText}>{t("joinAlliance")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setSetupMode("create")}><Text style={styles.secondaryButtonText}>{t("createAlliance")}</Text></Pressable></View><View style={styles.card}><Text style={styles.cardTitle}>{mode === "create" ? t("createAlliance") : t("joinAlliance")}</Text>{mode === "create" ? <TextInput value={allianceNameInput} onChangeText={setAllianceNameInput} style={styles.input} placeholder={t("allianceName")} /> : null}<TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder={t("allianceCode")} autoCapitalize="characters" />{mode === "join" ? <><Pressable style={styles.secondaryButton} onPress={onPreview}><Text style={styles.secondaryButtonText}>{t("previewAlliance")}</Text></Pressable>{alliancePreview ? <Text style={styles.line}>{t("foundAlliance", { name: alliancePreview.name })}</Text> : null}<Pressable style={styles.button} onPress={onJoin}><Text style={styles.buttonText}>{t("joinAlliance")}</Text></Pressable></> : <Pressable style={styles.button} onPress={onCreateAlliance}><Text style={styles.buttonText}>{t("createAlliance")}</Text></Pressable>}</View></>}{<Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>}{loading ? <ActivityIndicator color="#1f5c4d" /> : null}{errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}</ScrollView></SafeAreaView>;
-}
-
-function Dashboard({ dashboard }) { return <View style={styles.dashboardShell}><Text style={styles.cardTitle}>Leader Dashboard</Text><View style={styles.metricGrid}><View style={styles.dashboardMetricA}><Text style={styles.metricLabel}>Task Force A</Text><Text style={styles.metricPanelValue}>{dashboard.taskForceA.totalPower.toFixed(2)}M</Text></View><View style={styles.dashboardMetricB}><Text style={styles.metricLabel}>Task Force B</Text><Text style={styles.metricPanelValue}>{dashboard.taskForceB.totalPower.toFixed(2)}M</Text></View></View><View style={styles.dashboardCompare}><Text style={styles.metricLabel}>Difference vs Task Force A</Text><Text style={styles.dashboardCompareValue}>{dashboard.differenceVsA.toFixed(2)}M</Text></View></View>; }
-function RankSelector({ value, onChange, disabled = false, style }) {
-  const [open, setOpen] = useState(false);
-  const selected = RANK_OPTIONS.includes(value) ? value : "R1";
-
-  useEffect(() => {
-    if (disabled) setOpen(false);
-  }, [disabled]);
-
-  return <View style={[styles.rankSelectorWrap, style]}>
-    <Pressable style={[styles.rankSelectorButton, disabled && styles.disabled]} onPress={() => !disabled && setOpen((current) => !current)}>
-      <Text style={styles.pickText}>{selected}</Text>
-      <Text style={styles.hint}>{open ? "Hide" : "Choose"}</Text>
-    </Pressable>
-    {open ? <View style={styles.rankDropdown}>
-      {RANK_OPTIONS.map((rank) => <Pressable key={rank} style={[styles.rankOption, rank === selected && styles.rankOptionActive]} onPress={() => {
-        onChange(rank);
-        setOpen(false);
-      }}>
-        <Text style={[styles.rankOptionText, rank === selected && styles.rankOptionTextActive]}>{rank}</Text>
+  return <View style={styles.section}>
+    <Text style={styles.sectionTitle}>{t("language")}</Text>
+    <View style={styles.languageRow}>
+      {LANGUAGE_OPTIONS.map((option) => <Pressable key={option.code} style={[styles.languageButton, language === option.code && styles.languageButtonActive]} onPress={() => onChangeLanguage(option.code)}>
+        <Text style={[styles.languageButtonText, language === option.code && styles.languageButtonTextActive]}>{option.label}</Text>
       </Pressable>)}
-    </View> : null}
-  </View>;
-}
-function MyInfoView({ currentUser, desertStormAssignment, desertStormVoteStatus, todayCalendarEntries, currentZombieSiegeEvent, currentZombieSiegeAssignment, onChangeField, onOpenDesertStormVote, showPushNotificationsPrompt, notificationSetupInFlight, onSetDesertStormVoteNotificationsEnabled, onEnablePushNotifications, onDismissPushNotificationsPrompt, t }) {
-  const s = currentUser?.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
-  const appearances = currentUser?.desertStormAppearances || [];
-  const activeZombieSiegeEvent = currentZombieSiegeEvent?.status === "archived" ? null : currentZombieSiegeEvent;
-  const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
-  const desertStormNotificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
-  const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
-  const [draftHeroPower, setDraftHeroPower] = useState(String(currentUser?.heroPower ?? 0));
-  const [draftSquadPowers, setDraftSquadPowers] = useState({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
-  const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
-
-  useEffect(() => {
-    setDraftOverallPower(String(currentUser?.overallPower ?? 0));
-  }, [currentUser?.overallPower]);
-
-  useEffect(() => {
-    setDraftHeroPower(String(currentUser?.heroPower ?? 0));
-  }, [currentUser?.heroPower]);
-
-  useEffect(() => {
-    setDraftSquadPowers({ squad1: String(s.squad1), squad2: String(s.squad2), squad3: String(s.squad3), squad4: String(s.squad4) });
-  }, [s.squad1, s.squad2, s.squad3, s.squad4]);
-
-  return <View style={styles.profileCard}><View style={styles.profileHeader}><View><Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text><Text style={styles.cardTitle}>{currentUser?.name}</Text><Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text></View><View style={styles.rankBadge}><Text style={styles.rankBadgeText}>{currentUser?.rank}</Text></View></View><View style={styles.metricGrid}><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalBasePower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View><View style={styles.metricPanel}><Text style={styles.metricLabel}>{t("totalSquadPower")}</Text><Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text></View></View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Desert Storm vote alerts</Text><Text style={styles.statusLine}>{!desertStormNotificationsEnabled ? "Disabled. You will not get Desert Storm vote-open push notifications." : currentUser?.hasExpoPushToken ? "Enabled on this device." : "Enabled. Finish notification setup on this device to receive alerts."}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, desertStormNotificationsEnabled && styles.disabledButton]} disabled={desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(true)}><Text style={styles.buttonText}>Enable</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, !desertStormNotificationsEnabled && styles.disabled]} disabled={!desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(false)}><Text style={styles.secondaryButtonText}>Disable</Text></Pressable></View></View>{showPushNotificationsPrompt ? <View style={styles.statusCard}><Text style={styles.statusEyebrow}>Push Notifications</Text><Text style={styles.statusTitle}>Enable Desert Storm alerts</Text><Text style={styles.statusLine}>Turn on push notifications to get a heads-up when the Desert Storm vote goes live.</Text><View style={styles.row}><Pressable style={[styles.button, styles.half, notificationSetupInFlight && styles.disabledButton]} disabled={notificationSetupInFlight} onPress={onEnablePushNotifications}><Text style={styles.buttonText}>{notificationSetupInFlight ? "Enabling..." : "Enable"}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half]} onPress={onDismissPushNotificationsPrompt}><Text style={styles.secondaryButtonText}>Later</Text></Pressable></View></View> : null}<Pressable disabled={!onOpenDesertStormVote} onPress={() => onOpenDesertStormVote && onOpenDesertStormVote()} style={[styles.statusCard, desertStormVoteStatus === "needed" ? styles.statusCardInactive : desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text><Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>{desertStormVoteStatus === "needed" ? <Text style={styles.statusLine}>Response needed</Text> : null}{desertStormVoteStatus === "submitted" ? <Text style={styles.statusLine}>Vote submitted</Text> : null}{desertStormAssignment ? <><Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text><Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text><Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text></> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}{onOpenDesertStormVote ? <Text style={styles.selectedPlayerHint}>Tap to open the Desert Storm vote</Text> : null}</Pressable><View style={styles.statusCard}><Text style={styles.statusEyebrow}>Key Things Today</Text><Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today's schedule` : "Nothing scheduled for today"}</Text>{todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}><Text style={styles.todayItemTitle}>{entry.title}</Text>{entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}</View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}</View><View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}><Text style={styles.statusEyebrow}>Zombie Siege</Text><Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>{activeZombieSiegeEvent ? <><Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text><Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>{activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}</> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}</View><View style={styles.statusCard}><Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text><Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>{appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("basePowerSection")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text><TextInput value={draftSquadPowers.squad1} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad1: v }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text><TextInput value={draftSquadPowers.squad2} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad2: v }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" /></View></View><View style={styles.row}><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text><TextInput value={draftSquadPowers.squad3} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad3: v }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" /></View><View style={styles.squadCard}><Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text><TextInput value={draftSquadPowers.squad4} onChangeText={(v) => setDraftSquadPowers((current) => ({ ...current, squad4: v }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" /></View></View></View></View>;
-}
-function MyInfoViewV2({ currentUser, desertStormAssignment, desertStormVoteStatus, todayCalendarEntries, currentZombieSiegeEvent, currentZombieSiegeAssignment, onChangeField, onOpenDesertStormVote, showPushNotificationControls, showPushNotificationsPrompt, notificationSetupInFlight, onSetDesertStormVoteNotificationsEnabled, onEnablePushNotifications, onDismissPushNotificationsPrompt, t }) {
-  const squadPowers = currentUser?.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
-  const appearances = currentUser?.desertStormAppearances || [];
-  const activeZombieSiegeEvent = currentZombieSiegeEvent?.status === "archived" ? null : currentZombieSiegeEvent;
-  const activeZombieSiegeAssignment = activeZombieSiegeEvent ? currentZombieSiegeAssignment : null;
-  const desertStormNotificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
-  const [draftOverallPower, setDraftOverallPower] = useState(String(currentUser?.overallPower ?? 0));
-  const [draftHeroPower, setDraftHeroPower] = useState(String(currentUser?.heroPower ?? 0));
-  const [draftSquadPowers, setDraftSquadPowers] = useState({
-    squad1: String(squadPowers.squad1),
-    squad2: String(squadPowers.squad2),
-    squad3: String(squadPowers.squad3),
-    squad4: String(squadPowers.squad4)
-  });
-  const resultLabels = { pending: t("resultPending"), win: t("resultWin"), loss: t("resultLoss"), won: t("resultWin"), lost: t("resultLoss") };
-
-  useEffect(() => {
-    setDraftOverallPower(String(currentUser?.overallPower ?? 0));
-  }, [currentUser?.overallPower]);
-
-  useEffect(() => {
-    setDraftHeroPower(String(currentUser?.heroPower ?? 0));
-  }, [currentUser?.heroPower]);
-
-  useEffect(() => {
-    setDraftSquadPowers({
-      squad1: String(squadPowers.squad1),
-      squad2: String(squadPowers.squad2),
-      squad3: String(squadPowers.squad3),
-      squad4: String(squadPowers.squad4)
-    });
-  }, [squadPowers.squad1, squadPowers.squad2, squadPowers.squad3, squadPowers.squad4]);
-
-  return <View style={styles.profileCard}>
-    <View style={styles.profileHeader}>
-      <View>
-        <Text style={styles.profileEyebrow}>{t("signedInPlayer")}</Text>
-        <Text style={styles.cardTitle}>{currentUser?.name}</Text>
-        <Text style={styles.profileRank}>{t("rank")} {currentUser?.rank}</Text>
-      </View>
-      <View style={styles.rankBadge}>
-        <Text style={styles.rankBadgeText}>{currentUser?.rank}</Text>
-      </View>
-    </View>
-    <View style={styles.metricGrid}>
-      <View style={styles.metricPanel}>
-        <Text style={styles.metricLabel}>{t("totalBasePower")}</Text>
-        <Text style={styles.metricPanelValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text>
-      </View>
-      <View style={styles.metricPanel}>
-        <Text style={styles.metricLabel}>{t("heroPower")}</Text>
-        <Text style={styles.metricPanelValue}>{Number(currentUser?.heroPower || 0).toFixed(2)}M</Text>
-      </View>
-    </View>
-    <View style={styles.metricGrid}>
-      <View style={styles.metricPanel}>
-        <Text style={styles.metricLabel}>{t("totalSquadPower")}</Text>
-        <Text style={styles.metricPanelValue}>{Number(currentUser?.totalSquadPower || 0).toFixed(2)}M</Text>
-      </View>
-    </View>
-    {showPushNotificationControls ? <View style={styles.statusCard}>
-      <Text style={styles.statusEyebrow}>Push Notifications</Text>
-      <Text style={styles.statusTitle}>Desert Storm vote alerts</Text>
-      <Text style={styles.statusLine}>{!desertStormNotificationsEnabled ? "Disabled. You will not get Desert Storm vote-open push notifications." : currentUser?.hasExpoPushToken ? "Enabled on this device." : "Enabled. Finish notification setup on this device to receive alerts."}</Text>
-      <View style={styles.row}>
-        <Pressable style={[styles.button, styles.half, desertStormNotificationsEnabled && styles.disabledButton]} disabled={desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(true)}>
-          <Text style={styles.buttonText}>Enable</Text>
-        </Pressable>
-        <Pressable style={[styles.secondaryButton, styles.half, !desertStormNotificationsEnabled && styles.disabled]} disabled={!desertStormNotificationsEnabled} onPress={() => onSetDesertStormVoteNotificationsEnabled(false)}>
-          <Text style={styles.secondaryButtonText}>Disable</Text>
-        </Pressable>
-      </View>
-    </View> : null}
-    {showPushNotificationControls && showPushNotificationsPrompt ? <View style={styles.statusCard}>
-      <Text style={styles.statusEyebrow}>Push Notifications</Text>
-      <Text style={styles.statusTitle}>Enable Desert Storm alerts</Text>
-      <Text style={styles.statusLine}>Turn on push notifications to get a heads-up when the Desert Storm vote goes live.</Text>
-      <View style={styles.row}>
-        <Pressable style={[styles.button, styles.half, notificationSetupInFlight && styles.disabledButton]} disabled={notificationSetupInFlight} onPress={onEnablePushNotifications}>
-          <Text style={styles.buttonText}>{notificationSetupInFlight ? "Enabling..." : "Enable"}</Text>
-        </Pressable>
-        <Pressable style={[styles.secondaryButton, styles.half]} onPress={onDismissPushNotificationsPrompt}>
-          <Text style={styles.secondaryButtonText}>Later</Text>
-        </Pressable>
-      </View>
-    </View> : null}
-    <Pressable disabled={!onOpenDesertStormVote} onPress={() => onOpenDesertStormVote && onOpenDesertStormVote()} style={[styles.statusCard, desertStormVoteStatus === "needed" ? styles.statusCardInactive : desertStormAssignment ? styles.statusCardActive : styles.statusCardInactive]}>
-      <Text style={styles.statusEyebrow}>{t("desertStormTitle")}</Text>
-      <Text style={styles.statusTitle}>{desertStormAssignment ? t("selectedForDesertStorm") : t("notCurrentlyAssigned")}</Text>
-      {desertStormVoteStatus === "needed" ? <Text style={styles.statusLine}>Response needed</Text> : null}
-      {desertStormVoteStatus === "submitted" ? <Text style={styles.statusLine}>Vote submitted</Text> : null}
-      {desertStormAssignment ? <>
-        <Text style={styles.statusLine}>{t("taskForceLabel", { value: desertStormAssignment.taskForceLabel })}</Text>
-        <Text style={styles.statusLine}>{t("squadLabel", { value: desertStormAssignment.squadLabel })}</Text>
-        <Text style={styles.statusLine}>{t("slotLabel", { value: desertStormAssignment.slotLabel })}</Text>
-      </> : <Text style={styles.statusLine}>{t("notListedInTaskForces")}</Text>}
-      {onOpenDesertStormVote ? <Text style={styles.selectedPlayerHint}>Tap to open the Desert Storm vote</Text> : null}
-    </Pressable>
-    <View style={styles.statusCard}>
-      <Text style={styles.statusEyebrow}>Key Things Today</Text>
-      <Text style={styles.statusTitle}>{todayCalendarEntries?.length ? `${todayCalendarEntries.length} item${todayCalendarEntries.length === 1 ? "" : "s"} on today's schedule` : "Nothing scheduled for today"}</Text>
-      {todayCalendarEntries?.length ? todayCalendarEntries.map((entry) => <View key={entry.id} style={styles.todayItem}>
-        <Text style={styles.todayItemTitle}>{entry.title}</Text>
-        {entry.description ? <Text style={styles.statusLine}>{entry.description}</Text> : null}
-      </View>) : <Text style={styles.statusLine}>Any calendar events scheduled for today will show up here.</Text>}
-    </View>
-    <View style={[styles.statusCard, activeZombieSiegeAssignment ? styles.statusCardActive : styles.statusCardInactive]}>
-      <Text style={styles.statusEyebrow}>Zombie Siege</Text>
-      <Text style={styles.statusTitle}>{activeZombieSiegeAssignment ? activeZombieSiegeEvent?.title || "Current Published Plan" : activeZombieSiegeEvent ? "No published assignment yet" : "No active Zombie Siege event"}</Text>
-      {activeZombieSiegeEvent ? <>
-        <Text style={styles.statusLine}>{String(activeZombieSiegeEvent.startAt || "").slice(0, 16)} to {String(activeZombieSiegeEvent.endAt || "").slice(0, 16)}</Text>
-        <Text style={styles.statusLine}>Availability: {activeZombieSiegeEvent.myAvailabilityStatus || "no_response"}</Text>
-        {activeZombieSiegeAssignment?.instructions?.length ? activeZombieSiegeAssignment.instructions.map((instruction, index) => <Text key={`${activeZombieSiegeAssignment.playerId}-${index}`} style={styles.statusLine}>• {instruction}</Text>) : <Text style={styles.statusLine}>Leaders have not published a Zombie Siege plan for you yet.</Text>}
-      </> : <Text style={styles.statusLine}>When leaders create an event, your instructions will show here.</Text>}
-    </View>
-    <View style={styles.statusCard}>
-      <Text style={styles.statusEyebrow}>{t("desertStormRecord")}</Text>
-      <Text style={styles.statusTitle}>{appearances.length ? t("lockInsPlayed", { count: appearances.length }) : t("noLockedHistoryYet")}</Text>
-      {appearances.length ? appearances.map((appearance) => <Text key={appearance.id} style={styles.statusLine}>{appearance.lockedInAt.slice(0, 10)} - {appearance.title} - {resultLabels[appearance.result] || appearance.result}</Text>) : <Text style={styles.statusLine}>{t("appearancesWillShow")}</Text>}
-    </View>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t("basePowerSection")}</Text>
-      <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
-      <TextInput value={draftOverallPower} onChangeText={setDraftOverallPower} onEndEditing={() => onChangeField("overallPower", draftOverallPower)} onBlur={() => onChangeField("overallPower", draftOverallPower)} style={styles.input} keyboardType="decimal-pad" />
-      <Text style={styles.sectionTitle}>{t("heroPower")}</Text>
-      <TextInput value={draftHeroPower} onChangeText={setDraftHeroPower} onEndEditing={() => onChangeField("heroPower", draftHeroPower)} onBlur={() => onChangeField("heroPower", draftHeroPower)} style={styles.input} keyboardType="decimal-pad" />
-    </View>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t("squadPowerBreakdown")}</Text>
-      <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
-      <View style={styles.row}>
-        <View style={styles.squadCard}>
-          <Text style={styles.squadLabel}>{t("squadNumber", { number: 1 })}</Text>
-          <TextInput value={draftSquadPowers.squad1} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad1: value }))} onEndEditing={() => onChangeField("squad1", draftSquadPowers.squad1)} onBlur={() => onChangeField("squad1", draftSquadPowers.squad1)} style={styles.input} keyboardType="decimal-pad" />
-        </View>
-        <View style={styles.squadCard}>
-          <Text style={styles.squadLabel}>{t("squadNumber", { number: 2 })}</Text>
-          <TextInput value={draftSquadPowers.squad2} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad2: value }))} onEndEditing={() => onChangeField("squad2", draftSquadPowers.squad2)} onBlur={() => onChangeField("squad2", draftSquadPowers.squad2)} style={styles.input} keyboardType="decimal-pad" />
-        </View>
-      </View>
-      <View style={styles.row}>
-        <View style={styles.squadCard}>
-          <Text style={styles.squadLabel}>{t("squadNumber", { number: 3 })}</Text>
-          <TextInput value={draftSquadPowers.squad3} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad3: value }))} onEndEditing={() => onChangeField("squad3", draftSquadPowers.squad3)} onBlur={() => onChangeField("squad3", draftSquadPowers.squad3)} style={styles.input} keyboardType="decimal-pad" />
-        </View>
-        <View style={styles.squadCard}>
-          <Text style={styles.squadLabel}>{t("squadNumber", { number: 4 })}</Text>
-          <TextInput value={draftSquadPowers.squad4} onChangeText={(value) => setDraftSquadPowers((current) => ({ ...current, squad4: value }))} onEndEditing={() => onChangeField("squad4", draftSquadPowers.squad4)} onBlur={() => onChangeField("squad4", draftSquadPowers.squad4)} style={styles.input} keyboardType="decimal-pad" />
-        </View>
-      </View>
     </View>
   </View>;
 }
-function TaskForceView({ taskForce, currentUser, currentUserIsLeader, canEdit = false, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer }) {
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>{taskForce.label} - {taskForce.totalPower.toFixed(2)}M</Text>
-    {taskForce.squads.map((squad) => <View key={squad.id} style={styles.section}>
-      <Text style={styles.sectionTitle}>{squad.label} - {squad.totalPower.toFixed(2)}M</Text>
-      {squad.slots.map((slot) => {
-        const isSelectedPlayer = currentUser?.name && slot.playerName === currentUser.name;
-        const isMoveSource = Boolean(moveSource && moveSource.taskForceKey === taskForce.key && moveSource.squadId === squad.id && moveSource.slotId === slot.id);
-        const slotContext = { taskForceKey: taskForce.key, taskForceLabel: taskForce.label, squadId: squad.id, squadLabel: squad.label, slotId: slot.id, slotLabel: slot.label, memberType: slot.memberType };
-        return <View key={slot.id} style={styles.section}>
-          <Pressable style={[styles.pick, slot.isDuplicate && styles.dangerBox, isSelectedPlayer && styles.selectedPlayerBox, isMoveSource && styles.modeButtonActive]} disabled={!currentUserIsLeader || !canEdit} onPress={() => {
-            if (!currentUserIsLeader || !canEdit) return;
-            if (moveSource && !isMoveSource && moveSource.playerName) {
-              onMovePlayer(slotContext);
-              return;
-            }
-            onPickPlayer(slotContext);
-          }}>
-            <Text style={[styles.pickText, isSelectedPlayer && styles.selectedPlayerText, isMoveSource && styles.modeButtonTextActive]}>{slot.label}: {slot.playerName || "Open"} ({slot.overallPower.toFixed(2)}M)</Text>
-            {isSelectedPlayer ? <Text style={styles.selectedPlayerHint}>Selected for Desert Storm</Text> : null}
-            {isMoveSource ? <Text style={[styles.selectedPlayerHint, styles.modeButtonTextActive]}>Move target: tap another slot to swap</Text> : null}
-          </Pressable>
-          {currentUserIsLeader && canEdit && slot.playerName ? <View style={styles.row}>
-            <Pressable style={[styles.secondaryButton, styles.half, isMoveSource && styles.modeButtonActive]} onPress={() => onSelectMoveSource(isMoveSource ? null : { ...slotContext, playerName: slot.playerName })}>
-              <Text style={[styles.secondaryButtonText, isMoveSource && styles.modeButtonTextActive]}>{isMoveSource ? "Cancel Move" : "Move Player"}</Text>
-            </Pressable>
-            <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onPickPlayer(slotContext)}>
-              <Text style={styles.secondaryButtonText}>{slot.playerName ? "Change Player" : "Assign Player"}</Text>
-            </Pressable>
-          </View> : null}
-        </View>;
-      })}
-    </View>)}
+
+function RankSelector({ value, onChange, style }) {
+  return <View style={[styles.rankSelectorWrap, style]}>
+    <View style={styles.rankDropdown}>
+      {RANK_OPTIONS.map((rank, index) => <Pressable key={rank} style={[styles.rankOption, index === 0 && { borderTopWidth: 0 }, value === rank && styles.rankOptionActive]} onPress={() => onChange(rank)}>
+        <Text style={[styles.rankOptionText, value === rank && styles.rankOptionTextActive]}>{rank}</Text>
+      </Pressable>)}
+    </View>
   </View>;
 }
 
-function CalendarTimeWheelColumn({ value, values, onChange }) {
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    const index = Math.max(0, values.indexOf(value));
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ y: index * CALENDAR_WHEEL_ITEM_HEIGHT, animated: false });
-    });
-  }, [value, values]);
-
-  function handleMomentumEnd(event) {
-    const offsetY = event?.nativeEvent?.contentOffset?.y || 0;
-    const index = Math.max(0, Math.min(values.length - 1, Math.round(offsetY / CALENDAR_WHEEL_ITEM_HEIGHT)));
-    const nextValue = values[index];
-    if (nextValue !== value) {
-      onChange(nextValue);
-    }
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ y: index * CALENDAR_WHEEL_ITEM_HEIGHT, animated: true });
-    });
-  }
-
-  return <View style={styles.calendarWheelColumn}>
-    <ScrollView
-      ref={scrollRef}
-      showsVerticalScrollIndicator={false}
-      snapToInterval={CALENDAR_WHEEL_ITEM_HEIGHT}
-      decelerationRate="fast"
-      onMomentumScrollEnd={handleMomentumEnd}
-      contentContainerStyle={styles.calendarWheelContent}
-    >
-      {values.map((entry) => <View key={entry} style={styles.calendarWheelItem}>
-        <Text style={[styles.calendarWheelText, entry === value && styles.calendarWheelTextActive]}>{entry}</Text>
-      </View>)}
-    </ScrollView>
-    <View pointerEvents="none" style={styles.calendarWheelHighlight} />
-  </View>;
-}
-
-function CalendarTimePickerModal({ visible, title, value, minValue = "", onChange, onClose, language }) {
-  const calendarT = getCalendarTranslator(language);
-  const parsed = parseTimeValue(value || "00:00") || { hours: 0, minutes: 0 };
-  const hourValue = formatTwoDigits(parsed.hours);
-  const minuteValue = formatTwoDigits(parsed.minutes);
-  const minParts = parseTimeValue(minValue || "");
-  const minHour = minParts?.hours ?? 0;
-  const minMinute = minParts?.minutes ?? 0;
-  const hourOptions = useMemo(() => Array.from({ length: 24 - minHour }, (_, index) => formatTwoDigits(index + minHour)), [minHour]);
-  const effectiveHourValue = hourOptions.includes(hourValue) ? hourValue : hourOptions[0] || "00";
-  const minuteOptions = useMemo(() => {
-    const currentHour = Number.parseInt(effectiveHourValue, 10);
-    const startMinute = minParts && currentHour === minHour ? minMinute : 0;
-    return Array.from({ length: 60 - startMinute }, (_, index) => formatTwoDigits(index + startMinute));
-  }, [effectiveHourValue, minHour, minMinute, minParts]);
-  const effectiveMinuteValue = minuteOptions.includes(minuteValue) ? minuteValue : minuteOptions[0] || "00";
-
-  useEffect(() => {
-    const nextValue = `${effectiveHourValue}:${effectiveMinuteValue}`;
-    if (nextValue !== value) {
-      onChange(nextValue);
-    }
-  }, [effectiveHourValue, effectiveMinuteValue, onChange, value]);
-
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
-      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
-        <View style={CALENDAR_MODAL_CARD_STYLE}>
-          <Text style={styles.cardTitle}>{title}</Text>
-          <View style={styles.calendarWheelHeader}>
-            <Text style={styles.hint}>{calendarT("chooseHour")}</Text>
-            <Text style={styles.hint}>{calendarT("chooseMinute")}</Text>
-          </View>
-          <View style={styles.calendarWheelRow}>
-            <CalendarTimeWheelColumn value={effectiveHourValue} values={hourOptions} onChange={(nextHour) => onChange(`${nextHour}:${effectiveMinuteValue}`)} />
-            <Text style={styles.calendarWheelDivider}>:</Text>
-            <CalendarTimeWheelColumn value={effectiveMinuteValue} values={minuteOptions} onChange={(nextMinute) => onChange(`${effectiveHourValue}:${nextMinute}`)} />
-          </View>
-          <Pressable style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>{calendarT("done")}</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </View>
-  </Modal>;
-}
-
-function ReminderDurationPickerModal({ visible, title, value, onChange, onClose }) {
-  const parsed = parseReminderTimeValue(value || "00:00:00") || { hours: 0, minutes: 0, seconds: 0 };
-  const hourValue = formatTwoDigits(parsed.hours);
-  const minuteValue = formatTwoDigits(parsed.minutes);
-  const secondValue = formatTwoDigits(parsed.seconds || 0);
-  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, index) => formatTwoDigits(index)), []);
-  const minuteOptions = useMemo(() => Array.from({ length: 60 }, (_, index) => formatTwoDigits(index)), []);
-  const secondOptions = useMemo(() => Array.from({ length: 60 }, (_, index) => formatTwoDigits(index)), []);
-
-  function emit(nextHour, nextMinute, nextSecond) {
-    onChange(`${nextHour}:${nextMinute}:${nextSecond}`);
-  }
-
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
-      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
-        <View style={CALENDAR_MODAL_CARD_STYLE}>
-          <Text style={styles.cardTitle}>{title}</Text>
-          <View style={styles.calendarWheelHeader}>
-            <Text style={styles.hint}>Hours</Text>
-            <Text style={styles.hint}>Minutes</Text>
-            <Text style={styles.hint}>Seconds</Text>
-          </View>
-          <View style={styles.calendarWheelRow}>
-            <CalendarTimeWheelColumn value={hourValue} values={hourOptions} onChange={(nextHour) => emit(nextHour, minuteValue, secondValue)} />
-            <Text style={styles.calendarWheelDivider}>:</Text>
-            <CalendarTimeWheelColumn value={minuteValue} values={minuteOptions} onChange={(nextMinute) => emit(hourValue, nextMinute, secondValue)} />
-            <Text style={styles.calendarWheelDivider}>:</Text>
-            <CalendarTimeWheelColumn value={secondValue} values={secondOptions} onChange={(nextSecond) => emit(hourValue, minuteValue, nextSecond)} />
-          </View>
-          <Pressable style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>Done</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </View>
-  </Modal>;
-}
-
-function CalendarDatePickerModal({ visible, title, value, onChange, onClose, language }) {
-  const calendarT = getCalendarTranslator(language);
-  const fallbackDateKey = isValidDateKey(value) ? value : formatLocalDateKey(new Date());
-  const [year, month, day] = fallbackDateKey.split("-").map((part) => Number.parseInt(part, 10));
-  const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, index) => formatTwoDigits(index + 1)), []);
-  const yearOptions = useMemo(() => {
-    const startYear = year - 4;
-    return Array.from({ length: 10 }, (_, index) => String(startYear + index));
-  }, [year]);
-  const dayOptions = useMemo(() => Array.from({ length: getDaysInMonth(year, month) }, (_, index) => formatTwoDigits(index + 1)), [year, month]);
-  const yearValue = String(year);
-  const monthValue = formatTwoDigits(month);
-  const dayValue = formatTwoDigits(Math.min(day, dayOptions.length));
-
-  function updateDate(nextYear, nextMonth, nextDay) {
-    const safeYear = Number.parseInt(nextYear, 10) || year;
-    const safeMonth = Number.parseInt(nextMonth, 10) || month;
-    const maxDay = getDaysInMonth(safeYear, safeMonth);
-    const safeDay = Math.min(Number.parseInt(nextDay, 10) || 1, maxDay);
-    onChange(formatDateKeyFromParts({ year: safeYear, month: safeMonth, day: safeDay }));
-  }
-
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-    <View style={CALENDAR_MODAL_BACKDROP_STYLE}>
-      <SafeAreaView style={CALENDAR_MODAL_SHEET_SHELL_STYLE}>
-        <View style={CALENDAR_MODAL_CARD_STYLE}>
-          <Text style={styles.cardTitle}>{title}</Text>
-          <View style={styles.calendarWheelHeader}>
-            <Text style={styles.hint}>{calendarT("chooseMonth")}</Text>
-            <Text style={styles.hint}>{calendarT("chooseDay")}</Text>
-            <Text style={styles.hint}>{calendarT("chooseYear")}</Text>
-          </View>
-          <View style={styles.calendarWheelRow}>
-            <CalendarTimeWheelColumn value={monthValue} values={monthOptions} onChange={(nextMonth) => updateDate(yearValue, nextMonth, dayValue)} />
-            <CalendarTimeWheelColumn value={dayValue} values={dayOptions} onChange={(nextDay) => updateDate(yearValue, monthValue, nextDay)} />
-            <CalendarTimeWheelColumn value={yearValue} values={yearOptions} onChange={(nextYear) => updateDate(nextYear, monthValue, dayValue)} />
-          </View>
-          <Pressable style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>{calendarT("done")}</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </View>
-  </Modal>;
-}
-
-function DesertStormView({ section, onChangeSection, currentUser, currentUserIsLeader, events, archivedEvents, selectedEvent, selectedEventId, onSelectEvent, taskForce, moveSource, onSelectMoveSource, onMovePlayer, onPickPlayer, onCreateEvent, newEventTitle, onChangeNewEventTitle, onSubmitVote, onOpenVote, onCloseVote, onReopenVote, onPublishTeams, onEditTeams, onEndEvent, onArchiveEvent }) {
-  const [draftResults, setDraftResults] = useState({
-    taskForceA: { outcome: "pending", notes: "" },
-    taskForceB: { outcome: "pending", notes: "" }
-  });
-  const activeEvent = selectedEvent?.status !== "archived" ? selectedEvent : null;
-  const canEditTeams = Boolean(currentUserIsLeader && activeEvent && activeEvent.status !== "completed" && activeEvent.status !== "archived");
-  const canPublish = Boolean(currentUserIsLeader && activeEvent && (activeEvent.status === "draft" || activeEvent.status === "voting_open" || activeEvent.status === "voting_closed" || activeEvent.status === "editing"));
-  const canEditPublished = Boolean(currentUserIsLeader && activeEvent?.publishedTaskForces && activeEvent.status === "published");
-  const canEndEvent = Boolean(currentUserIsLeader && activeEvent?.publishedTaskForces && activeEvent.status !== "completed" && activeEvent.status !== "archived");
-  const canArchive = Boolean(currentUserIsLeader && selectedEvent && selectedEvent.status === "completed");
-  const eventHistory = archivedEvents || [];
-
-  useEffect(() => {
-    setDraftResults({
-      taskForceA: {
-        outcome: selectedEvent?.result?.taskForceA?.outcome || "pending",
-        notes: selectedEvent?.result?.taskForceA?.notes || ""
-      },
-      taskForceB: {
-        outcome: selectedEvent?.result?.taskForceB?.outcome || "pending",
-        notes: selectedEvent?.result?.taskForceB?.notes || ""
-      }
-    });
-  }, [selectedEvent?.id, selectedEvent?.result?.taskForceA?.outcome, selectedEvent?.result?.taskForceA?.notes, selectedEvent?.result?.taskForceB?.outcome, selectedEvent?.result?.taskForceB?.notes]);
-
-  if (!activeEvent) {
-    return <View style={styles.card}>
-      <Text style={styles.cardTitle}>Desert Storm</Text>
-      <Text style={styles.hint}>Create a Desert Storm event when you are ready to collect votes and build teams.</Text>
-      {currentUserIsLeader ? <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Create Desert Storm Event</Text>
-        <TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Desert Storm event title" />
-        <Pressable style={styles.button} onPress={onCreateEvent}>
-          <Text style={styles.buttonText}>Create Desert Storm Event</Text>
-        </Pressable>
-      </View> : <Text style={styles.hint}>Leaders create Desert Storm events here. Published teams will appear once an event is active.</Text>}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>History</Text>
-        {eventHistory.length ? eventHistory.map((event) => <Pressable key={event.id} style={[styles.voteCard, selectedEventId === event.id && styles.zombieSelectedCard]} onPress={() => onSelectEvent(event.id)}>
-          <Text style={styles.sectionTitle}>{event.title}</Text>
-          <Text style={styles.hint}>{String(event.archivedAt || event.endedAt || event.publishedAt || event.createdAt).slice(0, 16)}</Text>
-          <Text style={styles.line}>Task Force A: {getDesertStormStatusLabel(event.result?.taskForceA?.outcome || "pending")}</Text>
-          <Text style={styles.line}>Task Force B: {getDesertStormStatusLabel(event.result?.taskForceB?.outcome || "pending")}</Text>
-        </Pressable>) : <Text style={styles.hint}>No archived Desert Storm events yet.</Text>}
-      </View>
-      {selectedEvent?.status === "archived" ? <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{selectedEvent.title}</Text>
-        <Text style={styles.hint}>Archived event details</Text>
-        <View style={styles.statusCard}>
-          <Text style={styles.statusEyebrow}>Archived Vote</Text>
-          {(selectedEvent.vote?.options || []).map((option) => <Text key={option.id} style={styles.statusLine}>{option.label}: {option.votes}</Text>)}
-          {currentUserIsLeader && selectedEvent.vote?.responses?.length ? <Text style={styles.statusLine}>{selectedEvent.vote.responses.map((response) => `${response.playerName} (${getDesertStormVoteOptionLabel(response.optionId)})`).join(", ")}</Text> : null}
-        </View>
-        {Object.values(selectedEvent.publishedTaskForces || {}).map((taskForce) => <View key={taskForce.key} style={styles.statusCard}>
-          <Text style={styles.statusEyebrow}>{taskForce.label}</Text>
-          {(taskForce.squads || []).map((squad) => <View key={squad.id} style={styles.section}>
-            <Text style={styles.sectionTitle}>{squad.label}</Text>
-            {(squad.slots || []).map((slot) => <Text key={slot.id} style={styles.statusLine}>{slot.label}: {slot.playerName || "Open"}</Text>)}
-          </View>)}
-        </View>)}
-        {["taskForceA", "taskForceB"].map((key) => <View key={key} style={styles.statusCard}>
-          <Text style={styles.statusEyebrow}>{key === "taskForceA" ? "Task Force A" : "Task Force B"}</Text>
-          <Text style={styles.statusTitle}>{selectedEvent.result?.[key]?.outcome === "won" ? "Won" : selectedEvent.result?.[key]?.outcome === "lost" ? "Lost" : "Pending"}</Text>
-          {selectedEvent.result?.[key]?.notes ? <Text style={styles.statusLine}>{selectedEvent.result[key].notes}</Text> : <Text style={styles.statusLine}>No notes saved.</Text>}
-        </View>)}
-      </View> : null}
-    </View>;
-  }
-
-  const voteResponses = activeEvent.vote?.responses || [];
-  const voteCounts = Object.fromEntries((activeEvent.vote?.options || []).map((option) => [option.id, voteResponses.filter((response) => response.optionId === option.id)]));
-
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Desert Storm</Text>
-    <Text style={styles.line}>{activeEvent.title}</Text>
-    <Text style={styles.hint}>Status: {getDesertStormStatusLabel(activeEvent.status)}{activeEvent.publishedAt ? ` • Published v${activeEvent.version || 1}` : ""}</Text>
-    <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, section === "vote" && styles.modeButtonActive]} onPress={() => onChangeSection("vote")}><Text style={[styles.secondaryButtonText, section === "vote" && styles.modeButtonTextActive]}>Vote</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, section === "taskForceA" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceA")}><Text style={[styles.secondaryButtonText, section === "taskForceA" && styles.modeButtonTextActive]}>Task Force A</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, section === "taskForceB" && styles.modeButtonActive]} onPress={() => onChangeSection("taskForceB")}><Text style={[styles.secondaryButtonText, section === "taskForceB" && styles.modeButtonTextActive]}>Task Force B</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, section === "history" && styles.modeButtonActive]} onPress={() => onChangeSection("history")}><Text style={[styles.secondaryButtonText, section === "history" && styles.modeButtonTextActive]}>History</Text></Pressable>
-    </View>
-
-    {section === "vote" ? <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Desert Storm Vote</Text>
-      <Text style={styles.hint}>Vote choices stay with this event. Leaders can build teams while voting is open or closed.</Text>
-      <View style={styles.row}>
-        {(activeEvent.vote?.options || []).map((option) => <Pressable key={option.id} style={[styles.secondaryButton, styles.half, activeEvent.vote?.selectedOptionId === option.id && styles.modeButtonActive]} onPress={() => onSubmitVote(activeEvent.id, option.id)}>
-          <Text style={[styles.secondaryButtonText, activeEvent.vote?.selectedOptionId === option.id && styles.modeButtonTextActive]}>{option.label}</Text>
-        </Pressable>)}
-      </View>
-      <Text style={styles.line}>Vote status: {activeEvent.vote?.status === "open" ? "Open" : "Closed"}</Text>
-      <Text style={styles.line}>{activeEvent.vote?.totalVotes || 0} / {activeEvent.vote?.eligibleVoters || 0} alliance members responded</Text>
-      {(activeEvent.vote?.options || []).map((option) => <View key={option.id} style={styles.voteOption}>
-        <View style={styles.voteOptionHeader}>
-          <Text style={styles.pickText}>{option.label}</Text>
-          <Text style={styles.voteCount}>{voteCounts[option.id]?.length || 0}</Text>
-        </View>
-        {currentUserIsLeader ? <Text style={styles.voteResponseList}>{(voteCounts[option.id] || []).length ? voteCounts[option.id].map((response) => response.playerName).join(", ") : "No responses yet."}</Text> : null}
-      </View>)}
-      {currentUserIsLeader ? <View style={styles.row}>
-        {activeEvent.vote?.status === "open"
-          ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCloseVote(activeEvent.id)}><Text style={styles.secondaryButtonText}>Close Vote</Text></Pressable>
-          : <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => (activeEvent.vote?.openedAt ? onReopenVote(activeEvent.id) : onOpenVote(activeEvent.id))}><Text style={styles.secondaryButtonText}>{activeEvent.vote?.openedAt ? "Reopen Vote" : "Open Vote"}</Text></Pressable>}
-      </View> : null}
-    </View> : null}
-
-    {(section === "taskForceA" || section === "taskForceB") ? <>
-      {!currentUserIsLeader && !activeEvent.publishedTaskForces ? <View style={styles.statusCard}>
-        <Text style={styles.statusEyebrow}>Teams Hidden</Text>
-        <Text style={styles.statusTitle}>Waiting for publish</Text>
-        <Text style={styles.statusLine}>Leaders are still building draft teams. Published teams will appear here once they are ready.</Text>
-      </View> : <TaskForceView taskForce={taskForce} currentUser={currentUser} currentUserIsLeader={currentUserIsLeader} canEdit={canEditTeams} moveSource={moveSource} onSelectMoveSource={onSelectMoveSource} onMovePlayer={onMovePlayer} onPickPlayer={onPickPlayer} />}
-      {currentUserIsLeader ? <View style={styles.section}>
-        {canPublish ? <Pressable style={styles.button} onPress={() => onPublishTeams(activeEvent.id)}><Text style={styles.buttonText}>{activeEvent.publishedTaskForces ? "Republish Teams" : "Publish Teams"}</Text></Pressable> : null}
-        {canEditPublished ? <Pressable style={styles.secondaryButton} onPress={() => onEditTeams(activeEvent.id)}><Text style={styles.secondaryButtonText}>Edit Teams</Text></Pressable> : null}
-        {activeEvent.publishedTaskForces ? <Text style={styles.hint}>Members only see the published version. Any new edits stay private until you publish again.</Text> : null}
-      </View> : null}
-    </> : null}
-
-    {section === "history" ? <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Event Wrap Up</Text>
-      <Text style={styles.hint}>When the event is over, save each task force result and then archive the event.</Text>
-      {["taskForceA", "taskForceB"].map((key) => <View key={key} style={styles.statusCard}>
-        <Text style={styles.statusEyebrow}>{key === "taskForceA" ? "Task Force A" : "Task Force B"}</Text>
-        <View style={styles.row}>
-          <Pressable style={[styles.secondaryButton, styles.half, draftResults[key].outcome === "won" && styles.modeButtonActive]} onPress={() => setDraftResults((current) => ({ ...current, [key]: { ...current[key], outcome: "won" } }))}><Text style={[styles.secondaryButtonText, draftResults[key].outcome === "won" && styles.modeButtonTextActive]}>Won</Text></Pressable>
-          <Pressable style={[styles.secondaryButton, styles.half, draftResults[key].outcome === "lost" && styles.modeButtonActive]} onPress={() => setDraftResults((current) => ({ ...current, [key]: { ...current[key], outcome: "lost" } }))}><Text style={[styles.secondaryButtonText, draftResults[key].outcome === "lost" && styles.modeButtonTextActive]}>Lost</Text></Pressable>
-        </View>
-        <TextInput value={draftResults[key].notes} onChangeText={(value) => setDraftResults((current) => ({ ...current, [key]: { ...current[key], notes: value } }))} style={[styles.input, styles.textArea]} placeholder="Optional notes" multiline editable={currentUserIsLeader && selectedEvent.status !== "archived"} />
-      </View>)}
-      {canEndEvent ? <Pressable style={styles.button} onPress={() => onEndEvent(activeEvent.id, draftResults)}><Text style={styles.buttonText}>End Event</Text></Pressable> : null}
-      {canArchive ? <Pressable style={styles.secondaryButton} onPress={() => onArchiveEvent(activeEvent.id)}><Text style={styles.secondaryButtonText}>Archive Event</Text></Pressable> : null}
-      {selectedEvent.status === "archived" ? <Text style={styles.hint}>This event is archived. The Desert Storm home screen will stay focused on create-plus-history until a new event is created.</Text> : null}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Archived Events</Text>
-        {eventHistory.length ? eventHistory.map((event) => <View key={event.id} style={styles.voteCard}>
-          <Text style={styles.sectionTitle}>{event.title}</Text>
-          <Text style={styles.hint}>{String(event.archivedAt || event.endedAt || event.createdAt).slice(0, 16)}</Text>
-          <Text style={styles.line}>Task Force A: {event.result?.taskForceA?.outcome || "pending"}</Text>
-          <Text style={styles.line}>Task Force B: {event.result?.taskForceB?.outcome || "pending"}</Text>
-        </View>) : <Text style={styles.hint}>No archived Desert Storm events yet.</Text>}
-      </View>
-    </View> : null}
-  </View>;
-}
-function MembersView({ players, memberSearchText, memberSortMode, memberRankFilter, onChangeMemberSearchText, onChangeMemberSortMode, onChangeMemberRankFilter, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) {
-  const [drafts, setDrafts] = useState({});
-  const [expandedMemberId, setExpandedMemberId] = useState("");
-  const [editingMemberIds, setEditingMemberIds] = useState({});
-
-  useEffect(() => {
-    setDrafts(Object.fromEntries(players.map((player) => [player.id, {
-      name: player.name,
-      rank: player.rank,
-      overallPower: String(player.overallPower),
-      squad1: String(player.squadPowers?.squad1 ?? 0),
-      squad2: String(player.squadPowers?.squad2 ?? 0),
-      squad3: String(player.squadPowers?.squad3 ?? 0),
-      squad4: String(player.squadPowers?.squad4 ?? 0)
-    }])));
-  }, [players]);
-
-  useEffect(() => {
-    if (expandedMemberId && !players.some((player) => player.id === expandedMemberId)) {
-      setExpandedMemberId("");
-    }
-  }, [expandedMemberId, players]);
-
-  useEffect(() => {
-    setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => players.some((player) => player.id === playerId))));
-  }, [players]);
-
-  function handleRemoveMember(player) {
-    Alert.alert(
-      "Remove Member",
-      `Are you sure you want to remove ${player.name} from the alliance?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
-      ]
-    );
-  }
-
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Members</Text>
-    <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />
-    <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "rankDesc" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.secondaryButtonText, memberSortMode === "rankDesc" && styles.modeButtonTextActive]}>Sort By Rank</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "name" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.secondaryButtonText, memberSortMode === "name" && styles.modeButtonTextActive]}>Sort By Name</Text></Pressable>
-    </View>
-    <View style={styles.rankFilterRow}>
-      <Pressable style={[styles.rankFilterButton, memberRankFilter === "all" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter("all")}><Text style={[styles.rankFilterButtonText, memberRankFilter === "all" && styles.rankFilterButtonTextActive]}>All</Text></Pressable>
-      {["R5", "R4", "R3", "R2", "R1"].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank}</Text></Pressable>)}
-    </View>
-    {players.map((player) => {
-      const isEditing = !!editingMemberIds[player.id];
-      const canEdit = currentUserIsLeader && isEditing;
-      const canEditRank = currentUserIsLeader && isEditing;
-      const s = player.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
-      const ds = player.desertStormStats || { playedCount: 0, missedCount: 0 };
-      const draft = drafts[player.id] || {
-        name: player.name,
-        rank: player.rank,
-        overallPower: String(player.overallPower),
-        squad1: String(s.squad1),
-        squad2: String(s.squad2),
-        squad3: String(s.squad3),
-        squad4: String(s.squad4)
-      };
-      const expanded = expandedMemberId === player.id;
-
-      return <View key={player.id} style={styles.memberCard}>
-        <Pressable style={styles.memberCardSummary} onPress={() => setExpandedMemberId((current) => current === player.id ? "" : player.id)}>
-          <View style={styles.memberSummaryText}>
-            <Text style={styles.memberNameCompact}>{player.name}</Text>
-            <Text style={styles.memberSubline}>{player.rank}</Text>
-          </View>
-          <View style={styles.memberSummaryRight}>
-            <View style={styles.memberRankChip}><Text style={styles.memberRankChipText}>{player.rank}</Text></View>
-            <Text style={styles.memberExpandIcon}>{expanded ? "−" : "+"}</Text>
-          </View>
-        </Pressable>
-        {expanded ? <>
-          <View style={styles.memberStatGrid}>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Base Power</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Squad Power</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
-          </View>
-          <View style={styles.memberStatGrid}>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Played</Text><Text style={styles.memberStatValue}>{ds.playedCount}</Text></View>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Missed</Text><Text style={styles.memberStatValue}>{ds.missedCount}</Text></View>
-          </View>
-          {currentUserIsLeader ? <View style={styles.row}>
-            <Pressable style={[styles.secondaryButton, styles.half, isEditing && styles.modeButtonActive]} onPress={() => setEditingMemberIds((current) => ({ ...current, [player.id]: !current[player.id] }))}>
-              <Text style={[styles.secondaryButtonText, isEditing && styles.modeButtonTextActive]}>{isEditing ? "Done Editing" : "Edit"}</Text>
-            </Pressable>
-            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemoveMember(player)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
-          </View> : null}
-          <View style={styles.section}>
-            <Text style={styles.memberSectionLabel}>Player Info</Text>
-            <TextInput value={draft.name} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: v } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} />
-          </View>
-          <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
-          <View style={styles.row}>
-            <RankSelector value={draft.rank} onChange={(rank) => {
-              setDrafts((current) => ({ ...current, [player.id]: { ...draft, rank } }));
-              onChangeField(player.id, "rank", rank);
-            }} disabled={!canEditRank} style={styles.half} />
-            <TextInput value={draft.overallPower} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, overallPower: v } }))} onEndEditing={() => onChangeField(player.id, "overallPower", draft.overallPower)} onBlur={() => onChangeField(player.id, "overallPower", draft.overallPower)} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-          </View>
-          <View style={styles.memberSection}>
-            <Text style={styles.memberSectionLabel}>Squad Powers</Text>
-            <View style={styles.row}>
-              <TextInput value={draft.squad1} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad1: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-              <TextInput value={draft.squad2} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad2: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={draft.squad3} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad3: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-              <TextInput value={draft.squad4} onChangeText={(v) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad4: v } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-            </View>
-          </View>
-        </> : null}
-      </View>;
-    })}
-    {!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}
-  </View>;
-}
 function MembersViewV2({ players, memberSearchText, memberSortMode, memberRankFilter, onChangeMemberSearchText, onChangeMemberSortMode, onChangeMemberRankFilter, currentUser, currentUserIsLeader, onChangeField, onRemovePlayer }) {
   const [drafts, setDrafts] = useState({});
   const [expandedMemberId, setExpandedMemberId] = useState("");
   const [editingMemberIds, setEditingMemberIds] = useState({});
 
   useEffect(() => {
-    setDrafts(Object.fromEntries(players.map((player) => [player.id, {
+    setDrafts(Object.fromEntries((players || []).map((player) => [player.id, {
       name: player.name,
       rank: player.rank,
       overallPower: String(player.overallPower ?? 0),
@@ -2547,339 +2023,528 @@ function MembersViewV2({ players, memberSearchText, memberSortMode, memberRankFi
   }, [players]);
 
   useEffect(() => {
-    if (expandedMemberId && !players.some((player) => player.id === expandedMemberId)) {
+    if (expandedMemberId && !(players || []).some((player) => player.id === expandedMemberId)) {
       setExpandedMemberId("");
     }
   }, [expandedMemberId, players]);
 
   useEffect(() => {
-    setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => players.some((player) => player.id === playerId))));
+    setEditingMemberIds((current) => Object.fromEntries(Object.entries(current).filter(([playerId]) => (players || []).some((player) => player.id === playerId))));
   }, [players]);
 
-  function handleRemoveMember(player) {
-    Alert.alert("Remove Member", `Are you sure you want to remove ${player.name} from the alliance?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
-    ]);
+  const rosterSummary = useMemo(() => {
+    const rankCounts = (players || []).reduce((accumulator, player) => {
+      accumulator[player.rank] = (accumulator[player.rank] || 0) + 1;
+      return accumulator;
+    }, {});
+    const totalPower = (players || []).reduce((sum, player) => sum + (Number(player.overallPower) || 0), 0);
+    const totalHeroPower = (players || []).reduce((sum, player) => sum + (Number(player.heroPower) || 0), 0);
+    return {
+      totalMembers: (players || []).length,
+      totalPower,
+      totalHeroPower,
+      rankCounts
+    };
+  }, [players]);
+
+  function updateDraft(playerId, field, value) {
+    setDrafts((current) => ({ ...current, [playerId]: { ...(current[playerId] || {}), [field]: value } }));
   }
 
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Members</Text>
-    <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search players by name or rank" />
-    <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "rankDesc" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.secondaryButtonText, memberSortMode === "rankDesc" && styles.modeButtonTextActive]}>Sort By Rank</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, memberSortMode === "name" && styles.modeButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.secondaryButtonText, memberSortMode === "name" && styles.modeButtonTextActive]}>Sort By Name</Text></Pressable>
-    </View>
-    <View style={styles.rankFilterRow}>
-      <Pressable style={[styles.rankFilterButton, memberRankFilter === "all" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter("all")}><Text style={[styles.rankFilterButtonText, memberRankFilter === "all" && styles.rankFilterButtonTextActive]}>All</Text></Pressable>
-      {["R5", "R4", "R3", "R2", "R1"].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank}</Text></Pressable>)}
-    </View>
-    {players.map((player) => {
-      const isEditing = Boolean(editingMemberIds[player.id]);
-      const canEdit = currentUserIsLeader && isEditing;
-      const squadPowers = player.squadPowers || { squad1: 0, squad2: 0, squad3: 0, squad4: 0 };
-      const stats = player.desertStormStats || { playedCount: 0, missedCount: 0 };
-      const draft = drafts[player.id] || {
-        name: player.name,
-        rank: player.rank,
-        overallPower: String(player.overallPower ?? 0),
-        heroPower: String(player.heroPower ?? 0),
-        squad1: String(squadPowers.squad1),
-        squad2: String(squadPowers.squad2),
-        squad3: String(squadPowers.squad3),
-        squad4: String(squadPowers.squad4)
-      };
-      const expanded = expandedMemberId === player.id;
+  function toggleExpanded(playerId) {
+    setExpandedMemberId((current) => current === playerId ? "" : playerId);
+  }
 
-      return <View key={player.id} style={styles.memberCard}>
-        <Pressable style={styles.memberCardSummary} onPress={() => setExpandedMemberId((current) => current === player.id ? "" : player.id)}>
-          <View style={styles.memberSummaryText}>
-            <Text style={styles.memberNameCompact}>{player.name}</Text>
-            <Text style={styles.memberSubline}>{player.rank}</Text>
-          </View>
-          <View style={styles.memberSummaryRight}>
-            <View style={styles.memberRankChip}><Text style={styles.memberRankChipText}>{player.rank}</Text></View>
-            <Text style={styles.memberExpandIcon}>{expanded ? "−" : "+"}</Text>
-          </View>
-        </Pressable>
-        {expanded ? <>
-          <View style={styles.memberStatGrid}>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Base Power</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Hero Power</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
-          </View>
-          <View style={styles.memberStatGrid}>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Squad Power</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Played</Text><Text style={styles.memberStatValue}>{stats.playedCount}</Text></View>
-          </View>
-          <View style={styles.memberStatGrid}>
-            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>DS Missed</Text><Text style={styles.memberStatValue}>{stats.missedCount}</Text></View>
-          </View>
-          {currentUserIsLeader ? <View style={styles.row}>
-            <Pressable style={[styles.secondaryButton, styles.half, isEditing && styles.modeButtonActive]} onPress={() => setEditingMemberIds((current) => ({ ...current, [player.id]: !current[player.id] }))}>
-              <Text style={[styles.secondaryButtonText, isEditing && styles.modeButtonTextActive]}>{isEditing ? "Done Editing" : "Edit"}</Text>
-            </Pressable>
-            {currentUser?.id !== player.id ? <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemoveMember(player)}><Text style={styles.dangerButtonText}>Remove Member</Text></Pressable> : null}
+  function toggleEditing(playerId, enabled) {
+    setEditingMemberIds((current) => ({ ...current, [playerId]: enabled }));
+  }
+
+  function handleSave(player) {
+    const draft = drafts[player.id] || {};
+    if (draft.name !== player.name) onChangeField(player.id, "name", draft.name);
+    if (draft.rank !== player.rank) onChangeField(player.id, "rank", draft.rank);
+    if (String(draft.overallPower) !== String(player.overallPower)) onChangeField(player.id, "overallPower", draft.overallPower);
+    if (String(draft.heroPower) !== String(player.heroPower ?? 0)) onChangeField(player.id, "heroPower", draft.heroPower);
+    const currentSquads = player.squadPowers || {};
+    const nextSquads = { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 };
+    if (["squad1", "squad2", "squad3", "squad4"].some((key) => String(nextSquads[key]) !== String(currentSquads[key] ?? 0))) {
+      onChangeField(player.id, "squadPowers", nextSquads);
+    }
+    toggleEditing(player.id, false);
+  }
+
+  function handleRemove(player) {
+    Alert.alert(
+      "Remove Member",
+      `Are you sure you want to remove ${player.name} from the alliance?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
+      ]
+    );
+  }
+
+  return <View style={styles.section}>
+    <AppCard style={styles.membersHeroCard}>
+      <SectionHeader eyebrow="Members" title="Operational roster" detail="Search, filter, and manage alliance members without changing roster logic." />
+      <View style={styles.memberStatGrid}>
+        <View style={styles.memberStatCard}>
+          <Text style={styles.memberStatLabel}>Visible</Text>
+          <Text style={styles.memberStatValue}>{rosterSummary.totalMembers}</Text>
+        </View>
+        <View style={styles.memberStatCard}>
+          <Text style={styles.memberStatLabel}>Total Power</Text>
+          <Text style={styles.memberStatValue}>{rosterSummary.totalPower.toFixed(2)}M</Text>
+        </View>
+        <View style={styles.memberStatCard}>
+          <Text style={styles.memberStatLabel}>Hero Power</Text>
+          <Text style={styles.memberStatValue}>{rosterSummary.totalHeroPower.toFixed(2)}M</Text>
+        </View>
+      </View>
+      <View style={styles.rankFilterRow}>
+        <StatusBadge label={`R5 ${rosterSummary.rankCounts.R5 || 0}`} tone="info" />
+        <StatusBadge label={`R4 ${rosterSummary.rankCounts.R4 || 0}`} tone="success" />
+        <StatusBadge label={`R3 ${rosterSummary.rankCounts.R3 || 0}`} tone="neutral" />
+        <StatusBadge label={`R2 ${rosterSummary.rankCounts.R2 || 0}`} tone="neutral" />
+        <StatusBadge label={`R1 ${rosterSummary.rankCounts.R1 || 0}`} tone="neutral" />
+      </View>
+    </AppCard>
+
+    <AppCard style={styles.membersFilterCard}>
+      <SectionHeader eyebrow="Filters" title="Roster controls" detail="Keep the list tight and focused while preserving the existing search and sort rules." />
+      <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search name or rank" />
+      <View style={styles.rankFilterRow}>
+        <Pressable style={[styles.rankFilterButton, memberSortMode === "rankDesc" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.rankFilterButtonText, memberSortMode === "rankDesc" && styles.rankFilterButtonTextActive]}>Rank</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, memberSortMode === "name" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.rankFilterButtonText, memberSortMode === "name" && styles.rankFilterButtonTextActive]}>Name</Text></Pressable>
+      </View>
+      <View style={styles.rankFilterRow}>
+        {["all", ...RANK_OPTIONS].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank === "all" ? "All Ranks" : rank}</Text></Pressable>)}
+      </View>
+    </AppCard>
+
+    <View style={styles.membersRosterList}>
+      {(players || []).length ? players.map((player) => {
+        const isExpanded = expandedMemberId === player.id;
+        const isEditing = editingMemberIds[player.id];
+        const draft = drafts[player.id] || {};
+        const desertStormStats = player.desertStormStats || { playedCount: 0, missedCount: 0 };
+        return <AppCard key={player.id} style={styles.memberCard} variant={player.rank === "R5" ? "info" : player.rank === "R4" ? "active" : "default"}>
+          <Pressable onPress={() => toggleExpanded(player.id)} style={styles.memberCardSummary}>
+            <View style={styles.memberSummaryText}>
+              <Text style={styles.memberName}>{player.name}</Text>
+              <Text style={styles.memberSubline}>{player.rank} � Total {Number(player.overallPower || 0).toFixed(2)}M � Hero {Number(player.heroPower || 0).toFixed(2)}M</Text>
+            </View>
+            <View style={styles.memberSummaryRight}>
+              <StatusBadge label={`${desertStormStats.playedCount || 0} DS`} tone="warning" />
+              <Text style={styles.memberExpandIcon}>{isExpanded ? "-" : "+"}</Text>
+            </View>
+          </Pressable>
+
+          {isExpanded ? <View style={styles.memberSection}>
+            {!isEditing ? <>
+              <View style={styles.memberStatGrid}>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Power</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Hero Power</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad Total</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
+              </View>
+              <View style={styles.memberStatGrid}>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 1</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad1 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 2</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad2 || 0).toFixed(2)}M</Text></View>
+              </View>
+              <View style={styles.memberStatGrid}>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 3</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad3 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 4</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad4 || 0).toFixed(2)}M</Text></View>
+              </View>
+              <View style={styles.memberStatGrid}>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Desert Storm Played</Text><Text style={styles.memberStatValue}>{desertStormStats.playedCount || 0}</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Desert Storm Missed</Text><Text style={styles.memberStatValue}>{desertStormStats.missedCount || 0}</Text></View>
+              </View>
+              {currentUserIsLeader ? <View style={styles.memberCardActionsRow}>
+                <SecondaryButton label="Edit Member" onPress={() => toggleEditing(player.id, true)} style={styles.half} />
+                <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemove(player)}><Text style={styles.dangerButtonText}>Remove</Text></Pressable>
+              </View> : null}
+            </> : <View style={styles.memberSection}>
+              <TextInput value={draft.name} onChangeText={(value) => updateDraft(player.id, "name", value)} style={styles.input} placeholder="Member name" />
+              <RankSelector value={draft.rank || player.rank} onChange={(value) => updateDraft(player.id, "rank", value)} />
+              <View style={styles.row}>
+                <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder="Total Power" keyboardType="decimal-pad" />
+                <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder="Hero Power" keyboardType="decimal-pad" />
+              </View>
+              <View style={styles.row}>
+                <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder="Squad 1" keyboardType="decimal-pad" />
+                <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder="Squad 2" keyboardType="decimal-pad" />
+              </View>
+              <View style={styles.row}>
+                <TextInput value={draft.squad3} onChangeText={(value) => updateDraft(player.id, "squad3", value)} style={[styles.input, styles.half]} placeholder="Squad 3" keyboardType="decimal-pad" />
+                <TextInput value={draft.squad4} onChangeText={(value) => updateDraft(player.id, "squad4", value)} style={[styles.input, styles.half]} placeholder="Squad 4" keyboardType="decimal-pad" />
+              </View>
+              <View style={styles.memberCardActionsRow}>
+                <PrimaryButton label="Save Changes" onPress={() => handleSave(player)} style={styles.half} />
+                <SecondaryButton label="Cancel" onPress={() => toggleEditing(player.id, false)} style={styles.half} />
+              </View>
+            </View>}
           </View> : null}
-          <View style={styles.section}>
-            <Text style={styles.memberSectionLabel}>Player Info</Text>
-            <TextInput value={draft.name} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, name: value } }))} onEndEditing={() => onChangeField(player.id, "name", draft.name)} onBlur={() => onChangeField(player.id, "name", draft.name)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} />
-          </View>
-          <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
-          <View style={styles.row}>
-            <RankSelector value={draft.rank} onChange={(rank) => {
-              setDrafts((current) => ({ ...current, [player.id]: { ...draft, rank } }));
-              onChangeField(player.id, "rank", rank);
-            }} disabled={!canEdit} style={styles.half} />
-            <TextInput value={draft.overallPower} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, overallPower: value } }))} onEndEditing={() => onChangeField(player.id, "overallPower", draft.overallPower)} onBlur={() => onChangeField(player.id, "overallPower", draft.overallPower)} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-          </View>
-          <TextInput value={draft.heroPower} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, heroPower: value } }))} onEndEditing={() => onChangeField(player.id, "heroPower", draft.heroPower)} onBlur={() => onChangeField(player.id, "heroPower", draft.heroPower)} editable={canEdit} style={[styles.input, !canEdit && styles.disabled]} keyboardType="decimal-pad" placeholder="Hero Power" />
-          <View style={styles.memberSection}>
-            <Text style={styles.memberSectionLabel}>Squad Powers</Text>
-            <View style={styles.row}>
-              <TextInput value={draft.squad1} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad1: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-              <TextInput value={draft.squad2} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad2: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-            </View>
-            <View style={styles.row}>
-              <TextInput value={draft.squad3} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad3: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-              <TextInput value={draft.squad4} onChangeText={(value) => setDrafts((current) => ({ ...current, [player.id]: { ...draft, squad4: value } }))} onEndEditing={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} onBlur={() => onChangeField(player.id, "squadPowers", { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 })} editable={canEdit} style={[styles.input, styles.half, !canEdit && styles.disabled]} keyboardType="decimal-pad" />
-            </View>
-          </View>
-        </> : null}
-      </View>;
-    })}
-    {!players.length ? <Text style={styles.hint}>No players match that search.</Text> : null}
+        </AppCard>;
+      }) : <AppCard><Text style={styles.statusTitle}>No members found</Text><Text style={styles.hint}>Try another search or rank filter.</Text></AppCard>}
+    </View>
+  </View>;
+}
+function buildWheelValues(start, end, formatter = (value) => String(value)) {
+  const values = [];
+  for (let value = start; value <= end; value += 1) {
+    values.push({ value, label: formatter(value) });
+  }
+  return values;
+}
+
+function formatTwoDigit(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatReminderDuration(secondsTotal) {
+  const totalSeconds = Math.max(0, Number(secondsTotal) || 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${formatTwoDigit(hours)}:${formatTwoDigit(minutes)}:${formatTwoDigit(seconds)}`;
+}
+
+function formatReminderCountdown(msRemaining) {
+  if (msRemaining <= 0) {
+    return "Due now";
+  }
+  const totalSeconds = Math.floor(msRemaining / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours}h ${minutes}m ${formatTwoDigit(seconds)}s`;
+}
+
+function CalendarTimeWheelColumn({ value, values, onChange }) {
+  const scrollRef = useRef(null);
+  const itemHeight = CALENDAR_WHEEL_ITEM_HEIGHT;
+  useEffect(() => {
+    const index = Math.max(0, values.findIndex((entry) => entry.value === value));
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: index * itemHeight, animated: false });
+    });
+  }, [itemHeight, value, values]);
+  return <View style={styles.calendarWheelColumn}>
+    <ScrollView
+      ref={scrollRef}
+      showsVerticalScrollIndicator={false}
+      snapToInterval={itemHeight}
+      decelerationRate="fast"
+      contentContainerStyle={styles.calendarWheelContent}
+      onMomentumScrollEnd={(event) => {
+        const index = Math.max(0, Math.min(values.length - 1, Math.round(event.nativeEvent.contentOffset.y / itemHeight)));
+        const nextValue = values[index]?.value;
+        if (nextValue !== undefined && nextValue !== value) {
+          onChange(nextValue);
+        }
+      }}
+    >
+      {values.map((entry) => <Pressable key={`${entry.value}`} style={styles.calendarWheelItem} onPress={() => onChange(entry.value)}>
+        <Text style={[styles.calendarWheelText, entry.value === value && styles.calendarWheelTextActive]}>{entry.label}</Text>
+      </Pressable>)}
+    </ScrollView>
+    <View pointerEvents="none" style={styles.calendarWheelHighlight} />
   </View>;
 }
 
-function formatReminderCountdown(isoValue, nowTick) {
-  const remainingMs = new Date(isoValue).getTime() - nowTick;
-  if (!Number.isFinite(remainingMs) || remainingMs <= 0) {
-    return "Due now";
+function CalendarTimePickerModal({ visible, title, value, minValue = "", onChange, onClose, language }) {
+  const parsedValue = parseReminderTimeValue(value || "00:00") || { hours: 0, minutes: 0 };
+  const parsedMin = parseReminderTimeValue(minValue || "") || null;
+  const [hourValue, setHourValue] = useState(parsedValue.hours);
+  const [minuteValue, setMinuteValue] = useState(parsedValue.minutes);
+
+  useEffect(() => {
+    setHourValue(parsedValue.hours);
+    setMinuteValue(parsedValue.minutes);
+  }, [value]);
+
+  useEffect(() => {
+    if (!parsedMin) {
+      return;
+    }
+    if (hourValue < parsedMin.hours) {
+      setHourValue(parsedMin.hours);
+      setMinuteValue(parsedMin.minutes);
+      return;
+    }
+    if (hourValue === parsedMin.hours && minuteValue < parsedMin.minutes) {
+      setMinuteValue(parsedMin.minutes);
+    }
+  }, [hourValue, minuteValue, parsedMin]);
+
+  useEffect(() => {
+    onChange(`${formatTwoDigit(hourValue)}:${formatTwoDigit(minuteValue)}`);
+  }, [hourValue, minuteValue]);
+
+  const hourOptions = buildWheelValues(parsedMin ? parsedMin.hours : 0, 23, formatTwoDigit);
+  const minuteStart = parsedMin && hourValue === parsedMin.hours ? parsedMin.minutes : 0;
+  const minuteOptions = buildWheelValues(minuteStart, 59, formatTwoDigit);
+
+  if (!visible) {
+    return null;
   }
-  const totalSeconds = Math.floor(remainingMs / 1000);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const parts = [];
-  if (days) parts.push(`${days}d`);
-  if (days || hours) parts.push(`${hours}h`);
-  if (days || hours || minutes) parts.push(`${minutes}m`);
-  parts.push(`${seconds}s`);
-  return parts.join(" ");
+
+  return <BottomSheetModal visible={visible} onClose={onClose}>
+    <SectionHeader eyebrow="Picker" title={title} detail={language ? "" : ""} />
+    <View style={styles.calendarWheelHeader}>
+      <Text style={styles.hint}>Hour</Text>
+      <Text style={styles.hint}>Minute</Text>
+    </View>
+    <View style={styles.calendarWheelRow}>
+      <CalendarTimeWheelColumn value={hourValue} values={hourOptions} onChange={setHourValue} />
+      <CalendarTimeWheelColumn value={minuteValue} values={minuteOptions} onChange={setMinuteValue} />
+    </View>
+    <PrimaryButton label="Done" onPress={onClose} />
+  </BottomSheetModal>;
+}
+
+function CalendarDatePickerModal({ visible, title, value, onChange, onClose }) {
+  const safeValue = isValidReminderDateKey(value) ? value : formatReminderDateKey(new Date());
+  const [yearValue, setYearValue] = useState(Number.parseInt(safeValue.slice(0, 4), 10));
+  const [monthValue, setMonthValue] = useState(Number.parseInt(safeValue.slice(5, 7), 10));
+  const [dayValue, setDayValue] = useState(Number.parseInt(safeValue.slice(8, 10), 10));
+
+  useEffect(() => {
+    const normalized = isValidReminderDateKey(value) ? value : formatReminderDateKey(new Date());
+    setYearValue(Number.parseInt(normalized.slice(0, 4), 10));
+    setMonthValue(Number.parseInt(normalized.slice(5, 7), 10));
+    setDayValue(Number.parseInt(normalized.slice(8, 10), 10));
+  }, [value]);
+
+  const maxDay = new Date(yearValue, monthValue, 0).getDate();
+  useEffect(() => {
+    if (dayValue > maxDay) {
+      setDayValue(maxDay);
+    }
+  }, [dayValue, maxDay]);
+
+  useEffect(() => {
+    onChange(`${yearValue}-${formatTwoDigit(monthValue)}-${formatTwoDigit(Math.min(dayValue, maxDay))}`);
+  }, [yearValue, monthValue, dayValue, maxDay]);
+
+  const monthOptions = buildWheelValues(1, 12, formatTwoDigit);
+  const dayOptions = buildWheelValues(1, maxDay, formatTwoDigit);
+  const currentYear = new Date().getFullYear();
+  const yearOptions = buildWheelValues(currentYear - 1, currentYear + 3, String);
+
+  if (!visible) {
+    return null;
+  }
+
+  return <BottomSheetModal visible={visible} onClose={onClose}>
+    <SectionHeader eyebrow="Picker" title={title} />
+    <View style={styles.calendarWheelHeader}>
+      <Text style={styles.hint}>Month</Text>
+      <Text style={styles.hint}>Day</Text>
+      <Text style={styles.hint}>Year</Text>
+    </View>
+    <View style={styles.calendarWheelRow}>
+      <CalendarTimeWheelColumn value={monthValue} values={monthOptions} onChange={setMonthValue} />
+      <CalendarTimeWheelColumn value={Math.min(dayValue, maxDay)} values={dayOptions} onChange={setDayValue} />
+      <CalendarTimeWheelColumn value={yearValue} values={yearOptions} onChange={setYearValue} />
+    </View>
+    <PrimaryButton label="Done" onPress={onClose} />
+  </BottomSheetModal>;
+}
+
+function ReminderDurationPickerModal({ visible, title, valueSeconds, onChange, onClose }) {
+  const totalSeconds = Math.max(0, Number(valueSeconds) || 0);
+  const [hours, setHours] = useState(Math.floor(totalSeconds / 3600));
+  const [minutes, setMinutes] = useState(Math.floor((totalSeconds % 3600) / 60));
+  const [seconds, setSeconds] = useState(totalSeconds % 60);
+
+  useEffect(() => {
+    const normalized = Math.max(0, Number(valueSeconds) || 0);
+    setHours(Math.floor(normalized / 3600));
+    setMinutes(Math.floor((normalized % 3600) / 60));
+    setSeconds(normalized % 60);
+  }, [valueSeconds]);
+
+  useEffect(() => {
+    onChange(hours * 3600 + minutes * 60 + seconds);
+  }, [hours, minutes, seconds]);
+
+  if (!visible) {
+    return null;
+  }
+
+  return <BottomSheetModal visible={visible} onClose={onClose}>
+    <SectionHeader eyebrow="Reminder" title={title} detail="Set hours, minutes, and seconds for the countdown." />
+    <View style={styles.calendarWheelHeader}>
+      <Text style={styles.hint}>Hours</Text>
+      <Text style={styles.hint}>Minutes</Text>
+      <Text style={styles.hint}>Seconds</Text>
+    </View>
+    <View style={styles.calendarWheelRow}>
+      <CalendarTimeWheelColumn value={hours} values={buildWheelValues(0, 23, formatTwoDigit)} onChange={setHours} />
+      <CalendarTimeWheelColumn value={minutes} values={buildWheelValues(0, 59, formatTwoDigit)} onChange={setMinutes} />
+      <CalendarTimeWheelColumn value={seconds} values={buildWheelValues(0, 59, formatTwoDigit)} onChange={setSeconds} />
+    </View>
+    <PrimaryButton label="Done" onPress={onClose} />
+  </BottomSheetModal>;
 }
 
 function RemindersView({ reminders, language, onCreateReminder, onCancelReminder, onDeleteReminder }) {
   const localTimeZone = getReminderDeviceTimeZone();
-  const serverTimeZone = getReminderServerTimeZone();
-  const serverTimeLabel = getReminderServerTimeLabel();
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [mode, setMode] = useState("elapsed");
-  const [durationValue, setDurationValue] = useState("01:00:00");
   const [dateKey, setDateKey] = useState(formatReminderDateKey(new Date()));
-  const [timeValue, setTimeValue] = useState("09:00");
-  const [datePickerTarget, setDatePickerTarget] = useState("");
-  const [timePickerTarget, setTimePickerTarget] = useState("");
-  const [error, setError] = useState("");
-  const [nowTick, setNowTick] = useState(Date.now());
-  const activeReminders = reminders.filter((entry) => entry.status === "active");
-  const pastReminders = reminders.filter((entry) => entry.status !== "active");
-  const preview = useMemo(() => {
-    if ((mode === "localTime" || mode === "serverTime") && (!dateKey || !parseReminderTimeValue(timeValue))) {
-      return null;
-    }
-    return buildReminderSchedule({
-      mode,
-      title,
-      notes,
-      durationDays: 0,
-      durationHours: parseReminderTimeValue(durationValue)?.hours || 0,
-      durationMinutes: parseReminderTimeValue(durationValue)?.minutes || 0,
-      durationSeconds: parseReminderTimeValue(durationValue)?.seconds || 0,
-      dateKey,
-      timeValue,
-      localTimeZone
-    });
-  }, [mode, title, notes, durationValue, dateKey, timeValue, localTimeZone]);
+  const [timeValue, setTimeValue] = useState("12:00");
+  const [durationSeconds, setDurationSeconds] = useState(3600);
+  const [formError, setFormError] = useState("");
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [durationPickerVisible, setDurationPickerVisible] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setNowTick(Date.now());
-    }, 1000);
-    return () => clearInterval(intervalId);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  function resetForm() {
-    setTitle("");
-    setNotes("");
-    setMode("elapsed");
-    setDurationValue("01:00:00");
-    setDateKey(formatReminderDateKey(new Date()));
-    setTimeValue("09:00");
-    setDatePickerTarget("");
-    setTimePickerTarget("");
-    setError("");
+  const activeReminders = useMemo(() => (reminders || []).filter((reminder) => reminder.status === "active").sort((a, b) => String(a.scheduledForUtc).localeCompare(String(b.scheduledForUtc))), [reminders]);
+  const inactiveReminders = useMemo(() => (reminders || []).filter((reminder) => reminder.status !== "active").sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt))), [reminders]);
+  const preview = useMemo(() => {
+    try {
+      return buildReminderSchedule({
+        mode,
+        title,
+        notes,
+        durationDays: 0,
+        durationHours: Math.floor(durationSeconds / 3600),
+        durationMinutes: Math.floor((durationSeconds % 3600) / 60),
+        durationSeconds: durationSeconds % 60,
+        dateKey,
+        timeValue,
+        localTimeZone
+      });
+    } catch {
+      return null;
+    }
+  }, [mode, title, notes, durationSeconds, dateKey, timeValue, localTimeZone]);
+
+  function getReminderModeLabel(value) {
+    if (value === "serverTime") return `Server Time (${getReminderServerTimeLabel()})`;
+    if (value === "localTime") return "Local Time";
+    return "After Duration";
   }
 
-  async function handleCreate() {
-    if (mode === "elapsed") {
-      const parsedDuration = parseReminderTimeValue(durationValue);
-      const totalMinutes = parsedDuration ? parsedDuration.hours * 60 + parsedDuration.minutes : 0;
-      if (totalMinutes <= 0) {
-        setError("Choose a future duration.");
-        return;
-      }
-    } else {
-      if (!dateKey) {
-        setError("Choose a date before saving.");
-        return;
-      }
-      if (!parseReminderTimeValue(timeValue)) {
-        setError("Choose a time before saving.");
-        return;
-      }
-    }
-    if (!preview?.scheduledForUtc || new Date(preview.scheduledForUtc).getTime() <= Date.now()) {
-      setError("Reminder time must be in the future.");
+  async function handleSubmit() {
+    if (mode === "elapsed" && durationSeconds <= 0) {
+      setFormError("Choose a duration greater than zero.");
       return;
     }
-    setError("");
-    const created = await onCreateReminder({
+    if ((mode === "localTime" || mode === "serverTime") && !isValidReminderDateKey(dateKey)) {
+      setFormError("Choose a valid reminder date.");
+      return;
+    }
+    if ((mode === "localTime" || mode === "serverTime") && !parseReminderTimeValue(timeValue)) {
+      setFormError("Choose a valid reminder time.");
+      return;
+    }
+    if (!preview || new Date(preview.scheduledForUtc).getTime() <= Date.now()) {
+      setFormError("Reminder time must be in the future.");
+      return;
+    }
+    setFormError("");
+    const success = await onCreateReminder({
       title,
       notes,
       mode,
-      durationDays: "0",
-      durationHours: String(parseReminderTimeValue(durationValue)?.hours || 0),
-      durationMinutes: String(parseReminderTimeValue(durationValue)?.minutes || 0),
-      durationSeconds: String(parseReminderTimeValue(durationValue)?.seconds || 0),
+      durationDays: 0,
+      durationHours: Math.floor(durationSeconds / 3600),
+      durationMinutes: Math.floor((durationSeconds % 3600) / 60),
+      durationSeconds: durationSeconds % 60,
       dateKey,
       timeValue
     });
-    if (created) {
-      resetForm();
+    if (success) {
+      setTitle("");
+      setNotes("");
+      setMode("elapsed");
+      setDurationSeconds(3600);
+      setDateKey(formatReminderDateKey(new Date()));
+      setTimeValue("12:00");
+      setFormError("");
     }
   }
 
-  function renderReminderCard(reminder, showCancel) {
-    return <View key={reminder.id} style={styles.statusCard}>
-      <Text style={styles.statusEyebrow}>{reminder.mode === "elapsed" ? "After a duration" : reminder.mode === "serverTime" ? `Server Time (${serverTimeLabel})` : "My Local Time"}</Text>
-      <Text style={styles.statusTitle}>{reminder.title}</Text>
-      {reminder.notes ? <Text style={styles.statusLine}>{reminder.notes}</Text> : null}
-      <Text style={styles.statusLine}>Status: {reminder.status}</Text>
-      {showCancel ? <Text style={styles.statusLine}>Time left: {formatReminderCountdown(reminder.scheduledForUtc, nowTick)}</Text> : null}
-      <Text style={styles.statusLine}>Local: {formatReminderDateTimeDisplay(reminder.scheduledForUtc, localTimeZone, language)}</Text>
-      <Text style={styles.statusLine}>Server ({serverTimeLabel}): {formatReminderDateTimeDisplay(reminder.scheduledForUtc, serverTimeZone, language)}</Text>
-      <View style={styles.row}>
-        {showCancel ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onCancelReminder(reminder)}>
-          <Text style={styles.secondaryButtonText}>Cancel</Text>
-        </Pressable> : null}
-        <Pressable style={[showCancel ? styles.dangerButton : styles.secondaryButton, styles.half]} onPress={() => onDeleteReminder(reminder)}>
-          <Text style={showCancel ? styles.dangerButtonText : styles.secondaryButtonText}>Delete</Text>
-        </Pressable>
+  function renderReminderCard(reminder, inactive = false) {
+    const scheduledAt = new Date(reminder.scheduledForUtc).getTime();
+    const countdown = scheduledAt > now ? formatReminderCountdown(scheduledAt - now) : "Due now";
+    return <AppCard key={reminder.id} style={styles.reminderCard} variant={inactive ? "default" : "info"}>
+      <View style={styles.cardHeaderRow}>
+        <View style={styles.listRowContent}>
+          <Text style={styles.cardTitle}>{reminder.title || "Reminder"}</Text>
+          <Text style={styles.reminderMeta}>{getReminderModeLabel(reminder.mode)}</Text>
+        </View>
+        <StatusBadge label={reminder.status === "active" ? "Active" : reminder.status === "cancelled" ? "Cancelled" : "Completed"} tone={reminder.status === "active" ? "success" : reminder.status === "cancelled" ? "danger" : "neutral"} />
       </View>
-    </View>;
+      {reminder.notes ? <Text style={styles.line}>{reminder.notes}</Text> : null}
+      <View style={styles.calendarTimeStack}>
+        <ListRow title="Local Time" detail={formatReminderDateTimeDisplay(reminder.scheduledForUtc, localTimeZone, language)} />
+        <ListRow title={`Server Time (${getReminderServerTimeLabel()})`} detail={formatReminderDateTimeDisplay(reminder.scheduledForUtc, getReminderServerTimeZone(), language)} />
+        <ListRow title="Repeat" detail="One-time" />
+      </View>
+      {reminder.status === "active" ? <Text style={styles.reminderCountdown}>{countdown}</Text> : null}
+      <View style={styles.memberCardActionsRow}>
+        {reminder.status === "active" ? <SecondaryButton label="Cancel" onPress={() => onCancelReminder(reminder)} style={styles.half} /> : null}
+        <Pressable style={[styles.dangerButton, reminder.status === "active" ? styles.half : { flex: 1 }]} onPress={() => onDeleteReminder(reminder)}><Text style={styles.dangerButtonText}>Delete</Text></Pressable>
+      </View>
+    </AppCard>;
   }
 
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Reminders</Text>
-    <Text style={styles.hint}>Each reminder is personal to your account and fires on this device.</Text>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>New Reminder</Text>
+  return <View style={styles.section}>
+    <AppCard style={styles.remindersHeroCard}>
+      <SectionHeader eyebrow="Reminders" title="Operational reminders" detail="Track personal countdowns, local alarms, and server-time reminders in one place." />
+      <StatusBadge label={`${activeReminders.length} active`} tone={activeReminders.length ? "warning" : "neutral"} />
+    </AppCard>
+
+    <AppCard style={styles.reminderComposerCard}>
+      <SectionHeader eyebrow="Create" title="New reminder" detail="The reminder fires on this device using the existing local notification flow." />
       <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder="Reminder title" />
       <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.textArea]} placeholder="Optional notes" multiline />
       <View style={styles.rankFilterRow}>
-        <Pressable style={[styles.rankFilterButton, mode === "elapsed" && styles.rankFilterButtonActive]} onPress={() => setMode("elapsed")}><Text style={[styles.rankFilterButtonText, mode === "elapsed" && styles.rankFilterButtonTextActive]}>After a duration</Text></Pressable>
-        <Pressable style={[styles.rankFilterButton, mode === "localTime" && styles.rankFilterButtonActive]} onPress={() => setMode("localTime")}><Text style={[styles.rankFilterButtonText, mode === "localTime" && styles.rankFilterButtonTextActive]}>At local time</Text></Pressable>
-        <Pressable style={[styles.rankFilterButton, mode === "serverTime" && styles.rankFilterButtonActive]} onPress={() => setMode("serverTime")}><Text style={[styles.rankFilterButtonText, mode === "serverTime" && styles.rankFilterButtonTextActive]}>At server time</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, mode === "elapsed" && styles.rankFilterButtonActive]} onPress={() => setMode("elapsed")}><Text style={[styles.rankFilterButtonText, mode === "elapsed" && styles.rankFilterButtonTextActive]}>After Duration</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, mode === "localTime" && styles.rankFilterButtonActive]} onPress={() => setMode("localTime")}><Text style={[styles.rankFilterButtonText, mode === "localTime" && styles.rankFilterButtonTextActive]}>At Local Time</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, mode === "serverTime" && styles.rankFilterButtonActive]} onPress={() => setMode("serverTime")}><Text style={[styles.rankFilterButtonText, mode === "serverTime" && styles.rankFilterButtonTextActive]}>At Server Time</Text></Pressable>
       </View>
-      {mode === "elapsed" ? <View style={styles.row}>
-        <Pressable style={styles.secondaryButton} onPress={() => setTimePickerTarget("reminderDuration")}><Text style={styles.secondaryButtonText}>Duration: {durationValue}</Text></Pressable>
-      </View> : <>
-        <Text style={styles.hint}>{mode === "serverTime" ? `Server time is ${serverTimeLabel}.` : `Using your local time zone (${localTimeZone}).`}</Text>
-        <View style={styles.row}>
-          <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setDatePickerTarget("reminderDate")}><Text style={styles.secondaryButtonText}>Date: {dateKey}</Text></Pressable>
-          <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => setTimePickerTarget("reminderTime")}><Text style={styles.secondaryButtonText}>Time: {timeValue}</Text></Pressable>
-        </View>
-      </>}
-      {preview ? <View style={styles.statusCard}>
+      {mode === "elapsed" ? <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setDurationPickerVisible(true)}><Text style={styles.line}>Duration: {formatReminderDuration(durationSeconds)}</Text></Pressable> : null}
+      {(mode === "localTime" || mode === "serverTime") ? <>
+        <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setDatePickerVisible(true)}><Text style={styles.line}>Date: {dateKey}</Text></Pressable>
+        <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => setTimePickerVisible(true)}><Text style={styles.line}>Time: {timeValue}</Text></Pressable>
+        {mode === "serverTime" ? <Text style={styles.hint}>Server time is {getReminderServerTimeLabel()}.</Text> : null}
+      </> : null}
+      <AppCard variant="info" style={styles.reminderPreviewCard}>
         <Text style={styles.statusEyebrow}>Preview</Text>
-        <Text style={styles.statusLine}>Server ({serverTimeLabel}): {formatReminderDateTimeDisplay(preview.scheduledForUtc, serverTimeZone, language)}</Text>
-        <Text style={styles.statusLine}>Local: {formatReminderDateTimeDisplay(preview.scheduledForUtc, localTimeZone, language)}</Text>
-      </View> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={styles.button} onPress={handleCreate}><Text style={styles.buttonText}>Create Reminder</Text></Pressable>
-    </View>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Active Reminders</Text>
-      {activeReminders.length ? activeReminders.map((reminder) => renderReminderCard(reminder, true)) : <Text style={styles.hint}>No active reminders yet.</Text>}
-    </View>
-    {pastReminders.length ? <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Past Reminders</Text>
-      {pastReminders.map((reminder) => renderReminderCard(reminder, false))}
-    </View> : null}
-    <CalendarDatePickerModal visible={datePickerTarget === "reminderDate"} title="Select Reminder Date" value={dateKey} onChange={setDateKey} onClose={() => setDatePickerTarget("")} language={language} />
-    <ReminderDurationPickerModal visible={timePickerTarget === "reminderDuration"} title="Select Duration" value={durationValue} onChange={setDurationValue} onClose={() => setTimePickerTarget("")} />
-    <CalendarTimePickerModal visible={timePickerTarget === "reminderTime"} title="Select Reminder Time" value={timeValue} onChange={setTimeValue} onClose={() => setTimePickerTarget("")} language={language} />
+        <ListRow title="Local Time" detail={preview ? formatReminderDateTimeDisplay(preview.scheduledForUtc, localTimeZone, language) : "--"} />
+        <ListRow title={`Server Time (${getReminderServerTimeLabel()})`} detail={preview ? formatReminderDateTimeDisplay(preview.scheduledForUtc, getReminderServerTimeZone(), language) : "--"} />
+      </AppCard>
+      {formError ? <Text style={styles.error}>{formError}</Text> : null}
+      <PrimaryButton label="Create Reminder" onPress={handleSubmit} />
+    </AppCard>
+
+    <AppCard style={styles.reminderSectionCard}>
+      <SectionHeader eyebrow="Active" title="Active reminders" detail="Upcoming reminders that still have scheduled local notifications." />
+      {activeReminders.length ? <View style={styles.remindersList}>{activeReminders.map((reminder) => renderReminderCard(reminder, false))}</View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>No active reminders</Text><Text style={styles.hint}>Create a reminder to start tracking your next action window.</Text></AppCard>}
+    </AppCard>
+
+    <AppCard style={styles.reminderSectionCard}>
+      <SectionHeader eyebrow="Inactive" title="Past and cancelled" detail="Completed or cancelled reminders stay here for quick review." />
+      {inactiveReminders.length ? <View style={styles.remindersList}>{inactiveReminders.map((reminder) => renderReminderCard(reminder, true))}</View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>Nothing archived</Text><Text style={styles.hint}>Cancelled or completed reminders will show up here.</Text></AppCard>}
+    </AppCard>
+
+    <ReminderDurationPickerModal visible={durationPickerVisible} title="Select duration" valueSeconds={durationSeconds} onChange={setDurationSeconds} onClose={() => setDurationPickerVisible(false)} />
+    <CalendarDatePickerModal visible={datePickerVisible} title="Select date" value={dateKey} onChange={setDateKey} onClose={() => setDatePickerVisible(false)} />
+    <CalendarTimePickerModal visible={timePickerVisible} title="Select time" value={timeValue} onChange={setTimeValue} onClose={() => setTimePickerVisible(false)} />
   </View>;
 }
-function DesertStormHistoryView({ layouts, currentUserIsLeader, onUpdateResult }) {
-  const [selectedLayoutId, setSelectedLayoutId] = useState("");
-  const selectedLayout = layouts.find((layout) => layout.id === selectedLayoutId) || null;
-
-  useEffect(() => {
-    if (selectedLayoutId && !selectedLayout) {
-      setSelectedLayoutId("");
-    }
-  }, [selectedLayoutId, selectedLayout]);
-
-  function handleResultPress(layout, nextResult) {
-    if (layout.result === nextResult) return;
-    if (layout.result !== "pending") {
-      Alert.alert(
-        "Change Desert Storm Result",
-        `Are you sure you want to change this result from ${layout.result} to ${nextResult}?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Change", style: "default", onPress: () => onUpdateResult(layout.id, nextResult) }
-        ]
-      );
-      return;
-    }
-    onUpdateResult(layout.id, nextResult);
-  }
-
-  if (!layouts.length) {
-    return <View style={styles.card}><Text style={styles.cardTitle}>Desert Storm History</Text><Text style={styles.hint}>Locked layouts preserve each week’s positions and result.</Text><Text style={styles.hint}>No Desert Storm layouts have been locked in yet.</Text></View>;
-  }
-
-  if (!selectedLayout) {
-    return <View style={styles.card}><Text style={styles.cardTitle}>Desert Storm History</Text><Text style={styles.hint}>Tap a locked date to open that saved setup.</Text>{layouts.map((layout) => <Pressable key={layout.id} style={styles.voteCard} onPress={() => setSelectedLayoutId(layout.id)}><Text style={styles.sectionTitle}>{layout.lockedInAt.slice(0, 10)}</Text><Text style={styles.hint}>{layout.title}</Text><Text style={styles.hint}>Locked by {layout.lockedByName || "Leader"} • {layout.result}</Text></Pressable>)}</View>;
-  }
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>Desert Storm History</Text>
-    <Text style={styles.hint}>{selectedLayout.title}</Text>
-    <Text style={styles.hint}>Locked on {selectedLayout.lockedInAt.slice(0, 10)} by {selectedLayout.lockedByName || "Leader"}</Text>
-    <Text style={styles.line}>Result: {getDesertStormStatusLabel(selectedLayout.result || "pending")}</Text>
-    {selectedLayout.notes ? <Text style={styles.line}>Notes: {selectedLayout.notes}</Text> : null}
-    <Pressable style={styles.secondaryButton} onPress={() => setSelectedLayoutId("")}>
-      <Text style={styles.secondaryButtonText}>Back to History</Text>
-    </Pressable>
-    {Object.values(selectedLayout.taskForces || {}).map((taskForce) => <View key={taskForce.key || taskForce.label} style={styles.section}>
-      <Text style={styles.sectionTitle}>{taskForce.label || "Task Force"}</Text>
-      {(taskForce.squads || []).map((squad) => <View key={squad.id || squad.label} style={styles.voteCard}>
-        <Text style={styles.line}>{squad.label}</Text>
-        {(squad.slots || []).map((slot) => <Text key={slot.id || slot.label} style={styles.hint}>{slot.label}: {slot.playerName || "Open"}</Text>)}
-      </View>)}
-    </View>)}
-    {currentUserIsLeader ? <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, selectedLayout.result === "pending" && styles.modeButtonActive]} onPress={() => handleResultPress(selectedLayout, "pending")}><Text style={[styles.secondaryButtonText, selectedLayout.result === "pending" && styles.modeButtonTextActive]}>Pending</Text></Pressable>
-      <Pressable style={[styles.button, styles.half]} onPress={() => handleResultPress(selectedLayout, "win")}><Text style={styles.buttonText}>Win</Text></Pressable>
-      <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleResultPress(selectedLayout, "loss")}><Text style={styles.dangerButtonText}>Loss</Text></Pressable>
-    </View> : null}
-  </View>;
-}
-
 function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, currentUserIsLeader, calendarView, editingCalendarEntryId, language, newCalendarTimeInputMode, calendarTimePickerTarget, calendarDatePickerTarget, calendarFormError, onChangeCalendarView, newCalendarTitle, newCalendarDescription, newCalendarDate, newCalendarEndDate, newCalendarStartTime, newCalendarEndTime, newCalendarAllDay, newCalendarEntryType, newCalendarRepeat, newCalendarRepeatEndDate, newCalendarRepeatWeekdays, newCalendarLinkedType, newCalendarLinkedEventId, newCalendarEventTimeZone, newCalendarLeaderNotes, newCalendarLeaderOnly, onChangeNewCalendarTitle, onChangeNewCalendarDescription, onChangeNewCalendarDate, onChangeNewCalendarEndDate, onChangeNewCalendarStartTime, onChangeNewCalendarEndTime, onChangeNewCalendarTimeInputMode, onChangeCalendarTimePickerTarget, onChangeCalendarDatePickerTarget, onChangeNewCalendarEventTimeZone, onToggleNewCalendarAllDay, onChangeNewCalendarEntryType, onChangeNewCalendarRepeat, onChangeNewCalendarRepeatEndDate, onToggleNewCalendarRepeatWeekday, onChangeNewCalendarLinkedEventId, onChangeNewCalendarLeaderNotes, onToggleLeaderOnly, onCreateEntry, onCancelEdit, onEditEntry, onDeleteEntry, onOpenLinkedEntry }) {
   const today = startOfLocalDay();
   const todayKey = formatLocalDateKey(today);
@@ -2967,15 +2632,17 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
 
   const linkEventOptions = newCalendarEntryType === "linked_desert_storm" ? availableDesertStormEvents : newCalendarEntryType === "linked_zombie_siege" ? availableZombieSiegeEvents : [];
 
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>{calendarT("title")}</Text>
-    <Text style={styles.hint}>{calendarT("hint")}</Text>
-    <View style={styles.row}>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "today" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("today")}><Text style={[styles.secondaryButtonText, calendarView === "today" && styles.modeButtonTextActive]}>{calendarT("today")}</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "week" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("week")}><Text style={[styles.secondaryButtonText, calendarView === "week" && styles.modeButtonTextActive]}>{calendarT("week")}</Text></Pressable>
-      <Pressable style={[styles.secondaryButton, styles.half, calendarView === "month" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("month")}><Text style={[styles.secondaryButtonText, calendarView === "month" && styles.modeButtonTextActive]}>{calendarT("month")}</Text></Pressable>
-    </View>
-    {calendarView === "month" ? <View style={styles.calendarMonthShell}>
+  return <View style={styles.section}>
+    <AppCard style={styles.calendarAgendaShell}>
+      <SectionHeader eyebrow="Calendar" title={calendarT("title")} detail={calendarT("hint")} />
+      <View style={styles.calendarModeRow}>
+        <Pressable style={[styles.secondaryButton, styles.third, calendarView === "today" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("today")}><Text style={[styles.secondaryButtonText, calendarView === "today" && styles.modeButtonTextActive]}>{calendarT("today")}</Text></Pressable>
+        <Pressable style={[styles.secondaryButton, styles.third, calendarView === "week" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("week")}><Text style={[styles.secondaryButtonText, calendarView === "week" && styles.modeButtonTextActive]}>{calendarT("week")}</Text></Pressable>
+        <Pressable style={[styles.secondaryButton, styles.third, calendarView === "month" && styles.modeButtonActive]} onPress={() => onChangeCalendarView("month")}><Text style={[styles.secondaryButtonText, calendarView === "month" && styles.modeButtonTextActive]}>{calendarT("month")}</Text></Pressable>
+      </View>
+    </AppCard>
+
+    {calendarView === "month" ? <AppCard style={styles.calendarMonthShell}>
       <View style={styles.calendarMonthHeader}>
         <Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(-1)}><Text style={styles.calendarMonthArrowText}>{"<"}</Text></Pressable>
         <Text style={styles.calendarMonthTitle}>{monthLabel}</Text>
@@ -2987,52 +2654,73 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
       <View style={styles.calendarGrid}>
         {monthDays.map((day) => renderDayButton(day))}
       </View>
-    </View> : null}
-    {calendarView === "week" ? <View style={styles.calendarStrip}>{weekDays.map((day) => renderDayButton(day, true))}</View> : null}
-    {calendarView === "today" ? <View style={styles.calendarStrip}>{renderDayButton(today, true)}</View> : null}
-    <View style={styles.calendarDetailCard}>
+    </AppCard> : null}
+
+    {calendarView === "week" ? <AppCard style={styles.calendarStripShell}><View style={styles.calendarStrip}>{weekDays.map((day) => renderDayButton(day, true))}</View></AppCard> : null}
+    {calendarView === "today" ? <AppCard style={styles.calendarStripShell}><View style={styles.calendarStrip}>{renderDayButton(today, true)}</View></AppCard> : null}
+
+    <AppCard style={styles.calendarDetailCard}>
       <View style={styles.calendarDetailHeader}>
-        <View style={styles.memberHeaderText}>
-          <Text style={styles.sectionTitle}>{selectedDateLabel}</Text>
+        <View style={styles.listRowContent}>
+          <Text style={styles.statusEyebrow}>{calendarT("selectedDay")}</Text>
+          <Text style={styles.cardTitle}>{selectedDateLabel}</Text>
           <Text style={styles.hint}>{selectedEntries.length ? (selectedEntries.length === 1 ? calendarT("oneEventScheduled") : calendarT("manyEventsScheduled", { count: selectedEntries.length })) : calendarT("noEventsScheduled")}</Text>
         </View>
-        <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>{calendarT("selectedDay")}</Text>
-          <Text style={styles.memberStatValue}>{selectedDateShortLabel}</Text>
-        </View>
+        <StatusBadge label={selectedEntries.length ? `${selectedEntries.length}` : "0"} tone={selectedEntries.length ? "info" : "neutral"} />
       </View>
-      {selectedEntries.length ? selectedEntries.map((entry) => <Pressable key={entry.occurrenceId || entry.id} style={styles.voteCard} disabled={!entry.linkedType} onPress={() => entry.linkedType && onOpenLinkedEntry(entry)}>
-        <View style={styles.memberCardHeader}>
-          <View style={styles.memberHeaderText}>
-            <Text style={styles.sectionTitle}>{entry.title}</Text>
-            <Text style={styles.hint}>{entry.allDay !== false ? calendarT("allDay") : entry.localDisplayTime || entry.displayTime}{entry.leaderOnly ? ` • ${calendarT("leaderOnly")}` : ""}</Text>
-          </View>
-          {currentUserIsLeader ? <View style={styles.memberCardActions}><Pressable style={styles.secondaryButton} onPress={() => onEditEntry(entry)}><Text style={styles.secondaryButtonText}>{calendarT("edit")}</Text></Pressable><Pressable style={styles.dangerButton} onPress={() => onDeleteEntry(entry.sourceEntryId || entry.id)}><Text style={styles.dangerButtonText}>{calendarT("delete")}</Text></Pressable></View> : null}
-        </View>
-        {entry.description ? <Text style={styles.line}>{entry.description}</Text> : null}
-        {getRepeatLabel(entry) ? <Text style={styles.hint}>{getRepeatLabel(entry)}</Text> : null}
-        {entry.allDay === false ? <Text style={styles.hint}>{calendarT("serverTime")}: {entry.serverDisplayDateTime || entry.serverDisplayTime}</Text> : null}
-        {entry.allDay === false ? <Text style={styles.hint}>{calendarT("memberLocalTime")}: {entry.localDisplayDateTime || entry.localDisplayTime}</Text> : null}
-        {entry.linkedType === "desertStorm" ? <Text style={styles.selectedPlayerHint}>{calendarT("linkedDesertStorm")}</Text> : null}
-        {entry.linkedType === "zombieSiege" ? <Text style={styles.selectedPlayerHint}>{calendarT("linkedZombieSiege")}</Text> : null}
-        {currentUserIsLeader && entry.leaderNotes ? <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{calendarT("leaderNotes")}</Text><Text style={styles.line}>{entry.leaderNotes}</Text></View> : null}
-        <Text style={styles.hint}>{calendarT("addedBy", { name: entry.createdByName || "Leader" })}</Text>
-      </Pressable>) : <Text style={styles.hint}>{calendarView === "today" ? calendarT("nothingToday") : calendarT("tapAnotherDay")}</Text>}
-    </View>
-    {currentUserIsLeader ? <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{editingCalendarEntryId ? calendarT("editEntry") : calendarT("addEntry")}</Text>
+
+      {selectedEntries.length ? <View style={styles.calendarAgendaList}>
+        {selectedEntries.map((entry) => {
+          const badgeTone = entry.linkedType === "desertStorm" ? "warning" : entry.linkedType === "zombieSiege" ? "purple" : entry.leaderOnly ? "danger" : entry.allDay === false ? "info" : "neutral";
+          const badgeLabel = entry.linkedType === "desertStorm"
+            ? calendarT("linkedDesertStorm")
+            : entry.linkedType === "zombieSiege"
+              ? calendarT("linkedZombieSiege")
+              : entry.leaderOnly
+                ? calendarT("leaderOnly")
+                : entry.allDay !== false
+                  ? calendarT("allDay")
+                  : calendarT("timeSpecificEntry");
+          return <Pressable key={entry.occurrenceId || entry.id} style={styles.calendarEntryCard} disabled={!entry.linkedType} onPress={() => entry.linkedType && onOpenLinkedEntry(entry)}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.listRowContent}>
+                <Text style={styles.cardTitle}>{entry.title}</Text>
+                <Text style={styles.calendarEntryMeta}>{entry.allDay !== false ? calendarT("allDay") : entry.localDisplayDateTime || entry.localDisplayTime || entry.displayTime}</Text>
+              </View>
+              <StatusBadge label={badgeLabel} tone={badgeTone} />
+            </View>
+            {entry.description ? <Text style={styles.line}>{entry.description}</Text> : null}
+            {getRepeatLabel(entry) ? <Text style={styles.hint}>{getRepeatLabel(entry)}</Text> : null}
+            {entry.allDay === false ? <View style={styles.calendarTimeStack}>
+              <ListRow title={calendarT("serverTime")} detail={entry.serverDisplayDateTime || entry.serverDisplayTime} />
+              <ListRow title={calendarT("memberLocalTime")} detail={entry.localDisplayDateTime || entry.localDisplayTime} />
+            </View> : null}
+            {currentUserIsLeader && entry.leaderNotes ? <AppCard style={styles.calendarLeaderNotesCard}><Text style={styles.statusEyebrow}>{calendarT("leaderNotes")}</Text><Text style={styles.line}>{entry.leaderNotes}</Text></AppCard> : null}
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.hint}>{calendarT("addedBy", { name: entry.createdByName || "Leader" })}</Text>
+              {currentUserIsLeader ? <View style={styles.memberCardActions}>
+                <SecondaryButton label={calendarT("edit")} onPress={() => onEditEntry(entry)} />
+                <Pressable style={styles.dangerButton} onPress={() => onDeleteEntry(entry.sourceEntryId || entry.id)}><Text style={styles.dangerButtonText}>{calendarT("delete")}</Text></Pressable>
+              </View> : null}
+            </View>
+          </Pressable>;
+        })}
+      </View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>{calendarView === "today" ? calendarT("nothingToday") : calendarT("tapAnotherDay")}</Text><Text style={styles.hint}>{calendarT("noEventsScheduled")}</Text></AppCard>}
+    </AppCard>
+
+    {currentUserIsLeader ? <AppCard style={styles.calendarComposerCard}>
+      <SectionHeader eyebrow="Leader Controls" title={editingCalendarEntryId ? calendarT("editEntry") : calendarT("addEntry")} detail="Create and update alliance calendar entries without changing the underlying event logic." />
       <View style={styles.rankFilterRow}>
         {[["manual", calendarT("manualEvent")], ["reminder", calendarT("reminder")], ["linked_desert_storm", calendarT("linkDesertStorm")], ["linked_zombie_siege", calendarT("linkZombieSiege")]].map(([value, label]) => <Pressable key={value} style={[styles.rankFilterButton, newCalendarEntryType === value && styles.rankFilterButtonActive]} onPress={() => onChangeNewCalendarEntryType(value)}><Text style={[styles.rankFilterButtonText, newCalendarEntryType === value && styles.rankFilterButtonTextActive]}>{label}</Text></Pressable>)}
       </View>
       <TextInput value={newCalendarTitle} onChangeText={onChangeNewCalendarTitle} style={styles.input} placeholder={calendarT("eventTitle")} />
-      <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("startDate")}><Text style={styles.line}>{calendarT("startDate")}: {formatCalendarDateButtonLabel(newCalendarDate, language) || calendarT("chooseDate")}</Text></Pressable>
-      <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("endDate")}><Text style={styles.line}>{calendarT("endDate")}: {formatCalendarDateButtonLabel(newCalendarEndDate, language) || calendarT("chooseDate")}</Text></Pressable>
       <View style={styles.row}>
-        <Pressable style={[styles.secondaryButton, styles.half, newCalendarAllDay && styles.modeButtonActive]} onPress={onToggleNewCalendarAllDay}><Text style={[styles.secondaryButtonText, newCalendarAllDay && styles.modeButtonTextActive]}>{newCalendarAllDay ? calendarT("allDayEntry") : calendarT("timeSpecificEntry")}</Text></Pressable>
+        <Pressable style={[styles.input, styles.half, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("startDate")}><Text style={styles.line}>{calendarT("startDate")}: {formatCalendarDateButtonLabel(newCalendarDate, language) || calendarT("chooseDate")}</Text></Pressable>
+        <Pressable style={[styles.input, styles.half, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("endDate")}><Text style={styles.line}>{calendarT("endDate")}: {formatCalendarDateButtonLabel(newCalendarEndDate, language) || calendarT("chooseDate")}</Text></Pressable>
       </View>
-      {!newCalendarAllDay ? <View style={styles.section}>
-        <Text style={styles.hint}>{calendarT("inputMode")}</Text>
-        <Text style={styles.hint}>{calendarT("inputModeHint")}</Text>
+      <SecondaryButton label={newCalendarAllDay ? calendarT("allDayEntry") : calendarT("timeSpecificEntry")} onPress={onToggleNewCalendarAllDay} />
+      {!newCalendarAllDay ? <AppCard variant="info" style={styles.calendarTimingCard}>
+        <SectionHeader eyebrow="Time Entry" title={calendarT("timePreview")} detail={calendarT("inputModeHint")} />
         <View style={styles.rankFilterRow}>
           {CALENDAR_TIME_INPUT_MODES.map((mode) => <Pressable key={mode.id} style={[styles.rankFilterButton, newCalendarTimeInputMode === mode.id && styles.rankFilterButtonActive]} onPress={() => onChangeNewCalendarTimeInputMode(mode.id)}><Text style={[styles.rankFilterButtonText, newCalendarTimeInputMode === mode.id && styles.rankFilterButtonTextActive]}>{mode.id === "server" ? calendarT("serverInputMode") : calendarT("localInputMode")}</Text></Pressable>)}
         </View>
@@ -3040,14 +2728,14 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
           <Pressable style={[styles.input, styles.half, styles.calendarTimeButton]} onPress={() => onChangeCalendarTimePickerTarget("start")}><Text style={styles.line}>{calendarT("startTime")}: {newCalendarStartTime}</Text></Pressable>
           <Pressable style={[styles.input, styles.half, styles.calendarTimeButton]} onPress={() => onChangeCalendarTimePickerTarget("end")}><Text style={styles.line}>{calendarT("endTime")}: {newCalendarEndTime}</Text></Pressable>
         </View>
-        <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>{calendarT("timePreview")}</Text>
+        <View style={styles.calendarPreviewCard}>
+          <Text style={styles.statusEyebrow}>{calendarT("timePreview")}</Text>
           <Text style={styles.hint}>{calendarT("previewEnteredAs", { value: newCalendarTimeInputMode === "server" ? calendarT("serverInputMode") : calendarT("localInputMode") })}</Text>
-          <Text style={styles.line}>{calendarT("serverTime")}: {timePreview?.serverDisplay || "--"}</Text>
-          <Text style={styles.line}>{calendarT("localTime")}: {timePreview?.localDisplay || "--"} ({normalizeCalendarTimeZone(newCalendarEventTimeZone)})</Text>
+          <ListRow title={calendarT("serverTime")} detail={timePreview?.serverDisplay || "--"} />
+          <ListRow title={calendarT("localTime")} detail={`${timePreview?.localDisplay || "--"} (${normalizeCalendarTimeZone(newCalendarEventTimeZone)})`} />
           <Text style={styles.hint}>{calendarT("recurringServerAnchor")}</Text>
         </View>
-      </View> : null}
+      </AppCard> : null}
       {linkEventOptions.length ? <View style={styles.section}>
         <Text style={styles.hint}>{calendarT("chooseLinkedEvent")}</Text>
         <View style={styles.rankFilterRow}>
@@ -3063,7 +2751,7 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
       {newCalendarRepeat === "custom_weekdays" ? <View style={styles.rankFilterRow}>{CALENDAR_WEEKDAY_OPTIONS.map((option) => <Pressable key={option.code} style={[styles.rankFilterButton, newCalendarRepeatWeekdays.includes(option.code) && styles.rankFilterButtonActive]} onPress={() => onToggleNewCalendarRepeatWeekday(option.code)}><Text style={[styles.rankFilterButtonText, newCalendarRepeatWeekdays.includes(option.code) && styles.rankFilterButtonTextActive]}>{getCalendarWeekdayLabel(option.code, language)}</Text></Pressable>)}</View> : null}
       {newCalendarRepeat !== "none" ? <View style={styles.section}>
         <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={() => onChangeCalendarDatePickerTarget("repeatEndDate")}><Text style={styles.line}>{calendarT("repeatEndDate")}: {newCalendarRepeatEndDate ? formatCalendarDateButtonLabel(newCalendarRepeatEndDate, language) : calendarT("setRepeatEndDate")}</Text></Pressable>
-        {newCalendarRepeatEndDate ? <Pressable style={styles.secondaryButton} onPress={() => onChangeNewCalendarRepeatEndDate("")}><Text style={styles.secondaryButtonText}>{calendarT("clearRepeatEndDate")}</Text></Pressable> : null}
+        {newCalendarRepeatEndDate ? <SecondaryButton label={calendarT("clearRepeatEndDate")} onPress={() => onChangeNewCalendarRepeatEndDate("")} /> : null}
       </View> : null}
       <TextInput value={newCalendarDescription} onChangeText={onChangeNewCalendarDescription} style={[styles.input, styles.textArea]} placeholder={newCalendarEntryType === "reminder" ? calendarT("reminderPlaceholder") : calendarT("manualPlaceholder")} multiline />
       <TextInput value={newCalendarLeaderNotes} onChangeText={onChangeNewCalendarLeaderNotes} style={[styles.input, styles.textArea]} placeholder={calendarT("leaderNotes")} multiline />
@@ -3071,10 +2759,10 @@ function EnhancedCalendarView({ entries, desertStormEvents, zombieSiegeEvents, c
       {calendarFormError ? <Text style={styles.error}>{calendarFormError}</Text> : null}
       <View style={styles.row}>
         <Pressable style={[styles.secondaryButton, styles.half, newCalendarLeaderOnly && styles.modeButtonActive]} onPress={onToggleLeaderOnly}><Text style={[styles.secondaryButtonText, newCalendarLeaderOnly && styles.modeButtonTextActive]}>{newCalendarLeaderOnly ? calendarT("leaderOnlyEntry") : calendarT("visibleToEveryone")}</Text></Pressable>
-        <Pressable style={[styles.button, styles.half]} onPress={onCreateEntry}><Text style={styles.buttonText}>{editingCalendarEntryId ? calendarT("saveChanges") : calendarT("addToCalendar")}</Text></Pressable>
+        <View style={styles.half}><PrimaryButton label={editingCalendarEntryId ? calendarT("saveChanges") : calendarT("addToCalendar")} onPress={onCreateEntry} /></View>
       </View>
-      {editingCalendarEntryId ? <Pressable style={styles.secondaryButton} onPress={onCancelEdit}><Text style={styles.secondaryButtonText}>{calendarT("cancelEditing")}</Text></Pressable> : null}
-    </View> : null}
+      {editingCalendarEntryId ? <SecondaryButton label={calendarT("cancelEditing")} onPress={onCancelEdit} /> : null}
+    </AppCard> : null}
     <CalendarTimePickerModal
       visible={calendarTimePickerTarget === "start" || calendarTimePickerTarget === "end"}
       title={calendarTimePickerTarget === "end" ? calendarT("pickEndTime") : calendarT("pickStartTime")}
@@ -3139,7 +2827,146 @@ function ZombieSiegeView({ events, selectedEvent, selectedEventId, onSelectEvent
     setReviewDrafts(nextDrafts);
   }, [selectedEvent]);
 
-  return <View style={styles.card}><Text style={styles.cardTitle}>Zombie Siege</Text><Text style={styles.hint}>Voting stays open for the live event until a leader ends it. Finished events move into the archive folder.</Text><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, folder === "active" && styles.modeButtonActive]} onPress={() => setFolder("active")}><Text style={[styles.secondaryButtonText, folder === "active" && styles.modeButtonTextActive]}>Active Events</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, folder === "archived" && styles.modeButtonActive]} onPress={() => setFolder("archived")}><Text style={[styles.secondaryButtonText, folder === "archived" && styles.modeButtonTextActive]}>Archived Events</Text></Pressable></View>{visibleEvents.length ? <View style={styles.section}><Text style={styles.sectionTitle}>{folder === "archived" ? "Archived Zombie Siege Events" : "Active Zombie Siege Events"}</Text>{visibleEvents.map((event) => <Pressable key={event.id} style={[styles.voteCard, selectedEventId === event.id && styles.zombieSelectedCard]} onPress={() => onSelectEvent(event.id)}><Text style={styles.sectionTitle}>{event.title}</Text><Text style={styles.hint}>{String(event.startAt).slice(0, 16)} to {String(event.endAt).slice(0, 16)}</Text><Text style={styles.hint}>Status: {event.status} • Threshold: {Number(event.wave20Threshold || 0).toFixed(2)}M</Text>{event.publishedPlanSummary ? <Text style={styles.line}>Published survivors: {event.publishedPlanSummary.projectedSurvivors}</Text> : null}</Pressable>)}</View> : <Text style={styles.hint}>{folder === "archived" ? "No archived Zombie Siege events yet." : "No active Zombie Siege events yet."}</Text>}{currentUserIsLeader && folder === "active" ? <View style={styles.section}><Text style={styles.sectionTitle}>Create Zombie Siege Event</Text><TextInput value={newTitle} onChangeText={onChangeNewTitle} style={styles.input} placeholder="Event title" /><Text style={styles.hint}>Event start: when Zombie Siege begins for your alliance.</Text><TextInput value={newStartAt} onChangeText={onChangeNewStartAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" /><Text style={styles.hint}>Event end: when the event window is over.</Text><TextInput value={newEndAt} onChangeText={onChangeNewEndAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" /><Text style={styles.hint}>Wave 20 threshold: total defending squad power needed for a base to pass wave 20.</Text><TextInput value={newThreshold} onChangeText={onChangeNewThreshold} style={styles.input} placeholder="Wave 20 threshold" keyboardType="decimal-pad" /><Pressable style={styles.button} onPress={onCreateEvent}><Text style={styles.buttonText}>Create Event</Text></Pressable></View> : null}{selectedEvent ? <View style={styles.section}><Text style={styles.sectionTitle}>{selectedEvent.title}</Text><Text style={styles.line}>Event Window: {String(selectedEvent.startAt).slice(0, 16)} to {String(selectedEvent.endAt).slice(0, 16)}</Text><Text style={styles.line}>Wave 20 Threshold: {Number(selectedEvent.wave20Threshold || 0).toFixed(2)}M</Text><Text style={styles.line}>Your status: {selectedEvent.myAvailabilityStatus || "no_response"}</Text>{selectedEvent.status !== "archived" ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, selectedEvent.myAvailabilityStatus === "online" && styles.modeButtonActive]} onPress={() => onSubmitAvailability(selectedEvent.id, "online")}><Text style={[styles.secondaryButtonText, selectedEvent.myAvailabilityStatus === "online" && styles.modeButtonTextActive]}>I Will Be Online</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, selectedEvent.myAvailabilityStatus === "offline" && styles.modeButtonActive]} onPress={() => onSubmitAvailability(selectedEvent.id, "offline")}><Text style={[styles.secondaryButtonText, selectedEvent.myAvailabilityStatus === "offline" && styles.modeButtonTextActive]}>I Will Be Offline</Text></Pressable></View> : <Text style={styles.hint}>This event has ended and is now archived.</Text>}{currentUserIsLeader ? <><View style={styles.memberStatGrid}><View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Online</Text><Text style={styles.memberStatValue}>{availabilityCounts.online || 0}</Text></View><View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Offline</Text><Text style={styles.memberStatValue}>{availabilityCounts.offline || 0}</Text></View><View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>No Response</Text><Text style={styles.memberStatValue}>{availabilityCounts.no_response || 0}</Text></View></View>{selectedEvent.status !== "archived" ? <View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onRunPlan(selectedEvent.id)}><Text style={styles.buttonText}>Run Planner</Text></Pressable>{selectedEvent.draftPlan ? <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onPublishPlan(selectedEvent.id)}><Text style={styles.secondaryButtonText}>Publish To Members</Text></Pressable> : <Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onDiscardDraft(selectedEvent.id)}><Text style={styles.secondaryButtonText}>Clear Draft</Text></Pressable>}</View> : null}{selectedEvent.draftPlan ? <View style={styles.zombiePlanCard}><Text style={styles.sectionTitle}>Draft Review</Text><Text style={styles.line}>Projected survivors: {selectedEvent.draftPlan.projectedSurvivors}</Text><Text style={styles.line}>Online survivors: {selectedEvent.draftPlan.projectedOnlineSurvivors}</Text><Text style={styles.line}>Offline survivors: {selectedEvent.draftPlan.projectedOfflineSurvivors}</Text><Text style={styles.line}>Assignment changes vs published plan: {selectedEvent.draftPlan.summary?.changedAssignments || 0}</Text><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half]} onPress={() => onPublishPlan(selectedEvent.id)}><Text style={styles.secondaryButtonText}>Publish Draft</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDiscardDraft(selectedEvent.id)}><Text style={styles.dangerButtonText}>Discard Draft</Text></Pressable></View></View> : null}{currentReviewRows.length && selectedEvent.status !== "archived" ? <View style={styles.zombiePlanCard}><Text style={styles.sectionTitle}>Post-Wave-1 Review</Text><Text style={styles.hint}>Review no-response players and note whether they actually had troops on their wall after wave 1.</Text>{currentReviewRows.map((row) => <View key={row.playerId} style={styles.voteCard}><Text style={styles.sectionTitle}>{row.playerName}</Text><View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, row.wallStatus === "had_wall" && styles.modeButtonActive]} onPress={() => setReviewDrafts((current) => ({ ...current, [row.playerId]: "had_wall" }))}><Text style={[styles.secondaryButtonText, row.wallStatus === "had_wall" && styles.modeButtonTextActive]}>Had Troops On Wall</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, row.wallStatus === "no_wall" && styles.modeButtonActive]} onPress={() => setReviewDrafts((current) => ({ ...current, [row.playerId]: "no_wall" }))}><Text style={[styles.secondaryButtonText, row.wallStatus === "no_wall" && styles.modeButtonTextActive]}>No Troops On Wall</Text></Pressable></View></View>)}<Pressable style={styles.button} onPress={() => onSaveWaveOneReview(selectedEvent.id, currentReviewRows)}><Text style={styles.buttonText}>Save Wave 1 Review</Text></Pressable></View> : null}{selectedEvent.publishedPlan ? <View style={styles.zombiePlanCard}><Text style={styles.sectionTitle}>Published Plan</Text><Text style={styles.line}>Projected survivors: {selectedEvent.publishedPlan.projectedSurvivors}</Text><Text style={styles.line}>Protected players: {selectedEvent.publishedPlan.summary?.protectedCount || 0}</Text><Text style={styles.line}>Sacrificed donors: {selectedEvent.publishedPlan.summary?.sacrificedCount || 0}</Text></View> : null}{selectedEvent.status !== "archived" ? <Pressable style={styles.dangerButton} onPress={() => onEndEvent(selectedEvent.id)}><Text style={styles.dangerButtonText}>Event Has Ended</Text></Pressable> : null}</> : null}{selectedEvent.myAssignment ? <View style={styles.zombiePlanCard}><Text style={styles.sectionTitle}>Your Assignment</Text>{selectedEvent.myAssignment.instructions?.map((instruction, index) => <Text key={`${selectedEvent.myAssignment.playerId}-${index}`} style={styles.line}>• {instruction}</Text>)}</View> : null}</View> : null}</View>;
+  function getEventTone(status) {
+    if (status === "archived") return "neutral";
+    if (status === "published") return "success";
+    if (status === "draft") return "warning";
+    return "purple";
+  }
+
+  function getAvailabilityTone(status) {
+    if (status === "online") return "success";
+    if (status === "offline") return "danger";
+    return "warning";
+  }
+
+  function getAvailabilityLabel(status) {
+    if (status === "online") return "Online";
+    if (status === "offline") return "Offline";
+    return "No Response";
+  }
+
+  return <View style={styles.section}>
+    <AppCard variant="purple" style={styles.zombieHeroCard}>
+      <SectionHeader eyebrow="Zombie Siege" title="Operational event board" detail="Track active events, member availability, draft plans, and post-wave review in one tactical surface." />
+      <View style={styles.row}>
+        <StatusBadge label={`${activeEvents.length} Active`} tone={activeEvents.length ? "purple" : "neutral"} />
+        <StatusBadge label={folder === "archived" ? "Archive View" : "Live View"} tone={folder === "archived" ? "neutral" : "info"} />
+      </View>
+    </AppCard>
+
+    <AppCard style={styles.zombieSectionCard}>
+      <SectionHeader eyebrow="Folders" title="Event folders" detail="Switch between active and archived events without changing event behavior." />
+      <View style={styles.row}>
+        <Pressable style={[styles.secondaryButton, styles.half, folder === "active" && styles.modeButtonActive]} onPress={() => setFolder("active")}><Text style={[styles.secondaryButtonText, folder === "active" && styles.modeButtonTextActive]}>Active Events</Text></Pressable>
+        <Pressable style={[styles.secondaryButton, styles.half, folder === "archived" && styles.modeButtonActive]} onPress={() => setFolder("archived")}><Text style={[styles.secondaryButtonText, folder === "archived" && styles.modeButtonTextActive]}>Archived Events</Text></Pressable>
+      </View>
+    </AppCard>
+
+    <AppCard style={styles.zombieSectionCard}>
+      <SectionHeader eyebrow="Events" title={folder === "archived" ? "Archived Zombie Siege Events" : "Active Zombie Siege Events"} detail="Select an event to review status, availability, and plan details." />
+      {visibleEvents.length ? <View style={styles.zombieEventList}>
+        {visibleEvents.map((event) => <Pressable key={event.id} style={[styles.voteCard, styles.zombieEventCard, selectedEventId === event.id && styles.zombieSelectedCard]} onPress={() => onSelectEvent(event.id)}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.listRowContent}>
+              <Text style={styles.cardTitle}>{event.title}</Text>
+              <Text style={styles.hint}>{String(event.startAt).slice(0, 16)} to {String(event.endAt).slice(0, 16)}</Text>
+            </View>
+            <StatusBadge label={String(event.status || "draft").replace(/_/g, " ")} tone={getEventTone(event.status)} />
+          </View>
+          <Text style={styles.line}>Wave 20 Threshold: {Number(event.wave20Threshold || 0).toFixed(2)}M</Text>
+          {event.publishedPlanSummary ? <Text style={styles.line}>Published survivors: {event.publishedPlanSummary.projectedSurvivors}</Text> : null}
+        </Pressable>)}
+      </View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>{folder === "archived" ? "No archived events" : "No active events"}</Text><Text style={styles.hint}>{folder === "archived" ? "Archived Zombie Siege events will appear here after leaders end them." : "Create or publish an event to start the operational flow."}</Text></AppCard>}
+    </AppCard>
+
+    {currentUserIsLeader && folder === "active" ? <AppCard style={styles.zombieSectionCard}>
+      <SectionHeader eyebrow="Create" title="Create Zombie Siege Event" detail="Leaders can create a new event without changing the existing scheduling workflow." />
+      <TextInput value={newTitle} onChangeText={onChangeNewTitle} style={styles.input} placeholder="Event title" />
+      <Text style={styles.hint}>Event start: when Zombie Siege begins for your alliance.</Text>
+      <TextInput value={newStartAt} onChangeText={onChangeNewStartAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" />
+      <Text style={styles.hint}>Event end: when the event window is over.</Text>
+      <TextInput value={newEndAt} onChangeText={onChangeNewEndAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" />
+      <Text style={styles.hint}>Wave 20 threshold: total defending squad power needed for a base to pass wave 20.</Text>
+      <TextInput value={newThreshold} onChangeText={onChangeNewThreshold} style={styles.input} placeholder="Wave 20 threshold" keyboardType="decimal-pad" />
+      <PrimaryButton label="Create Event" onPress={onCreateEvent} tone="purple" />
+    </AppCard> : null}
+
+    {selectedEvent ? <>
+      <AppCard style={styles.zombieSectionCard}>
+        <SectionHeader eyebrow="Selected Event" title={selectedEvent.title} detail="Review the live event window, your response state, and the current planning status." />
+        <View style={styles.memberStatGrid}>
+          <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Status</Text><Text style={styles.memberStatValue}>{String(selectedEvent.status || "draft").replace(/_/g, " ")}</Text></View>
+          <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Threshold</Text><Text style={styles.memberStatValue}>{Number(selectedEvent.wave20Threshold || 0).toFixed(2)}M</Text></View>
+          <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Your Status</Text><Text style={styles.memberStatValue}>{getAvailabilityLabel(selectedEvent.myAvailabilityStatus || "no_response")}</Text></View>
+        </View>
+        <ListRow title="Event Window" detail={`${String(selectedEvent.startAt).slice(0, 16)} to ${String(selectedEvent.endAt).slice(0, 16)}`} />
+        <ListRow title="Availability" detail={`Your current response: ${getAvailabilityLabel(selectedEvent.myAvailabilityStatus || "no_response")}`} right={<StatusBadge label={getAvailabilityLabel(selectedEvent.myAvailabilityStatus || "no_response")} tone={getAvailabilityTone(selectedEvent.myAvailabilityStatus || "no_response")} />} />
+        {selectedEvent.status !== "archived" ? <View style={styles.row}>
+          <Pressable style={[styles.secondaryButton, styles.half, selectedEvent.myAvailabilityStatus === "online" && styles.modeButtonActive]} onPress={() => onSubmitAvailability(selectedEvent.id, "online")}><Text style={[styles.secondaryButtonText, selectedEvent.myAvailabilityStatus === "online" && styles.modeButtonTextActive]}>I Will Be Online</Text></Pressable>
+          <Pressable style={[styles.secondaryButton, styles.half, selectedEvent.myAvailabilityStatus === "offline" && styles.modeButtonActive]} onPress={() => onSubmitAvailability(selectedEvent.id, "offline")}><Text style={[styles.secondaryButtonText, selectedEvent.myAvailabilityStatus === "offline" && styles.modeButtonTextActive]}>I Will Be Offline</Text></Pressable>
+        </View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>Archived Event</Text><Text style={styles.hint}>This event has ended and moved into the archive.</Text></AppCard>}
+      </AppCard>
+
+      {selectedEvent.myAssignment ? <AppCard style={styles.zombieAssignmentCard}>
+        <SectionHeader eyebrow="Your Assignment" title="Published assignment" detail="Your current instructions stay visible here when the published plan includes you." />
+        {selectedEvent.myAssignment.instructions?.map((instruction, index) => <Text key={`${selectedEvent.myAssignment.playerId}-${index}`} style={styles.line}>- {instruction}</Text>)}
+      </AppCard> : null}
+
+      {currentUserIsLeader ? <>
+        <AppCard style={styles.zombieSectionCard}>
+          <SectionHeader eyebrow="Leader Controls" title="Availability summary" detail="Leaders can review attendance, run the planner, and manage draft or published plans here." />
+          <View style={styles.memberStatGrid}>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Online</Text><Text style={styles.memberStatValue}>{availabilityCounts.online || 0}</Text></View>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Offline</Text><Text style={styles.memberStatValue}>{availabilityCounts.offline || 0}</Text></View>
+            <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>No Response</Text><Text style={styles.memberStatValue}>{availabilityCounts.no_response || 0}</Text></View>
+          </View>
+          {selectedEvent.status !== "archived" ? <View style={styles.zombieActionRow}>
+            <PrimaryButton label="Run Planner" onPress={() => onRunPlan(selectedEvent.id)} style={styles.half} tone="purple" />
+            {selectedEvent.draftPlan ? <SecondaryButton label="Publish To Members" onPress={() => onPublishPlan(selectedEvent.id)} style={styles.half} /> : <SecondaryButton label="Clear Draft" onPress={() => onDiscardDraft(selectedEvent.id)} style={styles.half} />}
+          </View> : null}
+        </AppCard>
+
+        {selectedEvent.draftPlan ? <AppCard style={styles.zombiePlanCard}>
+          <SectionHeader eyebrow="Draft Review" title="Planner output" detail="Review the draft before publishing it to members." />
+          <ListRow title="Projected survivors" detail={String(selectedEvent.draftPlan.projectedSurvivors)} />
+          <ListRow title="Online survivors" detail={String(selectedEvent.draftPlan.projectedOnlineSurvivors)} />
+          <ListRow title="Offline survivors" detail={String(selectedEvent.draftPlan.projectedOfflineSurvivors)} />
+          <ListRow title="Assignment changes" detail={String(selectedEvent.draftPlan.summary?.changedAssignments || 0)} />
+          <View style={styles.zombieActionRow}>
+            <SecondaryButton label="Publish Draft" onPress={() => onPublishPlan(selectedEvent.id)} style={styles.half} />
+            <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onDiscardDraft(selectedEvent.id)}><Text style={styles.dangerButtonText}>Discard Draft</Text></Pressable>
+          </View>
+        </AppCard> : null}
+
+        {currentReviewRows.length && selectedEvent.status !== "archived" ? <AppCard style={styles.zombiePlanCard}>
+          <SectionHeader eyebrow="Post-Wave-1" title="No-response review" detail="Review no-response players and record whether they had troops on their wall after wave 1." />
+          <View style={styles.zombieEventList}>
+            {currentReviewRows.map((row) => <AppCard key={row.playerId} style={styles.voteCard}>
+              <Text style={styles.cardTitle}>{row.playerName}</Text>
+              <View style={styles.row}>
+                <Pressable style={[styles.secondaryButton, styles.half, row.wallStatus === "had_wall" && styles.modeButtonActive]} onPress={() => setReviewDrafts((current) => ({ ...current, [row.playerId]: "had_wall" }))}><Text style={[styles.secondaryButtonText, row.wallStatus === "had_wall" && styles.modeButtonTextActive]}>Had Troops On Wall</Text></Pressable>
+                <Pressable style={[styles.secondaryButton, styles.half, row.wallStatus === "no_wall" && styles.modeButtonActive]} onPress={() => setReviewDrafts((current) => ({ ...current, [row.playerId]: "no_wall" }))}><Text style={[styles.secondaryButtonText, row.wallStatus === "no_wall" && styles.modeButtonTextActive]}>No Troops On Wall</Text></Pressable>
+              </View>
+            </AppCard>)}
+          </View>
+          <PrimaryButton label="Save Wave 1 Review" onPress={() => onSaveWaveOneReview(selectedEvent.id, currentReviewRows)} tone="purple" />
+        </AppCard> : null}
+
+        {selectedEvent.publishedPlan ? <AppCard style={styles.zombiePlanCard}>
+          <SectionHeader eyebrow="Published Plan" title="Member-facing summary" detail="Published outputs stay visible here for leader review after release." />
+          <ListRow title="Projected survivors" detail={String(selectedEvent.publishedPlan.projectedSurvivors)} />
+          <ListRow title="Protected players" detail={String(selectedEvent.publishedPlan.summary?.protectedCount || 0)} />
+          <ListRow title="Sacrificed donors" detail={String(selectedEvent.publishedPlan.summary?.sacrificedCount || 0)} />
+        </AppCard> : null}
+
+        {selectedEvent.status !== "archived" ? <AppCard variant="danger" style={styles.settingsDangerCard}>
+          <SectionHeader eyebrow="Danger Zone" title="Event controls" detail="Ending the event is visually distinct, but the underlying event workflow is unchanged." />
+          <Pressable style={styles.dangerButton} onPress={() => onEndEvent(selectedEvent.id)}><Text style={styles.dangerButtonText}>Event Has Ended</Text></Pressable>
+        </AppCard> : null}
+      </> : null}
+    </> : null}
+  </View>;
 }
 function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackText, onSubmitFeedback, onSubmitFeedbackComment, t }) {
   const buildLabel = APP_BUILD ? `v${APP_VERSION} (${APP_BUILD})` : `v${APP_VERSION}`;
@@ -3153,201 +2980,414 @@ function FeedbackView({ feedbackEntries, newFeedbackText, onChangeNewFeedbackTex
     setCommentDrafts((current) => ({ ...current, [entryId]: value }));
   }
 
-  return <View style={styles.card}>
-    <Text style={styles.cardTitle}>{t("feedbackTitle")}</Text>
-    <Text style={styles.hint}>{t("feedbackHint")}</Text>
-    <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Current Build</Text><Text style={styles.memberStatValue}>{buildLabel}</Text></View>
-    <View style={styles.section}>
+  return <View style={styles.section}>
+    <AppCard style={styles.feedbackHeroCard}>
+      <SectionHeader eyebrow="Feedback" title={t("feedbackTitle")} detail={t("feedbackHint")} />
+      <StatusBadge label={feedbackEntries.length ? `${feedbackEntries.length} entries` : "No entries"} tone={feedbackEntries.length ? "info" : "neutral"} />
+    </AppCard>
+
+    <AppCard style={styles.feedbackComposerCard}>
+      <SectionHeader eyebrow="Submit" title="Share feedback" detail="Send clear notes to the alliance team without changing the existing submission flow." />
+      <View style={styles.memberStatCard}>
+        <Text style={styles.memberStatLabel}>Current Build</Text>
+        <Text style={styles.memberStatValue}>{buildLabel}</Text>
+      </View>
       <TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={t("feedbackExample")} multiline />
-      <Pressable style={styles.button} onPress={onSubmitFeedback}><Text style={styles.buttonText}>{t("submitFeedback")}</Text></Pressable>
-    </View>
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t("allianceFeedback")}</Text>
-      {feedbackEntries.length ? feedbackEntries.map((entry) => {
-        const commentDraft = commentDrafts[entry.id] || "";
-        return <View key={entry.id} style={styles.voteCard}>
-          <Text style={styles.line}>{entry.message}</Text>
-          <Text style={styles.hint}>{t("feedbackFrom", { name: entry.createdByName || "Member", date: String(entry.createdAt).slice(0, 10) })}</Text>
-          <View style={styles.feedbackCommentList}>
-            {(entry.comments || []).length ? entry.comments.map((comment) => <View key={comment.id} style={styles.feedbackCommentCard}>
-              <Text style={styles.line}>{comment.message}</Text>
-              <Text style={styles.hint}>{comment.createdByName || "Member"} • {String(comment.createdAt).slice(0, 10)}</Text>
-            </View>) : <Text style={styles.hint}>No comments yet.</Text>}
-          </View>
-          <View style={styles.feedbackCommentComposer}>
-            <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder="Add a comment" multiline />
-            <Pressable style={styles.secondaryButton} onPress={() => onSubmitFeedbackComment(entry.id, commentDraft, () => updateCommentDraft(entry.id, ""))}><Text style={styles.secondaryButtonText}>Comment</Text></Pressable>
-          </View>
-        </View>;
-      }) : <Text style={styles.hint}>{t("noFeedback")}</Text>}
-    </View>
+      <PrimaryButton label={t("submitFeedback")} onPress={onSubmitFeedback} />
+    </AppCard>
+
+    <AppCard style={styles.feedbackHistoryCard}>
+      <SectionHeader eyebrow="Recent" title={t("allianceFeedback")} detail="Recent feedback and follow-up comments stay readable in a single history stream." />
+      {feedbackEntries.length ? <View style={styles.feedbackEntryList}>
+        {feedbackEntries.map((entry) => {
+          const commentDraft = commentDrafts[entry.id] || "";
+          return <AppCard key={entry.id} style={styles.feedbackEntryCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.listRowContent}>
+                <Text style={styles.cardTitle}>{entry.createdByName || "Member"}</Text>
+                <Text style={styles.hint}>{String(entry.createdAt).slice(0, 10)}</Text>
+              </View>
+              <StatusBadge label={`${(entry.comments || []).length} comments`} tone={(entry.comments || []).length ? "info" : "neutral"} />
+            </View>
+            <Text style={styles.line}>{entry.message}</Text>
+            <Text style={styles.hint}>{t("feedbackFrom", { name: entry.createdByName || "Member", date: String(entry.createdAt).slice(0, 10) })}</Text>
+            <View style={styles.feedbackCommentList}>
+              {(entry.comments || []).length ? entry.comments.map((comment) => <View key={comment.id} style={styles.feedbackCommentCard}>
+                <Text style={styles.line}>{comment.message}</Text>
+                <Text style={styles.hint}>{comment.createdByName || "Member"} � {String(comment.createdAt).slice(0, 10)}</Text>
+              </View>) : <Text style={styles.hint}>No comments yet.</Text>}
+            </View>
+            <View style={styles.feedbackCommentComposer}>
+              <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder="Add a comment" multiline />
+              <SecondaryButton label="Comment" onPress={() => onSubmitFeedbackComment(entry.id, commentDraft, () => updateCommentDraft(entry.id, ""))} />
+            </View>
+          </AppCard>;
+        })}
+      </View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>No feedback yet</Text><Text style={styles.hint}>{t("noFeedback")}</Text></AppCard>}
+    </AppCard>
   </View>;
 }
-function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage }) { return <View style={styles.card}><Text style={styles.cardTitle}>{t("allianceTitle")}</Text><LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} /><Text style={styles.line}>{t("accountLabel", { value: account?.username })}</Text><Text style={styles.line}>{t("allianceLabel", { value: alliance?.name })}</Text><Text style={styles.line}>{t("codeLabel", { value: alliance?.code })}</Text><Text style={styles.line}>{t("signedInAsPlayer", { value: currentUser?.name })}</Text><Pressable style={styles.secondaryButton} onPress={onSignOut}><Text style={styles.secondaryButtonText}>{t("signOut")}</Text></Pressable>{currentUserIsLeader ? <><View style={styles.section}><Text style={styles.sectionTitle}>{t("pendingJoinRequests")}</Text>{joinRequests?.length ? joinRequests.map((req) => <View key={req.id} style={styles.card}><Text style={styles.line}>{req.displayName}</Text><Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text><View style={styles.row}><Pressable style={[styles.button, styles.half]} onPress={() => onApproveJoinRequest(req.id)}><Text style={styles.buttonText}>{t("approve")}</Text></Pressable><Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable></View></View>) : <Text style={styles.hint}>{t("noPendingRequests")}</Text>}</View><View style={styles.section}><Text style={styles.sectionTitle}>{t("rotateCode")}</Text><TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} /><Pressable style={styles.button} onPress={onRotateAllianceCode}><Text style={styles.buttonText}>{t("updateCode")}</Text></Pressable></View><View style={styles.section}><Text style={styles.sectionTitle}>{t("addMember")}</Text><TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} /><Text style={styles.hint}>{POWER_INPUT_HINT}</Text><View style={styles.row}><RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} /><TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" /></View><Pressable style={styles.button} onPress={onAddMember}><Text style={styles.buttonText}>{t("addMember")}</Text></Pressable></View></> : <View style={styles.section}><Text style={styles.sectionTitle}>{t("memberOptions")}</Text><Text style={styles.hint}>{t("leaveAnyTime")}</Text><Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable></View>}</View>; }
+function AllianceView({ alliance, account, currentUser, currentUserIsLeader, joinRequests, newMemberName, newMemberRank, newMemberPower, newAllianceCode, onChangeNewMemberName, onChangeNewMemberRank, onChangeNewMemberPower, onChangeNewAllianceCode, onAddMember, onApproveJoinRequest, onRejectJoinRequest, onLeaveAlliance, onRotateAllianceCode, onSignOut, t, language, onChangeLanguage, showPushNotificationControls, showPushNotificationsPrompt, notificationSetupInFlight, onSetDesertStormVoteNotificationsEnabled, onEnablePushNotifications }) {
+  const notificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
+
+  return <View style={styles.section}>
+    <AppCard style={styles.settingsHeroCard}>
+      <SectionHeader eyebrow="Settings" title={t("allianceTitle")} detail="Manage account context, app preferences, alerts, and alliance controls from grouped sections." />
+      <View style={styles.row}>
+        <StatusBadge label={currentUserIsLeader ? "Leader Access" : "Member Access"} tone={currentUserIsLeader ? "info" : "neutral"} />
+        <StatusBadge label={joinRequests?.length ? `${joinRequests.length} Pending` : "Stable"} tone={joinRequests?.length ? "warning" : "success"} />
+      </View>
+    </AppCard>
+
+    <AppCard style={styles.settingsSectionCard}>
+      <SectionHeader eyebrow="Account" title="Signed-in context" detail="Current account, alliance, and player identity are grouped here for quick reference." />
+      <ListRow title={t("accountLabel", { value: account?.username })} />
+      <ListRow title={t("allianceLabel", { value: alliance?.name })} />
+      <ListRow title={t("codeLabel", { value: alliance?.code })} />
+      <ListRow title={t("signedInAsPlayer", { value: currentUser?.name })} />
+    </AppCard>
+
+    {showPushNotificationControls ? <AppCard style={styles.settingsSectionCard}>
+      <SectionHeader eyebrow="Notifications" title="Desert Storm alerts" detail="Manage vote-open alert preferences without changing reminder or event logic." />
+      <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} />} />
+      <View style={styles.row}>
+        <PrimaryButton label="Enable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(true)} style={styles.half} disabled={notificationsEnabled} />
+        <SecondaryButton label="Disable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(false)} style={styles.half} disabled={!notificationsEnabled} />
+      </View>
+      {showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard}>
+        <Text style={styles.cardTitle}>Enable push notifications</Text>
+        <Text style={styles.hint}>Turn on device notifications to receive Desert Storm vote alerts on this device.</Text>
+        <PrimaryButton label={notificationSetupInFlight ? "Enabling..." : "Enable Notifications"} onPress={onEnablePushNotifications} disabled={notificationSetupInFlight} tone="blue" />
+      </AppCard> : null}
+    </AppCard> : null}
+
+    <AppCard style={styles.settingsSectionCard}>
+      <SectionHeader eyebrow="Preferences" title="Language" detail="Update app-level preferences without changing alliance data." />
+      <LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} />
+    </AppCard>
+
+    <AppCard style={styles.settingsSectionCard}>
+      <SectionHeader eyebrow="App Controls" title="Session and device actions" detail="Keep account-level controls separated from alliance management actions." />
+      <SecondaryButton label={t("signOut")} onPress={onSignOut} />
+    </AppCard>
+
+    {currentUserIsLeader ? <>
+      <AppCard style={styles.settingsSectionCard}>
+        <SectionHeader eyebrow="Requests" title={t("pendingJoinRequests")} detail="Approve or reject new join requests without leaving the settings workflow." />
+        {joinRequests?.length ? <View style={styles.settingsStack}>
+          {joinRequests.map((req) => <AppCard key={req.id} style={styles.settingsNestedCard}>
+            <Text style={styles.cardTitle}>{req.displayName}</Text>
+            <Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text>
+            <View style={styles.row}>
+              <PrimaryButton label={t("approve")} onPress={() => onApproveJoinRequest(req.id)} style={styles.half} />
+              <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable>
+            </View>
+          </AppCard>)}
+        </View> : <AppCard style={styles.calendarEmptyCard}><Text style={styles.statusTitle}>{t("noPendingRequests")}</Text><Text style={styles.hint}>New join requests will appear here when they are ready for review.</Text></AppCard>}
+      </AppCard>
+
+      <AppCard style={styles.settingsSectionCard}>
+        <SectionHeader eyebrow="Alliance" title={t("rotateCode")} detail="Rotate or update the alliance code with a single clear action." />
+        <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} />
+        <PrimaryButton label={t("updateCode")} onPress={onRotateAllianceCode} />
+      </AppCard>
+
+      <AppCard style={styles.settingsSectionCard}>
+        <SectionHeader eyebrow="Roster" title={t("addMember")} detail="Leaders can add members directly from settings without changing roster behavior." />
+        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} />
+        <Text style={styles.hint}>{POWER_INPUT_HINT}</Text>
+        <View style={styles.row}>
+          <RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} />
+          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" />
+        </View>
+        <PrimaryButton label={t("addMember")} onPress={onAddMember} />
+      </AppCard>
+    </> : <AppCard variant="danger" style={styles.settingsDangerCard}>
+      <SectionHeader eyebrow="Danger Zone" title={t("memberOptions")} detail="Important account and alliance actions are isolated here so they stay clear but restrained." />
+      <Text style={styles.hint}>{t("leaveAnyTime")}</Text>
+      <Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable>
+    </AppCard>}
+  </View>;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#f3efe3" },
+  safeArea: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.bg },
   keyboardShell: { flex: 1 },
-  loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 },
-  screen: { flex: 1, padding: 18, gap: 12 },
-  title: { fontSize: 28, fontWeight: "700", color: "#1f2a1f" },
-  hint: { fontSize: 14, color: "#566156" },
-  line: { color: "#435043", fontSize: 15 },
-  error: { color: "#8b241f", fontWeight: "700" },
-  alertBanner: { backgroundColor: "#f2dfc2", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#d9ba84", gap: 4 },
-  alertBannerTitle: { fontSize: 16, fontWeight: "700", color: "#5d3f11" },
-  alertBannerText: { fontSize: 14, color: "#72542b" },
-  voteBanner: { backgroundColor: "#dde9f3", borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "#b6cade", gap: 4 },
-  voteBannerTitle: { fontSize: 16, fontWeight: "700", color: "#244a68" },
-  voteBannerText: { fontSize: 14, color: "#40627d" },
-  card: { backgroundColor: "#fbf7ee", borderRadius: 18, padding: 16, gap: 10, borderWidth: 1, borderColor: "#e2d8c5" },
-  cardTitle: { fontSize: 22, fontWeight: "700", color: "#1f2a1f" },
-  input: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, color: "#243025" },
+  loadingScreen: { flex: 1, justifyContent: "center", alignItems: "center", gap: DESIGN_TOKENS.spacing.sm, padding: DESIGN_TOKENS.spacing.xl },
+  screen: { flex: 1, padding: DESIGN_TOKENS.spacing.md, gap: DESIGN_TOKENS.spacing.sm, backgroundColor: DESIGN_TOKENS.colors.bg },
+  title: { fontSize: DESIGN_TOKENS.type.title, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  hint: { fontSize: 14, color: DESIGN_TOKENS.colors.textMuted },
+  line: { color: DESIGN_TOKENS.colors.textSoft, fontSize: DESIGN_TOKENS.type.body },
+  error: { color: DESIGN_TOKENS.colors.red, fontWeight: "700" },
+  sectionHeader: { gap: 4, paddingBottom: 4 },
+  sectionEyebrow: { fontSize: DESIGN_TOKENS.type.meta, color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase", letterSpacing: 1.4, fontWeight: "700" },
+  sectionHeaderTitle: { fontSize: DESIGN_TOKENS.type.title, color: DESIGN_TOKENS.colors.text, fontWeight: "800" },
+  sectionHeaderDetail: { fontSize: 14, color: DESIGN_TOKENS.colors.textMuted },
+  bannerHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: DESIGN_TOKENS.spacing.sm },
+  alertBanner: { backgroundColor: DESIGN_TOKENS.colors.yellowSoft, borderRadius: DESIGN_TOKENS.radius.md, padding: 14, borderWidth: 1, borderColor: "#6d5b25", gap: 4 },
+  alertBannerTitle: { fontSize: 16, fontWeight: "700", color: DESIGN_TOKENS.colors.yellow },
+  alertBannerText: { fontSize: 14, color: "#d8c185" },
+  voteBanner: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderRadius: DESIGN_TOKENS.radius.md, padding: 14, borderWidth: 1, borderColor: "#355f82", gap: 4 },
+  voteBannerTitle: { fontSize: 16, fontWeight: "700", color: DESIGN_TOKENS.colors.text },
+  voteBannerText: { fontSize: 14, color: "#99bfdd" },
+  card: { backgroundColor: DESIGN_TOKENS.colors.surface, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  cardActive: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: "#21543c" },
+  cardWarning: { backgroundColor: DESIGN_TOKENS.colors.yellowSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: "#6d5b25" },
+  cardInfo: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: "#355f82" },
+  cardDanger: { backgroundColor: DESIGN_TOKENS.colors.redSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: "#7a3742" },
+  cardPurple: { backgroundColor: DESIGN_TOKENS.colors.purpleSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: DESIGN_TOKENS.spacing.md, gap: 10, borderWidth: 1, borderColor: "#56417f" },
+  cardTitle: { fontSize: DESIGN_TOKENS.type.cardTitle, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  input: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.sm, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, paddingHorizontal: 12, paddingVertical: 10, color: DESIGN_TOKENS.colors.text },
   textArea: { minHeight: 96, textAlignVertical: "top" },
-  button: { backgroundColor: "#1f5c4d", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
+  buttonBase: { borderRadius: DESIGN_TOKENS.radius.sm, paddingVertical: 12, paddingHorizontal: 14, alignItems: "center", justifyContent: "center", minHeight: 46, borderWidth: 1 },
+  primaryButton: { backgroundColor: DESIGN_TOKENS.colors.green, borderColor: DESIGN_TOKENS.colors.green },
+  primaryButtonBlue: { backgroundColor: DESIGN_TOKENS.colors.blue, borderColor: DESIGN_TOKENS.colors.blue },
+  primaryButtonPurple: { backgroundColor: DESIGN_TOKENS.colors.purple, borderColor: DESIGN_TOKENS.colors.purple },
+  primaryButtonRed: { backgroundColor: DESIGN_TOKENS.colors.red, borderColor: DESIGN_TOKENS.colors.red },
+  button: { backgroundColor: DESIGN_TOKENS.colors.green, borderRadius: DESIGN_TOKENS.radius.sm, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: DESIGN_TOKENS.colors.green },
   disabledButton: { opacity: 0.55 },
-  buttonText: { color: "#f7f4ee", fontWeight: "700" },
-  secondaryButton: { backgroundColor: "#efe5d2", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
-  secondaryButtonText: { color: "#544636", fontWeight: "700" },
-  modeButtonActive: { backgroundColor: "#1f5c4d", borderWidth: 1, borderColor: "#1f5c4d" },
-  modeButtonTextActive: { color: "#f7f4ee" },
-  dangerButton: { backgroundColor: "#7f221d", borderRadius: 12, paddingVertical: 10, alignItems: "center" },
-  dangerButtonText: { color: "#fff5f4", fontWeight: "700" },
+  buttonText: { color: "#081016", fontWeight: "800" },
+  secondaryButton: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.sm, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  secondaryButtonText: { color: DESIGN_TOKENS.colors.textSoft, fontWeight: "700" },
+  modeButtonActive: { backgroundColor: DESIGN_TOKENS.colors.green, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.green },
+  modeButtonTextActive: { color: "#081016" },
+  dangerButton: { backgroundColor: DESIGN_TOKENS.colors.redSoft, borderRadius: DESIGN_TOKENS.radius.sm, paddingVertical: 10, alignItems: "center", borderWidth: 1, borderColor: "#7a3742" },
+  dangerButtonText: { color: "#ffdede", fontWeight: "700" },
   row: { flexDirection: "row", gap: 10 },
   languageRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  languageButton: { backgroundColor: "#efe5d2", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "#d8c6a6" },
-  languageButtonActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" },
-  languageButtonText: { color: "#544636", fontWeight: "700" },
-  languageButtonTextActive: { color: "#f7f4ee" },
+  languageButton: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.pill, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  languageButtonActive: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: DESIGN_TOKENS.colors.blue },
+  languageButtonText: { color: DESIGN_TOKENS.colors.textSoft, fontWeight: "700" },
+  languageButtonTextActive: { color: DESIGN_TOKENS.colors.text },
   rankSelectorWrap: { gap: 6 },
-  rankSelectorButton: { backgroundColor: "#f3eee1", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  rankDropdown: { backgroundColor: "#fbf7ee", borderRadius: 12, borderWidth: 1, borderColor: "#ddd0b9", overflow: "hidden" },
-  rankOption: { paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#eee3cf" },
-  rankOptionActive: { backgroundColor: "#dff0e5" },
-  rankOptionText: { color: "#243025", fontWeight: "600" },
-  rankOptionTextActive: { color: "#17352b" },
+  rankSelectorButton: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.sm, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  rankDropdown: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: DESIGN_TOKENS.radius.sm, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, overflow: "hidden" },
+  rankOption: { paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: DESIGN_TOKENS.colors.border },
+  rankOptionActive: { backgroundColor: DESIGN_TOKENS.colors.greenSoft },
+  rankOptionText: { color: DESIGN_TOKENS.colors.text, fontWeight: "600" },
+  rankOptionTextActive: { color: DESIGN_TOKENS.colors.green },
   half: { flex: 1 },
   third: { flex: 1 },
   tabs: { flexGrow: 0, minHeight: 52 },
-  tab: { backgroundColor: "#f5ead8", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: "#ccb99a", shadowColor: "#3d3124", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
-  tabActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" },
-  tabText: { color: "#3f3429", fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" },
-  tabTextActive: { color: "#f8f5ef" },
+  tab: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: DESIGN_TOKENS.radius.pill, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, shadowColor: "#000000", shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  tabActive: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: DESIGN_TOKENS.colors.blue },
+  tabText: { color: DESIGN_TOKENS.colors.textMuted, fontWeight: "700", fontSize: 14, lineHeight: 18, includeFontPadding: false, textAlignVertical: "center" },
+  tabTextActive: { color: DESIGN_TOKENS.colors.text },
   content: { flexGrow: 1, gap: 12, paddingBottom: 96 },
   section: { gap: 8, marginTop: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#213126" },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
   disabled: { opacity: 0.55 },
-  pick: { backgroundColor: "#f3eee1", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" },
-  pickText: { color: "#243025", fontWeight: "600" },
-  selectedPlayerBox: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e", borderWidth: 2 },
-  selectedPlayerText: { color: "#17352b" },
-  selectedPlayerHint: { color: "#2a6d52", fontSize: 12, fontWeight: "700", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 },
-  dangerBox: { borderColor: "#be3e36", backgroundColor: "#f9e1de" },
-  dashboardShell: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 14, borderWidth: 1, borderColor: "#e2d8c5" },
+  pick: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.sm, padding: 12, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  pickText: { color: DESIGN_TOKENS.colors.text, fontWeight: "600" },
+  dashboardShell: { backgroundColor: DESIGN_TOKENS.colors.surface, borderRadius: DESIGN_TOKENS.radius.xl, padding: 18, gap: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
   metricGrid: { flexDirection: "row", gap: 10 },
-  dashboardMetricA: { flex: 1, backgroundColor: "#dbe9e1", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#c7d9cf" },
-  dashboardMetricB: { flex: 1, backgroundColor: "#efe4cf", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#deceb2" },
-  metricLabel: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#587262", marginBottom: 8 },
-  metricPanelValue: { fontSize: 24, fontWeight: "700", color: "#17352b" },
-  dashboardCompare: { backgroundColor: "#1f5c4d", borderRadius: 18, padding: 16, gap: 6 },
-  dashboardCompareValue: { fontSize: 28, fontWeight: "700", color: "#f7f4ee" },
-  profileCard: { backgroundColor: "#fbf7ee", borderRadius: 22, padding: 18, gap: 16, borderWidth: 1, borderColor: "#e2d8c5" },
+  dashboardMetricA: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  dashboardMetricB: { flex: 1, backgroundColor: "#2b2416", borderRadius: DESIGN_TOKENS.radius.lg, padding: 14, borderWidth: 1, borderColor: "#6d5b25" },
+  metricLabel: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: DESIGN_TOKENS.colors.textMuted, marginBottom: 8 },
+  metricPanelValue: { fontSize: 24, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  dashboardCompare: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: 16, gap: 6, borderWidth: 1, borderColor: "#21543c" },
+  dashboardCompareValue: { fontSize: 28, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  profileCard: { backgroundColor: DESIGN_TOKENS.colors.surface, borderRadius: DESIGN_TOKENS.radius.xl, padding: 18, gap: 16, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  homeHeroCard: { padding: 18, gap: 12 },
+  homeHeroContent: { flex: 1, gap: 4 },
+  homeHeroBadgeColumn: { alignItems: "flex-end", gap: 8 },
+  homeHeroMeta: { fontSize: 11, color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: "700" },
   profileHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-  profileEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, color: "#7a6a55", marginBottom: 6 },
-  profileRank: { fontSize: 15, color: "#5b665a", marginTop: 4 },
-  rankBadge: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },
-  rankBadgeText: { color: "#f7f4ee", fontWeight: "700" },
-  metricPanel: { flex: 1, backgroundColor: "#e8f1ea", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#cfe0d5" },
+  profileEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, color: DESIGN_TOKENS.colors.textMuted, marginBottom: 6 },
+  profileRank: { fontSize: 15, color: DESIGN_TOKENS.colors.textMuted, marginTop: 4 },
+  rankBadge: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderRadius: DESIGN_TOKENS.radius.pill, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.blue },
+  rankBadgeText: { color: DESIGN_TOKENS.colors.text, fontWeight: "700" },
+  metricPanel: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.lg, padding: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
   statusCard: { borderRadius: 18, padding: 16, gap: 6, borderWidth: 1 },
-  statusCardActive: { backgroundColor: "#dff0e5", borderColor: "#9cc8ad" },
-  statusCardInactive: { backgroundColor: "#f2ecdf", borderColor: "#ddd0b9" },
-  statusEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: "#5f6d60" },
-  statusTitle: { fontSize: 22, fontWeight: "700", color: "#1b3327" },
-  statusLine: { fontSize: 15, color: "#435043" },
-  todayItem: { backgroundColor: "#fbf7ee", borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "#e3d8c3", gap: 4 },
-  todayItemTitle: { fontSize: 16, fontWeight: "700", color: "#1f2a1f" },
+  statusCardActive: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: "#21543c" },
+  statusCardInactive: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderColor: DESIGN_TOKENS.colors.border },
+  statusEyebrow: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, color: DESIGN_TOKENS.colors.textMuted },
+  statusTitle: { fontSize: 22, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  statusLine: { fontSize: 15, color: DESIGN_TOKENS.colors.textSoft },
+  cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  statusBadge: { alignSelf: "flex-start", borderRadius: DESIGN_TOKENS.radius.pill, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1 },
+  statusBadgeText: { fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.8 },
+  statusBadgeNeutral: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  statusBadgeSuccess: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: "#21543c" },
+  statusBadgeWarning: { backgroundColor: DESIGN_TOKENS.colors.yellowSoft, borderColor: "#6d5b25" },
+  statusBadgeInfo: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: "#355f82" },
+  statusBadgeDanger: { backgroundColor: DESIGN_TOKENS.colors.redSoft, borderColor: "#7a3742" },
+  statusBadgePurple: { backgroundColor: DESIGN_TOKENS.colors.purpleSoft, borderColor: "#56417f" },
+  statusBadgeTextNeutral: { color: DESIGN_TOKENS.colors.textSoft },
+  statusBadgeTextSuccess: { color: DESIGN_TOKENS.colors.green },
+  statusBadgeTextWarning: { color: DESIGN_TOKENS.colors.yellow },
+  statusBadgeTextInfo: { color: DESIGN_TOKENS.colors.blue },
+  statusBadgeTextDanger: { color: DESIGN_TOKENS.colors.red },
+  statusBadgeTextPurple: { color: DESIGN_TOKENS.colors.purple },
+  todayItem: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, gap: 4 },
+  todayItemTitle: { fontSize: 16, fontWeight: "700", color: DESIGN_TOKENS.colors.text },
+  listRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: DESIGN_TOKENS.colors.border },
+  listRowContent: { flex: 1, gap: 4 },
+  listRowTitle: { color: DESIGN_TOKENS.colors.text, fontSize: 15, fontWeight: "700" },
+  listRowDetail: { color: DESIGN_TOKENS.colors.textMuted, fontSize: 13 },
+  listRowRight: { alignItems: "flex-end", justifyContent: "center" },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: DESIGN_TOKENS.colors.overlay },
+  modalBackdropDismissArea: { flex: 1 },
+  modalSafeArea: { width: "100%" },
+  modalSheetShell: { width: "100%", paddingHorizontal: 8, paddingBottom: Platform.OS === "ios" ? 8 : 0 },
+  modalHandle: { alignSelf: "center", width: 44, height: 5, borderRadius: 999, backgroundColor: DESIGN_TOKENS.colors.borderStrong, marginBottom: 10 },
+  modalCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 24, gap: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, shadowColor: "#000", shadowOpacity: 0.28, shadowRadius: 18, shadowOffset: { width: 0, height: -8 }, elevation: 20, maxHeight: "88%" },
+  modalKeyboardShell: { gap: 12, maxHeight: "100%" },
+  modalListScroll: { maxHeight: 320 },
+  modalListContent: { gap: 10, paddingBottom: 6 },
+  quickActionGrid: { gap: 10 },
+  quickActionCard: { gap: 6 },
+  quickActionTitle: { color: DESIGN_TOKENS.colors.text, fontSize: 18, fontWeight: "800" },
+  quickActionDetail: { color: DESIGN_TOKENS.colors.textSoft, fontSize: 14, lineHeight: 19 },
+  desertStormTaskForceCard: { gap: 12 },
+  desertStormSlotCard: { gap: 10 },
+  desertStormLeaderControls: { gap: 10 },
   voteStatusRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   voteStatusTitle: { flex: 1, flexShrink: 1, paddingRight: 8 },
   votePill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "700", flexShrink: 0, alignSelf: "flex-start" },
-  votePillDone: { backgroundColor: "#d8ecdf", color: "#24523e" },
-  votePillPending: { backgroundColor: "#f0e3c8", color: "#6b4f20" },
-  squadCard: { flex: 1, backgroundColor: "#f4efe4", borderRadius: 16, padding: 12, borderWidth: 1, borderColor: "#e0d4be", gap: 8 },
-  squadLabel: { fontSize: 13, fontWeight: "700", color: "#5b665a", textTransform: "uppercase", letterSpacing: 0.7 },
-  voteCard: { backgroundColor: "#f5efe3", borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: "#e0d4be" },
+  votePillDone: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, color: DESIGN_TOKENS.colors.green },
+  votePillPending: { backgroundColor: DESIGN_TOKENS.colors.yellowSoft, color: DESIGN_TOKENS.colors.yellow },
+  squadCard: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, gap: 8 },
+  squadLabel: { fontSize: 13, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase", letterSpacing: 0.7 },
+  voteCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  feedbackHeroCard: { gap: 12 },
+  feedbackComposerCard: { gap: 12 },
+  feedbackHistoryCard: { gap: 12 },
+  feedbackEntryList: { gap: 10 },
+  feedbackEntryCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  settingsHeroCard: { gap: 12 },
+  settingsSectionCard: { gap: 12 },
+  settingsNestedCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  settingsDangerCard: { gap: 12 },
+  settingsStack: { gap: 10 },
   feedbackCommentList: { gap: 8, marginTop: 4 },
-  feedbackCommentCard: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 10, borderWidth: 1, borderColor: "#e2d8c5", gap: 4 },
+  feedbackCommentCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, gap: 4 },
   feedbackCommentComposer: { gap: 8, marginTop: 4 },
   feedbackCommentInput: { minHeight: 72 },
   voteOptionWrap: { gap: 4 },
-  voteOption: { backgroundColor: "#fbf7ee", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#ddd0b9" },
-  voteOptionSelected: { borderColor: "#4f8a6e", backgroundColor: "#dff0e5" },
+  voteOption: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  voteOptionSelected: { borderColor: DESIGN_TOKENS.colors.green, backgroundColor: DESIGN_TOKENS.colors.greenSoft },
   voteOptionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
-  voteCount: { fontSize: 14, fontWeight: "700", color: "#5b665a" },
-  voteResponseList: { fontSize: 13, color: "#5c6558", lineHeight: 18 },
-  inlineSummary: { marginTop: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#e2d8c5" },
-  memberCard: { backgroundColor: "#f7f1e5", borderRadius: 18, padding: 14, gap: 12, borderWidth: 1, borderColor: "#dfd1b7" },
+  voteCount: { fontSize: 14, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted },
+  voteResponseList: { fontSize: 13, color: DESIGN_TOKENS.colors.textSoft, lineHeight: 18 },
+  inlineSummary: { marginTop: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: DESIGN_TOKENS.colors.border },
+  membersHeroCard: { gap: 12 },
+  membersFilterCard: { gap: 12 },
+  membersRosterList: { gap: 10 },
+  memberCard: { gap: 12 },
   memberCardSummary: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
-  memberSummaryText: { flex: 1, gap: 2 },
+  memberSummaryText: { flex: 1, gap: 4 },
   memberSummaryRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  memberExpandIcon: { fontSize: 24, fontWeight: "700", color: "#5d4b36", width: 22, textAlign: "center" },
+  memberExpandIcon: { fontSize: 24, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted, width: 22, textAlign: "center" },
   memberCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
   memberCardActions: { flexDirection: "row", gap: 8, alignItems: "center" },
+  memberCardActionsRow: { flexDirection: "row", gap: 10 },
   memberHeaderText: { flex: 1, gap: 4 },
-  memberName: { fontSize: 20, fontWeight: "700", color: "#1f2a1f" },
-  memberNameCompact: { fontSize: 18, fontWeight: "700", color: "#1f2a1f" },
-  memberSubline: { fontSize: 14, color: "#6a725f" },
-  memberRankChip: { backgroundColor: "#1f5c4d", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  memberRankChipText: { color: "#f7f4ee", fontWeight: "700" },
+  memberName: { fontSize: 20, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  memberNameCompact: { fontSize: 18, fontWeight: "700", color: DESIGN_TOKENS.colors.text },
+  memberSubline: { fontSize: 14, color: DESIGN_TOKENS.colors.textSoft },
+  memberRankChip: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.blue },
+  memberRankChipText: { color: DESIGN_TOKENS.colors.text, fontWeight: "700" },
   memberStatGrid: { flexDirection: "row", gap: 10 },
-  memberStatCard: { flex: 1, backgroundColor: "#fbf7ee", borderRadius: 14, padding: 12, borderWidth: 1, borderColor: "#e3d8c3", gap: 6 },
-  memberStatLabel: { fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#6a725f" },
-  memberStatValue: { fontSize: 18, fontWeight: "700", color: "#1f2a1f" },
-  memberSection: { gap: 8 },
-  memberSectionLabel: { fontSize: 13, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: "#6a725f" },
+  memberStatCard: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, gap: 6 },
+  memberStatLabel: { fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: DESIGN_TOKENS.colors.textMuted },
+  memberStatValue: { fontSize: 18, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
+  memberSection: { gap: 10 },
+  memberSectionLabel: { fontSize: 13, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8, color: DESIGN_TOKENS.colors.textMuted },
   rankFilterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  rankFilterButton: { backgroundColor: "#efe5d2", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: "#d8c6a6" },
-  rankFilterButtonActive: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" },
-  rankFilterButtonText: { color: "#544636", fontWeight: "700" },
-  rankFilterButtonTextActive: { color: "#f7f4ee" },
-  calendarMonthShell: { backgroundColor: "#f6f0e4", borderRadius: 18, padding: 12, borderWidth: 1, borderColor: "#e1d6c2", gap: 10 },
+  rankFilterButton: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  rankFilterButtonActive: { backgroundColor: DESIGN_TOKENS.colors.green, borderColor: DESIGN_TOKENS.colors.green },
+  rankFilterButtonText: { color: DESIGN_TOKENS.colors.textSoft, fontWeight: "700" },
+  rankFilterButtonTextActive: { color: "#081016", fontWeight: "800" },
+  remindersHeroCard: { gap: 12 },
+  reminderComposerCard: { gap: 12 },
+  reminderSectionCard: { gap: 12 },
+  remindersList: { gap: 10 },
+  reminderCard: { gap: 10 },
+  reminderMeta: { color: DESIGN_TOKENS.colors.textSoft, fontSize: 14, fontWeight: "700" },
+  reminderPreviewCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderColor: DESIGN_TOKENS.colors.borderStrong, padding: 12, gap: 8 },
+  reminderCountdown: { color: DESIGN_TOKENS.colors.yellow, fontWeight: "800", fontSize: 15 },
+  calendarModeRow: { flexDirection: "row", gap: 10 },
+  calendarMonthShell: { gap: 12 },
   calendarMonthHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  calendarMonthArrow: { width: 40, height: 40, borderRadius: 999, backgroundColor: "#efe5d2", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#d8c6a6" },
-  calendarMonthArrowText: { fontSize: 24, fontWeight: "700", color: "#544636", marginTop: -2 },
-  calendarMonthTitle: { fontSize: 18, fontWeight: "700", color: "#213126" },
+  calendarMonthArrow: { width: 40, height: 40, borderRadius: 999, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  calendarMonthArrowText: { fontSize: 24, fontWeight: "700", color: DESIGN_TOKENS.colors.textSoft, marginTop: -2 },
+  calendarMonthTitle: { fontSize: 18, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
   calendarWeekdayRow: { flexDirection: "row", justifyContent: "space-between", gap: 6 },
-  calendarWeekday: { flex: 1, textAlign: "center", fontSize: 12, fontWeight: "700", color: "#7a6a55", textTransform: "uppercase" },
+  calendarWeekday: { flex: 1, textAlign: "center", fontSize: 12, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase" },
   calendarGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  calendarStripShell: { padding: 12 },
   calendarStrip: { flexDirection: "row", gap: 8 },
-  calendarDayCell: { width: "13.3%", minHeight: 88, backgroundColor: "#fbf7ee", borderRadius: 16, borderWidth: 1, borderColor: "#e2d8c5", paddingHorizontal: 6, paddingVertical: 8, alignItems: "center", justifyContent: "space-between" },
+  calendarDayCell: { width: "13.3%", minHeight: 88, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, paddingHorizontal: 6, paddingVertical: 8, alignItems: "center", justifyContent: "space-between" },
   calendarDayCellCompact: { flex: 1, width: undefined, minHeight: 82 },
-  calendarDayCellMuted: { opacity: 0.5 },
-  calendarDayCellToday: { borderColor: "#6ca88a", borderWidth: 2 },
-  calendarDayCellSelected: { backgroundColor: "#1f5c4d", borderColor: "#1f5c4d" },
-  calendarDayWeekLabel: { fontSize: 11, fontWeight: "700", color: "#6a725f", textTransform: "uppercase" },
+  calendarDayCellMuted: { opacity: 0.45 },
+  calendarDayCellToday: { borderColor: DESIGN_TOKENS.colors.green, borderWidth: 2 },
+  calendarDayCellSelected: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: DESIGN_TOKENS.colors.blue },
+  calendarDayWeekLabel: { fontSize: 11, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase" },
   calendarDayWeekLabelCompact: { fontSize: 12 },
-  calendarDayNumber: { fontSize: 26, fontWeight: "700", color: "#213126" },
+  calendarDayNumber: { fontSize: 26, fontWeight: "800", color: DESIGN_TOKENS.colors.text },
   calendarDayNumberCompact: { fontSize: 24 },
-  calendarDayTextMuted: { color: "#9b9384" },
-  calendarDayTextSelected: { color: "#f7f4ee" },
-  calendarEventBadge: { minWidth: 24, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: "#e1efe6", alignItems: "center", justifyContent: "center" },
-  calendarEventBadgeSelected: { backgroundColor: "#f7f4ee" },
-  calendarEventBadgeText: { fontSize: 12, fontWeight: "700", color: "#21563f" },
-  calendarEventBadgeTextSelected: { color: "#1f5c4d" },
+  calendarDayTextMuted: { color: "#66727f" },
+  calendarDayTextSelected: { color: DESIGN_TOKENS.colors.text },
+  calendarEventBadge: { minWidth: 24, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: DESIGN_TOKENS.colors.greenSoft, alignItems: "center", justifyContent: "center" },
+  calendarEventBadgeSelected: { backgroundColor: DESIGN_TOKENS.colors.text },
+  calendarEventBadgeText: { fontSize: 12, fontWeight: "700", color: DESIGN_TOKENS.colors.green },
+  calendarEventBadgeTextSelected: { color: DESIGN_TOKENS.colors.blue },
   calendarEventSpacer: { height: 24 },
-  calendarDetailCard: { backgroundColor: "#f3ede0", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "#e1d6c2", gap: 10 },
+  calendarAgendaShell: { gap: 12 },
+  calendarDetailCard: { gap: 12 },
   calendarDetailHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+  calendarAgendaList: { gap: 10 },
+  calendarEntryCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border },
+  calendarEntryMeta: { color: DESIGN_TOKENS.colors.textSoft, fontSize: 14, fontWeight: "700" },
+  calendarTimeStack: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, paddingHorizontal: 12 },
+  calendarLeaderNotesCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderColor: DESIGN_TOKENS.colors.borderStrong, padding: 12 },
+  calendarEmptyCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderColor: DESIGN_TOKENS.colors.borderStrong, padding: 14 },
+  calendarComposerCard: { gap: 12 },
+  calendarTimingCard: { gap: 12 },
+  calendarPreviewCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 14, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong, padding: 12, gap: 8 },
   calendarTimeButton: { justifyContent: "center" },
   calendarWheelColumn: { flex: 1, height: 220, position: "relative" },
   calendarWheelContent: { paddingVertical: 90 },
   calendarWheelItem: { height: 40, justifyContent: "center", alignItems: "center" },
-  calendarWheelText: { fontSize: 22, color: "#7a6a55", fontWeight: "600" },
-  calendarWheelTextActive: { color: "#213126", fontWeight: "700" },
-  calendarWheelHighlight: { position: "absolute", left: 0, right: 0, top: 90, height: 40, borderRadius: 12, backgroundColor: "rgba(31, 92, 77, 0.08)", borderWidth: 1, borderColor: "#c7d9cf" },
+  calendarWheelText: { fontSize: 22, color: DESIGN_TOKENS.colors.textMuted, fontWeight: "600" },
+  calendarWheelTextActive: { color: DESIGN_TOKENS.colors.text, fontWeight: "700" },
+  calendarWheelHighlight: { position: "absolute", left: 0, right: 0, top: 90, height: 40, borderRadius: 12, backgroundColor: "rgba(79,195,138,0.08)", borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
   calendarWheelHeader: { flexDirection: "row", justifyContent: "space-around", gap: 12 },
   calendarWheelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  calendarWheelDivider: { fontSize: 28, fontWeight: "700", color: "#5d4b36", paddingHorizontal: 4 },
-  zombieSelectedCard: { backgroundColor: "#dff0e5", borderColor: "#4f8a6e" },
-  zombiePlanCard: { backgroundColor: "#eef5ef", borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: "#cfe0d5" }
+  calendarWheelDivider: { fontSize: 28, fontWeight: "700", color: DESIGN_TOKENS.colors.textMuted, paddingHorizontal: 4 },
+  zombieHeroCard: { gap: 12 },
+  zombieSectionCard: { gap: 12 },
+  zombieEventList: { gap: 10 },
+  zombieEventCard: { gap: 8 },
+  zombieActionRow: { flexDirection: "row", gap: 10 },
+  zombieAssignmentCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
+  zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
+  zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
+
+
+
+
+
+
+
+
+
 
 
