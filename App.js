@@ -5,6 +5,7 @@ import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+import { Ionicons } from "@expo/vector-icons";
 import { AppCard as SharedAppCard, BottomSheetModal as SharedBottomSheetModal, ListRow as SharedListRow, PrimaryButton as SharedPrimaryButton, ScreenContainer as SharedScreenContainer, SectionHeader as SharedSectionHeader, SecondaryButton as SharedSecondaryButton, StatusBadge as SharedStatusBadge } from "./src/components/ui/primitives";
 import { CalendarDatePickerModal as SharedCalendarDatePickerModal, CalendarTimePickerModal as SharedCalendarTimePickerModal, ReminderDurationPickerModal as SharedReminderDurationPickerModal } from "./src/components/Pickers";
 import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankSelector } from "./src/components/Selectors";
@@ -465,6 +466,15 @@ function tabLabel(tab, leader, joinRequests, t) {
   if (tab === "reminders") return t("tabReminders");
   if (tab === "more") return `More${leader && joinRequests.length ? ` (${joinRequests.length})` : ""}`;
   return t("tabDashboard");
+}
+
+function getTabIconName(tab, active) {
+  if (tab === "home") return active ? "home" : "home-outline";
+  if (tab === "calendar") return active ? "calendar" : "calendar-outline";
+  if (tab === "events") return active ? "flash" : "flash-outline";
+  if (tab === "reminders") return active ? "notifications" : "notifications-outline";
+  if (tab === "more") return active ? "ellipsis-horizontal-circle" : "ellipsis-horizontal";
+  return active ? "grid" : "grid-outline";
 }
 
 function ScreenContainer(props) {
@@ -1513,6 +1523,7 @@ export default function App() {
           <View style={styles.bottomTabBar}>
             {tabs.map((tab) => <Pressable key={tab} style={[styles.bottomTabButton, activeTab === tab && styles.bottomTabButtonActive]} onPress={() => handleTabPress(tab)}>
               <View style={[styles.bottomTabIndicator, activeTab === tab && styles.bottomTabIndicatorActive]} />
+              <Ionicons name={getTabIconName(tab, activeTab === tab)} size={20} color={activeTab === tab ? DESIGN_TOKENS.colors.green : DESIGN_TOKENS.colors.textMuted} />
               <Text style={[styles.bottomTabLabel, activeTab === tab && styles.bottomTabLabelActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text>
             </Pressable>)}
           </View>
