@@ -24,6 +24,7 @@ import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCom
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
 import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
+import { buildCalendarNotificationCandidates, CALENDAR_NOTIFICATION_CHANNEL_ID, getCalendarNotificationStorageKey } from "./src/lib/calendarNotifications";
 import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormStatusLabel, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
 import { formatReminderCountdown, formatReminderDuration } from "./src/lib/uiFormatters";
 
@@ -883,6 +884,9 @@ export default function App() {
 
   async function signOut(message = "") {
     const nextMessage = typeof message === "string" ? message : "";
+    if (currentUser?.id) {
+      await clearCalendarNotificationsForMember(currentUser.id).catch(() => {});
+    }
     await AsyncStorage.removeItem(SESSION_STORAGE_KEY);
     clearSessionState(nextMessage);
   }
@@ -1029,6 +1033,8 @@ export default function App() {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "calendarEvent") {
+        handleTabPress("calendar");
       } else if (data?.type === "reminder") {
         handleTabPress("reminders");
       }
@@ -1037,6 +1043,8 @@ export default function App() {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "calendarEvent") {
+        handleTabPress("calendar");
       } else if (data?.type === "reminder") {
         handleTabPress("reminders");
       }
@@ -1053,6 +1061,19 @@ export default function App() {
     }
     syncPushNotifications().catch(() => {});
   }, [session.token, session.backendUrl, alliance, currentUser?.id, currentUser?.hasExpoPushToken, notificationPermissionStatus]);
+
+  useEffect(() => {
+    if (!session.token || !currentUser?.id || !alliance) {
+      return;
+    }
+    (async () => {
+      try {
+        await reconcileCalendarNotifications(calendarEntries, currentUser.id);
+      } catch {
+        // Swallow calendar notification reconciliation failures to avoid blocking app usage.
+      }
+    })();
+  }, [session.token, currentUser?.id, alliance, calendarEntries]);
 
   useEffect(() => {
     if (!session.token || !session.backendUrl || !currentUser?.id || !reminders.length || reminderSyncInFlight.current) {
@@ -1176,6 +1197,134 @@ export default function App() {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: DESIGN_TOKENS.colors.green
     });
+  }
+
+  async function ensureCalendarNotificationChannel() {
+    if (Platform.OS !== "android") {
+      return;
+    }
+    await Notifications.setNotificationChannelAsync(CALENDAR_NOTIFICATION_CHANNEL_ID, {
+      name: "Calendar Events",
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: DESIGN_TOKENS.colors.blue
+    });
+  }
+
+  async function scheduleCalendarNotification(candidate) {
+    if (!candidate?.startsAt) {
+      throw new Error("Calendar notification is missing a scheduled time.");
+    }
+    const fireDate = new Date(candidate.startsAt);
+    if (Number.isNaN(fireDate.getTime()) || fireDate.getTime() <= Date.now()) {
+      throw new Error("Calendar event time must be in the future.");
+    }
+    await ensureCalendarNotificationChannel();
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: candidate.title || "Calendar Event",
+        body: candidate.body || "Your calendar event is starting.",
+        ...(Platform.OS === "android" ? { sound: "default" } : {}),
+        data: {
+          type: "calendarEvent",
+          entryId: candidate.sourceEntryId,
+          occurrenceId: candidate.occurrenceId
+        }
+      },
+      trigger: Platform.OS === "android"
+        ? {
+            type: "date",
+            date: fireDate,
+            channelId: CALENDAR_NOTIFICATION_CHANNEL_ID
+          }
+        : {
+            type: "date",
+            date: fireDate
+          }
+    });
+  }
+
+  async function loadCalendarNotificationState(memberId) {
+    if (!memberId) {
+      return {};
+    }
+    try {
+      const raw = await AsyncStorage.getItem(getCalendarNotificationStorageKey(memberId));
+      if (!raw) {
+        return {};
+      }
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  async function saveCalendarNotificationState(memberId, value) {
+    if (!memberId) {
+      return;
+    }
+    const nextValue = value && typeof value === "object" ? value : {};
+    if (!Object.keys(nextValue).length) {
+      await AsyncStorage.removeItem(getCalendarNotificationStorageKey(memberId));
+      return;
+    }
+    await AsyncStorage.setItem(getCalendarNotificationStorageKey(memberId), JSON.stringify(nextValue));
+  }
+
+  async function clearCalendarNotificationsForMember(memberId) {
+    if (!memberId) {
+      return;
+    }
+    const current = await loadCalendarNotificationState(memberId);
+    await Promise.all(Object.values(current).map(async (entry) => {
+      if (entry?.notificationId) {
+        await cancelReminderNotification(entry.notificationId);
+      }
+    }));
+    await AsyncStorage.removeItem(getCalendarNotificationStorageKey(memberId));
+  }
+
+  async function reconcileCalendarNotifications(entries, memberId) {
+    if (!memberId) {
+      return;
+    }
+    const permissionGranted = await ensureReminderNotificationPermission({ requestPermission: false });
+    if (!permissionGranted) {
+      return;
+    }
+    const candidates = buildCalendarNotificationCandidates(entries, new Date());
+    const desiredById = Object.fromEntries(candidates.map((candidate) => [candidate.occurrenceId, candidate]));
+    const currentState = await loadCalendarNotificationState(memberId);
+    const nextState = {};
+
+    for (const [occurrenceId, stored] of Object.entries(currentState)) {
+      const desired = desiredById[occurrenceId];
+      if (!desired || stored?.startsAt !== desired.startsAt) {
+        if (stored?.notificationId) {
+          await cancelReminderNotification(stored.notificationId);
+        }
+      } else {
+        nextState[occurrenceId] = stored;
+      }
+    }
+
+    for (const candidate of candidates) {
+      if (nextState[candidate.occurrenceId]) {
+        continue;
+      }
+      try {
+        const notificationId = await scheduleCalendarNotification(candidate);
+        nextState[candidate.occurrenceId] = {
+          notificationId,
+          startsAt: candidate.startsAt
+        };
+      } catch {
+        // Skip device-specific scheduling failures so calendar rendering still works.
+      }
+    }
+
+    await saveCalendarNotificationState(memberId, nextState);
   }
 
   async function scheduleReminderNotification(reminder) {
@@ -1510,7 +1659,7 @@ export default function App() {
             {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} /> : null}
             {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} joinRequests={joinRequests} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
               {moreSelection === "members" && leader ? <MembersScreen styles={styles} players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} RankSelector={RankSelector} rankOptions={RANK_OPTIONS} /> : null}
-              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const result = await leaveAlliance(session.backendUrl, session.token); setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const departingPlayerId = currentUser?.id; const result = await leaveAlliance(session.backendUrl, session.token); if (departingPlayerId) { await clearCalendarNotificationsForMember(departingPlayerId).catch(() => {}); } setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
                 const enabled = await syncPushNotifications({ requestPermission: true });
                 if (!enabled) {
                   Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
