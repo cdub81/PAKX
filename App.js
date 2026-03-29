@@ -44,17 +44,15 @@ const SUPPORTED_LANGUAGES = [
   { code: "pt", label: "Português" }
 ];
 
-if (Platform.OS !== "android") {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false
-    })
-  });
-}
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false
+  })
+});
 const TRANSLATIONS = {
   en: {
     appTitle: "PAKX Alliance App",
@@ -1278,20 +1276,14 @@ export default function App() {
         if (alive) {
           setPushPromptDismissed(storedPushPromptDismissed === "true");
         }
-        if (Platform.OS === "android") {
+        try {
+          const permission = await Notifications.getPermissionsAsync();
           if (alive) {
-            setNotificationPermissionStatus("disabled");
+            setNotificationPermissionStatus(permission.status || "undetermined");
           }
-        } else {
-          try {
-            const permission = await Notifications.getPermissionsAsync();
-            if (alive) {
-              setNotificationPermissionStatus(permission.status || "undetermined");
-            }
-          } catch {
-            if (alive) {
-              setNotificationPermissionStatus("unknown");
-            }
+        } catch {
+          if (alive) {
+            setNotificationPermissionStatus("unknown");
           }
         }
         if (!stored) return;
@@ -1325,9 +1317,6 @@ export default function App() {
   }, [session.token, session.backendUrl, alliance, activeTab]);
 
   useEffect(() => {
-    if (Platform.OS === "android") {
-      return undefined;
-    }
     Notifications.getLastNotificationResponseAsync().then((response) => {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
