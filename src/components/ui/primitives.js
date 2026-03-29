@@ -1,10 +1,8 @@
 import React from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, StatusBar, Text, View } from "react-native";
-import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 
 export function ScreenContainer({ children, styles }) {
   return <SafeAreaView style={styles.safeArea}>
-    <ExpoStatusBar style="light" />
     <StatusBar barStyle="light-content" />
     <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
       {children}
@@ -108,3 +106,4 @@ export function BottomSheetModal({ visible, onClose, children, styles }) {
     </View>
   </Modal>;
 }
+

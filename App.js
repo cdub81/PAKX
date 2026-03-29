@@ -44,10 +44,10 @@ const CALENDAR_TRANSLATIONS = {
 };
 const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English" },
-  { code: "ko", label: "한국어" },
-  { code: "es", label: "Español" },
-  { code: "pt", label: "Português" }
-
+  { code: "ko", label: "???" },
+  { code: "es", label: "Espa�ol" },
+  { code: "pt", label: "Portugu�s" }
+];
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
