@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { AppCard, ListRow, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
+import { AppCard, ListRow, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
 export function SettingsScreen({
   alliance,
