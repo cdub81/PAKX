@@ -10,14 +10,9 @@ export function HomeScreen({
   desertStormVoteStatus,
   todayCalendarEntries,
   currentZombieSiegeEvent,
-  currentZombieSiegeAssignment,
   onChangeField,
   onOpenDesertStormVote,
-  onOpenCalendar,
-  onOpenReminders,
   onOpenZombieSiege,
-  onOpenFeedback,
-  onOpenSettings,
   showPushNotificationControls,
   showPushNotificationsPrompt,
   notificationSetupInFlight,
@@ -51,14 +46,6 @@ export function HomeScreen({
       <SectionHeader eyebrow="Active Operations" title="Desert Storm" detail={desertStormAssignment ? `Assigned to ${desertStormAssignment.taskForceLabel || desertStormAssignment.taskForceKey || "task force"}` : "No current assignment published."} styles={styles} />
       <StatusBadge label={desertStormLabel} tone={desertStormTone} styles={styles} />
     </AppCard>
-
-    <View style={styles.quickActionGrid}>
-      <AppCard style={styles.quickActionCard} onPress={onOpenCalendar} styles={styles}><Text style={styles.quickActionTitle}>Calendar</Text><Text style={styles.quickActionDetail}>Open the alliance agenda and upcoming linked events.</Text></AppCard>
-      <AppCard style={styles.quickActionCard} onPress={onOpenReminders} styles={styles}><Text style={styles.quickActionTitle}>Reminders</Text><Text style={styles.quickActionDetail}>Manage your personal timers and local alerts.</Text></AppCard>
-      <AppCard style={styles.quickActionCard} onPress={onOpenZombieSiege} styles={styles}><Text style={styles.quickActionTitle}>Zombie Siege</Text><Text style={styles.quickActionDetail}>{currentZombieSiegeAssignment ? "Review your published assignment." : "Check event availability and planning status."}</Text></AppCard>
-      <AppCard style={styles.quickActionCard} onPress={onOpenFeedback} styles={styles}><Text style={styles.quickActionTitle}>Feedback</Text><Text style={styles.quickActionDetail}>Share notes, bugs, and coordination feedback.</Text></AppCard>
-      <AppCard style={styles.quickActionCard} onPress={onOpenSettings} styles={styles}><Text style={styles.quickActionTitle}>Settings</Text><Text style={styles.quickActionDetail}>Open account, notification, and alliance controls.</Text></AppCard>
-    </View>
 
     <AppCard styles={styles}>
       <SectionHeader eyebrow="Recent Activity" title="Today" detail="Today’s agenda and current operation context." styles={styles} />
