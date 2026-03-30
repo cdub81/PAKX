@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { AppCard, ListRow, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
+import { AppCard, ListRow, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
 export function SettingsScreen({
   alliance,
@@ -57,10 +57,7 @@ export function SettingsScreen({
     {showPushNotificationControls ? <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow="Notifications" title="Desert Storm alerts" detail="Manage vote-open alert preferences without changing reminder or event logic." styles={styles} />
       <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
-      <View style={styles.row}>
-        <PrimaryButton label="Enable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(true)} style={styles.half} disabled={notificationsEnabled} styles={styles} />
-        <SecondaryButton label="Disable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(false)} style={styles.half} disabled={!notificationsEnabled} styles={styles} />
-      </View>
+      <PrimaryButton label={notificationsEnabled ? "Turn Alerts Off" : "Turn Alerts On"} onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)} tone={notificationsEnabled ? "red" : "green"} styles={styles} />
       {showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
         <Text style={styles.cardTitle}>Enable push notifications</Text>
         <Text style={styles.hint}>Turn on device notifications to receive Desert Storm vote alerts on this device.</Text>

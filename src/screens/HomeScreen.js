@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, TextInput, View } from "react-native";
-import { AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
+import { AppCard, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
 export function HomeScreen({
   currentUser,
@@ -13,12 +13,6 @@ export function HomeScreen({
   onChangeField,
   onOpenDesertStormVote,
   onOpenZombieSiege,
-  showPushNotificationControls,
-  showPushNotificationsPrompt,
-  notificationSetupInFlight,
-  onSetDesertStormVoteNotificationsEnabled,
-  onEnablePushNotifications,
-  onDismissPushNotificationsPrompt,
   styles,
   t
 }) {
@@ -64,14 +58,5 @@ export function HomeScreen({
       <View style={styles.row}><TextInput value={String(squadPowers.squad1 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad1: value })} style={[styles.input, styles.half]} placeholder="Squad 1" keyboardType="decimal-pad" /><TextInput value={String(squadPowers.squad2 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad2: value })} style={[styles.input, styles.half]} placeholder="Squad 2" keyboardType="decimal-pad" /></View>
       <View style={styles.row}><TextInput value={String(squadPowers.squad3 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad3: value })} style={[styles.input, styles.half]} placeholder="Squad 3" keyboardType="decimal-pad" /><TextInput value={String(squadPowers.squad4 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad4: value })} style={[styles.input, styles.half]} placeholder="Squad 4" keyboardType="decimal-pad" /></View>
     </AppCard>
-
-    {showPushNotificationControls ? <AppCard styles={styles}>
-      <SectionHeader eyebrow="Notifications" title="Desert Storm vote alerts" detail="Control whether vote-open alerts are enabled for your account." styles={styles} />
-      <View style={styles.row}>
-        <PrimaryButton label="Enable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(true)} style={styles.half} styles={styles} />
-        <SecondaryButton label="Disable Alerts" onPress={() => onSetDesertStormVoteNotificationsEnabled(false)} style={styles.half} styles={styles} />
-      </View>
-      {showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}><Text style={styles.cardTitle}>Enable push notifications</Text><Text style={styles.hint}>Allow device notifications so Desert Storm vote alerts can reach this device.</Text><View style={styles.row}><PrimaryButton label={notificationSetupInFlight ? "Enabling..." : "Enable Notifications"} onPress={onEnablePushNotifications} style={styles.half} disabled={notificationSetupInFlight} tone="blue" styles={styles} /><SecondaryButton label="Later" onPress={onDismissPushNotificationsPrompt} style={styles.half} styles={styles} /></View></AppCard> : null}
-    </AppCard> : null}
   </View>;
 }
