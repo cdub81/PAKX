@@ -56,8 +56,9 @@ export function SettingsScreen({
 
     {showPushNotificationControls ? <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow="Notifications" title="Desert Storm alerts" detail="Manage vote-open alert preferences without changing reminder or event logic." styles={styles} />
-      <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
-      <PrimaryButton label={notificationsEnabled ? "Turn Alerts Off" : "Turn Alerts On"} onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)} tone={notificationsEnabled ? "red" : "green"} styles={styles} />
+      <Pressable onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)}>
+        <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
+      </Pressable>
       {showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
         <Text style={styles.cardTitle}>Enable push notifications</Text>
         <Text style={styles.hint}>Turn on device notifications to receive Desert Storm vote alerts on this device.</Text>
