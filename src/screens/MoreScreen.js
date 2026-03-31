@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { AppCard, ListRow, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
+import { AppCard, ListRow, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
 export function MoreScreen({
   styles,
@@ -18,7 +18,6 @@ export function MoreScreen({
     return <View style={styles.section}>
       <AppCard style={styles.settingsSectionCard} styles={styles}>
         <SectionHeader eyebrow="More" title={selection === "leaderControls" ? "Leader Controls" : selection === "members" ? "Members" : selection === "settings" ? "Settings" : "Feedback"} detail="Use More for secondary destinations without adding extra top-level tabs." styles={styles} />
-        <SecondaryButton label="Back to More" onPress={onBack} styles={styles} />
       </AppCard>
       {children}
     </View>;

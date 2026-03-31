@@ -1,4 +1,5 @@
 import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, StatusBar, Text, View } from "react-native";
 
 export function ScreenContainer({ children, styles }) {
@@ -15,6 +16,17 @@ export function SectionHeader({ eyebrow, title, detail, styles }) {
     {eyebrow ? <Text style={styles.sectionEyebrow}>{eyebrow}</Text> : null}
     <Text style={styles.sectionHeaderTitle}>{title}</Text>
     {detail ? <Text style={styles.sectionHeaderDetail}>{detail}</Text> : null}
+  </View>;
+}
+
+export function AppBackHeader({ title, onBack, styles }) {
+  return <View style={styles.appBackHeader}>
+    <Pressable onPress={onBack} style={styles.appBackButton} accessibilityRole="button" accessibilityLabel={`Go back from ${title}`}>
+      <Ionicons name="chevron-back" size={20} color="#F4F7FB" />
+      <Text style={styles.appBackButtonText}>Back</Text>
+    </Pressable>
+    <Text style={styles.appBackHeaderTitle} numberOfLines={1}>{title}</Text>
+    <View style={styles.appBackHeaderSpacer} />
   </View>;
 }
 

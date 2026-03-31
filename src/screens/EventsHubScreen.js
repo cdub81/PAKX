@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { AppCard, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
+import { AppCard, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
 export function EventsHubScreen({
   styles,
@@ -16,7 +16,6 @@ export function EventsHubScreen({
     return <View style={styles.section}>
       <AppCard style={styles.settingsSectionCard} styles={styles}>
         <SectionHeader eyebrow="Events" title={selection === "desertStorm" ? "Desert Storm" : "Zombie Siege"} detail="Use the event hub to move between alliance event workflows without changing the underlying logic." styles={styles} />
-        <SecondaryButton label="Back to Events" onPress={onBack} styles={styles} />
       </AppCard>
       {children}
     </View>;
