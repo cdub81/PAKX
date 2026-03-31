@@ -21,7 +21,7 @@ import { RemindersScreen } from "./src/screens/RemindersScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { ZombieSiegeScreen } from "./src/screens/ZombieSiegeScreen";
 import { DESIGN_TOKENS } from "./src/theme/designSystem";
-import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createReminder as createReminderRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteReminder as deleteReminderRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAlliancePreview, getJoinRequests, getMe, getReminders as getRemindersRequest, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, sendAllianceBroadcastPush as sendAllianceBroadcastPushRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateReminder as updateReminderRequest, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
+import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createReminder as createReminderRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteReminder as deleteReminderRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAllianceBroadcastPushHistory as getAllianceBroadcastPushHistoryRequest, getAlliancePreview, getJoinRequests, getMe, getReminders as getRemindersRequest, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, sendAllianceBroadcastPush as sendAllianceBroadcastPushRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateReminder as updateReminderRequest, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
 import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
@@ -674,6 +674,7 @@ export default function App() {
   const [leaderBroadcastAudience, setLeaderBroadcastAudience] = useState("all");
   const [leaderBroadcastSelectedMemberIds, setLeaderBroadcastSelectedMemberIds] = useState([]);
   const [leaderBroadcastMemberSearchText, setLeaderBroadcastMemberSearchText] = useState("");
+  const [leaderBroadcastHistory, setLeaderBroadcastHistory] = useState([]);
   const [reminders, setReminders] = useState([]);
   const [calendarView, setCalendarView] = useState("today");
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
@@ -848,6 +849,7 @@ export default function App() {
     setReminders([]);
     setJoinRequest(null);
     setJoinRequests([]);
+    setLeaderBroadcastHistory([]);
     setAuthMode("");
     setSetupMode("join");
     setAlliancePreview(null);
@@ -1045,8 +1047,11 @@ export default function App() {
     if (me.alliance && me.player && isLeader(me.player.rank)) {
       const jr = await getJoinRequests(backendUrl, token);
       setJoinRequests(jr.joinRequests || []);
+      const historyResponse = await getAllianceBroadcastPushHistoryRequest(backendUrl, token);
+      setLeaderBroadcastHistory(historyResponse.history || []);
     } else {
       setJoinRequests([]);
+      setLeaderBroadcastHistory([]);
     }
   }
 
@@ -1542,6 +1547,7 @@ export default function App() {
         audience: leaderBroadcastAudience,
         memberIds: leaderBroadcastAudience === "selected" ? leaderBroadcastSelectedMemberIds : []
       });
+      await refresh();
       setLeaderBroadcastMessage("");
       setLeaderBroadcastSelectedMemberIds([]);
       setLeaderBroadcastMemberSearchText("");
@@ -1584,6 +1590,7 @@ export default function App() {
                   audience: "selected",
                   memberIds
                 });
+                await refresh();
                 Alert.alert(
                   "Broadcast sent",
                   result?.targetedDevices
@@ -1839,7 +1846,7 @@ export default function App() {
             </EventsHubScreen> : null}
             {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} /> : null}
             {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} joinRequests={joinRequests} onSelectLeaderControls={() => setMoreSelection("leaderControls")} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
-              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
+              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} history={leaderBroadcastHistory} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
                 setLeaderBroadcastAudience(value);
                 if (value === "all") {
                   setLeaderBroadcastMemberSearchText("");
@@ -1955,6 +1962,7 @@ const styles = StyleSheet.create({
   rankOptionTextActive: { color: DESIGN_TOKENS.colors.green },
   half: { flex: 1 },
   third: { flex: 1 },
+  flexOne: { flex: 1 },
   tabs: { flexGrow: 0, minHeight: 52 },
   tab: { backgroundColor: DESIGN_TOKENS.colors.surfaceAlt, borderRadius: DESIGN_TOKENS.radius.pill, paddingHorizontal: 14, paddingVertical: 12, minHeight: 44, justifyContent: "center", marginRight: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, shadowColor: "#000000", shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   tabActive: { backgroundColor: DESIGN_TOKENS.colors.blueSoft, borderColor: DESIGN_TOKENS.colors.blue },

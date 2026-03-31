@@ -206,6 +206,22 @@ function normalizeFeedbackComment(value) {
   };
 }
 
+function normalizePushBroadcastLog(value) {
+  return {
+    id: value?.id || crypto.randomUUID(),
+    createdAt: value?.createdAt || new Date().toISOString(),
+    senderPlayerId: String(value?.senderPlayerId || "").trim(),
+    senderName: String(value?.senderName || "").trim(),
+    message: String(value?.message || "").trim(),
+    preset: String(value?.preset || "").trim(),
+    audience: value?.audience === "selected" ? "selected" : "all",
+    memberIds: Array.isArray(value?.memberIds)
+      ? [...new Set(value.memberIds.map((entry) => String(entry || "").trim()).filter(Boolean))]
+      : [],
+    targetedDevices: Math.max(0, Number(value?.targetedDevices) || 0)
+  };
+}
+
 function normalizeCalendarRecurrence(value) {
   const recurrence = value && typeof value === "object" ? value : {};
   const repeat = ["none", "daily", "every_other_day", "weekly", "custom_weekdays"].includes(recurrence.repeat) ? recurrence.repeat : "none";
@@ -501,7 +517,8 @@ function normalizeAlliance(alliance) {
     desertStormEvents: Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents.map(normalizeDesertStormEvent) : [],
     feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : [],
     calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : [],
-    zombieSiegeEvents: Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents.map(normalizeZombieSiegeEvent) : []
+    zombieSiegeEvents: Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents.map(normalizeZombieSiegeEvent) : [],
+    pushBroadcastLogs: Array.isArray(alliance.pushBroadcastLogs) ? alliance.pushBroadcastLogs.map(normalizePushBroadcastLog) : []
   };
 }
 
@@ -1962,6 +1979,18 @@ function createStore(config = {}) {
     if (messages.length) {
       queueExpoPushMessages(messages);
     }
+    alliance.pushBroadcastLogs = Array.isArray(alliance.pushBroadcastLogs) ? alliance.pushBroadcastLogs : [];
+    alliance.pushBroadcastLogs.unshift(normalizePushBroadcastLog({
+      senderPlayerId: player?.id || "",
+      senderName: player?.name || "",
+      message: normalizedMessage,
+      preset,
+      audience,
+      memberIds: audience === "selected" ? validMemberIds : [],
+      targetedDevices: messages.length
+    }));
+    alliance.pushBroadcastLogs = alliance.pushBroadcastLogs.slice(0, 100);
+    commit();
     return {
       ok: true,
       targetedDevices: messages.length,
@@ -1970,6 +1999,16 @@ function createStore(config = {}) {
       preset,
       memberIds: audience === "selected" ? validMemberIds : []
     };
+  }
+
+  function listAlliancePushBroadcastLogs(allianceId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    return (alliance.pushBroadcastLogs || [])
+      .map((entry) => normalizePushBroadcastLog(entry))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   }
 
   function setDesertStormVoteState(allianceId, eventId, player, status) {
@@ -2377,6 +2416,7 @@ function createStore(config = {}) {
     createDesertStormEvent,
     registerExpoPushToken,
     sendAllianceBroadcastPush,
+    listAlliancePushBroadcastLogs,
     submitDesertStormVote,
     setDesertStormVoteState,
     updateDesertStormEventSlot,

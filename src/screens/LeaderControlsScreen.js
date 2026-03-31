@@ -5,6 +5,7 @@ import { AppCard, ListRow, PrimaryButton, SectionHeader, StatusBadge } from "../
 export function LeaderControlsScreen({
   styles,
   alliance,
+  history,
   audience,
   onChangeAudience,
   selectedMemberIds,
@@ -26,6 +27,15 @@ export function LeaderControlsScreen({
       .filter((member) => !query || String(member?.name || "").toLowerCase().includes(query) || String(member?.rank || "").toLowerCase().includes(query));
   }, [alliance?.players, memberSearchText]);
   const selectedCount = Array.isArray(selectedMemberIds) ? selectedMemberIds.length : 0;
+  const pushHistory = Array.isArray(history) ? history : [];
+
+  const formatHistoryTimestamp = (value) => {
+    const parsed = value ? new Date(value) : null;
+    if (!parsed || Number.isNaN(parsed.getTime())) {
+      return "Unknown time";
+    }
+    return `${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  };
 
   return <View style={styles.section}>
     <AppCard style={styles.settingsHeroCard} styles={styles}>
@@ -80,6 +90,34 @@ export function LeaderControlsScreen({
       <TextInput value={pushMessage} onChangeText={onChangePushMessage} style={[styles.input, styles.textArea]} placeholder="Enter the note you want to send to the alliance." multiline />
       <Text style={styles.hint}>{audience === "selected" ? "Only the selected members with registered push-enabled devices will receive this alert." : "This sends a direct alliance-wide alert using the current Expo push-token setup. Devices without registered push tokens will not receive it."}</Text>
       <PrimaryButton label={sending ? "Sending..." : "Send Push Notification"} onPress={onSendBroadcastPush} disabled={sending} tone="blue" styles={styles} />
+    </AppCard>
+
+    <AppCard style={styles.settingsSectionCard} styles={styles}>
+      <SectionHeader eyebrow="History" title="Recent Pushes" detail="Review who sent recent broadcasts and dig presets." styles={styles} />
+      <View style={styles.settingsStack}>
+        {pushHistory.length
+          ? pushHistory.map((entry) => <AppCard key={entry.id || `${entry.createdAt}-${entry.senderPlayerId}`} style={styles.settingsNestedCard} styles={styles}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.flexOne}>
+                <Text style={styles.cardTitle}>{entry.senderName || "Unknown sender"}</Text>
+                <Text style={styles.hint}>{formatHistoryTimestamp(entry.createdAt)}</Text>
+              </View>
+              <View style={styles.row}>
+                {entry.preset === "dig" ? <StatusBadge label="dig" tone="warning" styles={styles} /> : null}
+                <StatusBadge label={entry.audience === "selected" ? "Selected" : "All"} tone={entry.audience === "selected" ? "info" : "success"} styles={styles} />
+              </View>
+            </View>
+            <Text style={styles.statusTitle}>{entry.message || "No message recorded"}</Text>
+            <Text style={styles.hint}>
+              {entry.targetedDevices === 1 ? "1 device targeted" : `${Number(entry.targetedDevices || 0)} devices targeted`}
+              {entry.audience === "selected" && Array.isArray(entry.memberIds) && entry.memberIds.length ? ` • ${entry.memberIds.length} members selected` : ""}
+            </Text>
+          </AppCard>)
+          : <AppCard style={styles.calendarEmptyCard} styles={styles}>
+            <Text style={styles.statusTitle}>No push history yet</Text>
+            <Text style={styles.hint}>New broadcasts and dig presets will appear here after they are sent.</Text>
+          </AppCard>}
+      </View>
     </AppCard>
   </View>;
 }

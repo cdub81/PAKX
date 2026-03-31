@@ -196,8 +196,20 @@ async function handleRequest(request, response) {
       sendJson(response, 200, store.sendAllianceBroadcastPush(context.alliance.id, context.player, {
         message: body.message,
         audience: body.audience,
-        memberIds: body.memberIds
+        memberIds: body.memberIds,
+        preset: body.preset
       }));
+      return;
+    }
+
+    if (request.method === "GET" && pathname === "/api/leader-controls/push-history") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, {
+        history: store.listAlliancePushBroadcastLogs(context.alliance.id)
+      });
       return;
     }
 
