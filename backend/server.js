@@ -690,6 +690,16 @@ async function handleRequest(request, response) {
       return;
     }
 
+    const desertStormDeleteMatch = pathname.match(/^\/api\/desert-storm\/events\/([^/]+)$/);
+    if (desertStormDeleteMatch && request.method === "DELETE") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.hardDeleteDesertStormEvent(context.alliance.id, desertStormDeleteMatch[1], context.player));
+      return;
+    }
+
     const zombieRunPlanMatch = pathname.match(/^\/api\/zombie-siege\/events\/([^/]+)\/run-plan$/);
     if (zombieRunPlanMatch && request.method === "POST") {
       const context = requireLeader(request, response);
