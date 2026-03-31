@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const seed = require("../data/seed");
-const { getDesertStormCycleForDate, hasTimestampPassed } = require("./desertStorm");
+const { getDesertStormCycleForDate, getServerShiftedDateParts, hasTimestampPassed } = require("./desertStorm");
 const { buildAvailabilityMap, runZombieSiegePlanner } = require("./zombieSiege");
 
 const DATA_DIR = path.join(__dirname, "..", "data");
