@@ -166,7 +166,7 @@ export function ZombieSiegeScreen({
           </View>
         </AppCard> : null}
 
-        {currentReviewRows.length && selectedEvent.status !== "archived" ? <AppCard style={styles.zombiePlanCard} styles={styles}>
+        {currentReviewRows.length > 0 && selectedEvent.status !== "archived" ? <AppCard style={styles.zombiePlanCard} styles={styles}>
           <SectionHeader eyebrow="Post-Wave-1" title="No-response review" detail="Review no-response players and record whether they had troops on their wall after wave 1." styles={styles} />
           <View style={styles.zombieEventList}>
             {currentReviewRows.map((row) => <AppCard key={row.playerId} style={styles.voteCard} styles={styles}>
