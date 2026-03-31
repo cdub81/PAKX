@@ -29,6 +29,7 @@ export function SettingsScreen({
   showPushNotificationsPrompt,
   notificationSetupInFlight,
   onSetDesertStormVoteNotificationsEnabled,
+  onSetDigNotificationsEnabled,
   onEnablePushNotifications,
   LanguageSelector,
   RankSelector,
@@ -36,6 +37,7 @@ export function SettingsScreen({
   styles
 }) {
   const notificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
+  const digNotificationsEnabled = currentUser?.digNotificationsEnabled !== false;
 
   return <View style={styles.section}>
     <AppCard style={styles.settingsHeroCard} styles={styles}>
@@ -54,17 +56,20 @@ export function SettingsScreen({
       <ListRow title={t("signedInAsPlayer", { value: currentUser?.name })} styles={styles} />
     </AppCard>
 
-    {showPushNotificationControls ? <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="Notifications" title="Desert Storm alerts" detail="Manage vote-open alert preferences without changing reminder or event logic." styles={styles} />
-      <Pressable onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)}>
+    <AppCard style={styles.settingsSectionCard} styles={styles}>
+      <SectionHeader eyebrow="Notifications" title="Alert preferences" detail="Manage personal alert preferences without changing existing reminder or event logic." styles={styles} />
+      {showPushNotificationControls ? <Pressable onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)}>
         <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
+      </Pressable> : null}
+      <Pressable onPress={() => onSetDigNotificationsEnabled(!digNotificationsEnabled)}>
+        <ListRow title="Dig notifications" detail={digNotificationsEnabled ? "Enabled for your account." : "Opted out for your account."} right={<StatusBadge label={digNotificationsEnabled ? "Enabled" : "Disabled"} tone={digNotificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
       </Pressable>
-      {showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
+      {showPushNotificationControls && showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
         <Text style={styles.cardTitle}>Enable push notifications</Text>
         <Text style={styles.hint}>Turn on device notifications to receive Desert Storm vote alerts on this device.</Text>
         <PrimaryButton label={notificationSetupInFlight ? "Enabling..." : "Enable Notifications"} onPress={onEnablePushNotifications} disabled={notificationSetupInFlight} tone="blue" styles={styles} />
       </AppCard> : null}
-    </AppCard> : null}
+    </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow="Preferences" title="Language" detail="Update app-level preferences without changing alliance data." styles={styles} />

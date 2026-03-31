@@ -193,7 +193,11 @@ async function handleRequest(request, response) {
         sendError(response, 400, "message is required.");
         return;
       }
-      sendJson(response, 200, store.sendAllianceBroadcastPush(context.alliance.id, context.player, body.message));
+      sendJson(response, 200, store.sendAllianceBroadcastPush(context.alliance.id, context.player, {
+        message: body.message,
+        audience: body.audience,
+        memberIds: body.memberIds
+      }));
       return;
     }
 
@@ -491,6 +495,9 @@ async function handleRequest(request, response) {
       }
       if (body.desertStormVoteNotificationsEnabled !== undefined) {
         updates.desertStormVoteNotificationsEnabled = body.desertStormVoteNotificationsEnabled;
+      }
+      if (body.digNotificationsEnabled !== undefined) {
+        updates.digNotificationsEnabled = body.digNotificationsEnabled;
       }
       sendJson(response, 200, store.updateMember(context.alliance.id, memberId, updates));
       return;

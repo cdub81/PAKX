@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
@@ -6,7 +6,7 @@ import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { AppCard as SharedAppCard, BottomSheetModal as SharedBottomSheetModal, ListRow as SharedListRow, PrimaryButton as SharedPrimaryButton, ScreenContainer as SharedScreenContainer, SectionHeader as SharedSectionHeader, SecondaryButton as SharedSecondaryButton, StatusBadge as SharedStatusBadge } from "./src/components/ui/primitives";
+import { AppBackHeader as SharedAppBackHeader, AppCard as SharedAppCard, BottomSheetModal as SharedBottomSheetModal, ListRow as SharedListRow, PrimaryButton as SharedPrimaryButton, ScreenContainer as SharedScreenContainer, SectionHeader as SharedSectionHeader, SecondaryButton as SharedSecondaryButton, StatusBadge as SharedStatusBadge } from "./src/components/ui/primitives";
 import { CalendarDatePickerModal as SharedCalendarDatePickerModal, CalendarTimePickerModal as SharedCalendarTimePickerModal, ReminderDurationPickerModal as SharedReminderDurationPickerModal } from "./src/components/Pickers";
 import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankSelector } from "./src/components/Selectors";
 import { FeedbackScreen } from "./src/screens/FeedbackScreen";
@@ -41,15 +41,51 @@ const APP_BUILD = Application.nativeBuildVersion || Constants.nativeBuildVersion
 const RANK_OPTIONS = ["R5", "R4", "R3", "R2", "R1"];
 const POWER_INPUT_HINT = "Please enter power value in millions. Ex. 12,700,000 = 12.7";
 const REMINDER_NOTIFICATION_CHANNEL_ID = "reminders";
-const CALENDAR_TRANSLATIONS = {
+
+function repairMojibakeString(value) {
+  let current = String(value ?? "");
+  for (let index = 0; index < 3; index += 1) {
+    if (!/[ÃƒÃ‚Ã¬Ã«Ã°ÃªÃ©Ã³Ã¡ÃºÃ±Ã§]/.test(current)) {
+      break;
+    }
+    try {
+      const repaired = decodeURIComponent(escape(current));
+      if (!repaired || repaired === current) {
+        break;
+      }
+      current = repaired;
+    } catch {
+      break;
+    }
+  }
+  return current;
+}
+
+function repairMojibakeDeep(value) {
+  if (Array.isArray(value)) {
+    return value.map(repairMojibakeDeep);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, repairMojibakeDeep(entry)]));
+  }
+  return typeof value === "string" ? repairMojibakeString(value) : value;
+}
+
+const RAW_CALENDAR_TRANSLATIONS = {
   en: { title: "Alliance Calendar", hint: "Tap a day to see what is scheduled and what needs attention.", today: "Today", week: "Week", month: "Month", selectedDay: "Selected Day", noEventsScheduled: "No events scheduled", oneEventScheduled: "1 event scheduled", manyEventsScheduled: "{count} events scheduled", allDay: "All day", leaderOnly: "Leader Only", edit: "Edit", delete: "Delete", anchoredTo: "Anchored to {value}", linkedDesertStorm: "Linked to Desert Storm", linkedZombieSiege: "Linked to Zombie Siege", addedBy: "Added by {name}", nothingToday: "Nothing is scheduled for today.", tapAnotherDay: "Tap another day to review what is planned.", editEntry: "Edit Calendar Entry", addEntry: "Add Calendar Entry", manualEvent: "Manual Event", reminder: "Reminder", linkDesertStorm: "Link Desert Storm", linkZombieSiege: "Link Zombie Siege", eventTitle: "Event title", startDate: "Start Date", endDate: "End Date", chooseDate: "Choose Date", allDayEntry: "All-day entry", timeSpecificEntry: "Time-specific entry", startTime: "Start Time", endTime: "End Time", eventTimezone: "Event timezone (IANA, ex. America/Chicago)", chooseLinkedEvent: "Choose the linked event", repeat: "Repeat", noRepeat: "No Repeat", daily: "Daily", everyOtherDay: "Every Other Day", weekly: "Weekly", customWeekdays: "Custom Weekdays", repeatEndDate: "Repeat End Date", setRepeatEndDate: "Set Repeat End Date", clearRepeatEndDate: "Clear End Date", reminderPlaceholder: "What should members remember to do?", manualPlaceholder: "What should members know or do?", leaderNotes: "Leader-only notes", timezoneHint: "Timed entries are anchored to {value} and shown in each member's local time.", visibleToEveryone: "Visible To Everyone", leaderOnlyEntry: "Leader Only Entry", saveChanges: "Save Changes", addToCalendar: "Add To Calendar", cancelEditing: "Cancel Editing", repeatsDaily: "Repeats daily", repeatsEveryOtherDay: "Repeats every other day", repeatsWeekly: "Repeats weekly", repeatsWeekdays: "Repeats {value}", inputMode: "Enter Time As", inputModeHint: "Choose whether you are entering the time in server time or your own local time.", serverInputMode: "Server Time (UTC-2)", localInputMode: "My Local Time", timePreview: "Before You Save", previewEnteredAs: "Entered as {value}", serverTime: "Server Time", localTime: "My Local Time", memberLocalTime: "Your Local Time", recurringServerAnchor: "Recurring timed entries will follow Server Time (UTC-2).", pickStartTime: "Select Start Time", pickEndTime: "Select End Time", pickDate: "Select Date", chooseMonth: "Month", chooseDay: "Day", chooseYear: "Year", chooseHour: "Hour", chooseMinute: "Minute", done: "Done", dateRequiredError: "Choose a start date before saving.", endDateRequiredError: "Choose an end date before saving.", repeatEndDateError: "Choose a valid repeat end date or clear it.", startTimeRequiredError: "Choose a start time before saving.", endTimeRequiredError: "Choose an end time before saving.", endTimeInvalidError: "End time must be after start time" },
-  ko: { title: "ì¼ë¼ì´ì¸ì¤ ìºë¦°ë", hint: "ë ì§ë¥¼ ëë¬ ì¼ì ê³¼ í´ì¼ í  ì¼ì íì¸íì¸ì.", today: "ì¤ë", week: "ì£¼ê°", month: "ìê°", selectedDay: "ì íí ë ì§", noEventsScheduled: "ìì ë ì¼ì ì´ ììµëë¤", oneEventScheduled: "ì¼ì  1ê°", manyEventsScheduled: "ì¼ì  {count}ê°", allDay: "íë£¨ ì¢ì¼", leaderOnly: "ë¦¬ë ì ì©", edit: "ìì ", delete: "ì­ì ", anchoredTo: "{value} ê¸°ì¤", linkedDesertStorm: "ë°ì í¸ ì¤í°ê³¼ ì°ê²°ë¨", linkedZombieSiege: "ì¢ë¹ ìì¦ì ì°ê²°ë¨", addedBy: "{name} ëì´ ì¶ê°", nothingToday: "ì¤ë ìì ë ì¼ì ì´ ììµëë¤.", tapAnotherDay: "ë¤ë¥¸ ë ì§ë¥¼ ëë¬ ê³íì íì¸íì¸ì.", editEntry: "ìºë¦°ë í­ëª© ìì ", addEntry: "ìºë¦°ë í­ëª© ì¶ê°", manualEvent: "ìë ì¼ì ", reminder: "ë¦¬ë§ì¸ë", linkDesertStorm: "ë°ì í¸ ì¤í° ì°ê²°", linkZombieSiege: "ì¢ë¹ ìì¦ ì°ê²°", eventTitle: "ì´ë²¤í¸ ì ëª©", allDayEntry: "íë£¨ ì¢ì¼ ì¼ì ", timeSpecificEntry: "ìê° ì§ì  ì¼ì ", startTime: "ìì HH:MM", endTime: "ì¢ë£ HH:MM", eventTimezone: "ì´ë²¤í¸ ìê°ë (IANA, ì: America/Chicago)", chooseLinkedEvent: "ì°ê²°í  ì´ë²¤í¸ ì í", repeat: "ë°ë³µ", noRepeat: "ë°ë³µ ìì", daily: "ë§¤ì¼", everyOtherDay: "ê²©ì¼", weekly: "ë§¤ì£¼", customWeekdays: "ìì¼ ì§ì ", repeatEndDate: "ë°ë³µ ì¢ë£ì¼ (ì í YYYY-MM-DD)", reminderPlaceholder: "ë©¤ë²ë¤ì´ ë¬´ìì ê¸°ìµí´ì¼ íëì?", manualPlaceholder: "ë©¤ë²ë¤ìê² ë¬´ìì ìë ¤ì¼ íëì?", leaderNotes: "ë¦¬ë ì ì© ë©ëª¨", timezoneHint: "ìê° ì§ì  ì¼ì ì {value} ê¸°ì¤ì´ë©°, ê° ë©¤ë²ì íì§ ìê°ì¼ë¡ íìë©ëë¤.", visibleToEveryone: "ì ì²´ ê³µê°", leaderOnlyEntry: "ë¦¬ë ì ì© ì¼ì ", saveChanges: "ë³ê²½ ì ì¥", addToCalendar: "ìºë¦°ëì ì¶ê°", cancelEditing: "ìì  ì·¨ì", repeatsDaily: "ë§¤ì¼ ë°ë³µ", repeatsEveryOtherDay: "ê²©ì¼ ë°ë³µ", repeatsWeekly: "ë§¤ì£¼ ë°ë³µ", repeatsWeekdays: "{value} ë°ë³µ" },
-  es: { title: "Calendario de la alianza", hint: "Toca un dÃ­a para ver lo programado y lo que requiere atenciÃ³n.", today: "Hoy", week: "Semana", month: "Mes", selectedDay: "DÃ­a seleccionado", noEventsScheduled: "No hay eventos programados", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Todo el dÃ­a", leaderOnly: "Solo lÃ­deres", edit: "Editar", delete: "Eliminar", anchoredTo: "Anclado a {value}", linkedDesertStorm: "Vinculado a Desert Storm", linkedZombieSiege: "Vinculado a Zombie Siege", addedBy: "Agregado por {name}", nothingToday: "No hay nada programado para hoy.", tapAnotherDay: "Toca otro dÃ­a para revisar lo planeado.", editEntry: "Editar entrada del calendario", addEntry: "Agregar entrada al calendario", manualEvent: "Evento manual", reminder: "Recordatorio", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃ­tulo del evento", allDayEntry: "Evento de todo el dÃ­a", timeSpecificEntry: "Evento con hora", startTime: "Inicio HH:MM", endTime: "Fin HH:MM", eventTimezone: "Zona horaria del evento (IANA, ej. America/Chicago)", chooseLinkedEvent: "Elige el evento vinculado", repeat: "Repetir", noRepeat: "No repetir", daily: "Diario", everyOtherDay: "Cada dos dÃ­as", weekly: "Semanal", customWeekdays: "DÃ­as personalizados", repeatEndDate: "Fecha de fin de repeticiÃ³n (opcional YYYY-MM-DD)", reminderPlaceholder: "Â¿QuÃ© deben recordar hacer los miembros?", manualPlaceholder: "Â¿QuÃ© deben saber o hacer los miembros?", leaderNotes: "Notas solo para lÃ­deres", timezoneHint: "Las entradas con hora se anclan a {value} y se muestran en la hora local de cada miembro.", visibleToEveryone: "Visible para todos", leaderOnlyEntry: "Entrada solo para lÃ­deres", saveChanges: "Guardar cambios", addToCalendar: "Agregar al calendario", cancelEditing: "Cancelar ediciÃ³n", repeatsDaily: "Se repite a diario", repeatsEveryOtherDay: "Se repite cada dos dÃ­as", repeatsWeekly: "Se repite semanalmente", repeatsWeekdays: "Se repite {value}" },
-  pt: { title: "CalendÃ¡rio da alianÃ§a", hint: "Toque em um dia para ver o que estÃ¡ programado e o que precisa de atenÃ§Ã£o.", today: "Hoje", week: "Semana", month: "MÃªs", selectedDay: "Dia selecionado", noEventsScheduled: "Nenhum evento programado", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Dia inteiro", leaderOnly: "Somente lÃ­deres", edit: "Editar", delete: "Excluir", anchoredTo: "Ancorado em {value}", linkedDesertStorm: "Vinculado ao Desert Storm", linkedZombieSiege: "Vinculado ao Zombie Siege", addedBy: "Adicionado por {name}", nothingToday: "Nada estÃ¡ programado para hoje.", tapAnotherDay: "Toque em outro dia para revisar o planejamento.", editEntry: "Editar entrada do calendÃ¡rio", addEntry: "Adicionar entrada ao calendÃ¡rio", manualEvent: "Evento manual", reminder: "Lembrete", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃ­tulo do evento", allDayEntry: "Evento de dia inteiro", timeSpecificEntry: "Evento com horÃ¡rio", startTime: "InÃ­cio HH:MM", endTime: "Fim HH:MM", eventTimezone: "Fuso do evento (IANA, ex. America/Chicago)", chooseLinkedEvent: "Escolha o evento vinculado", repeat: "Repetir", noRepeat: "NÃ£o repetir", daily: "Diariamente", everyOtherDay: "Dia sim, dia nÃ£o", weekly: "Semanal", customWeekdays: "Dias personalizados", repeatEndDate: "Data final da repetiÃ§Ã£o (opcional YYYY-MM-DD)", reminderPlaceholder: "O que os membros precisam lembrar de fazer?", manualPlaceholder: "O que os membros precisam saber ou fazer?", leaderNotes: "Notas apenas para lÃ­deres", timezoneHint: "Entradas com horÃ¡rio sÃ£o ancoradas em {value} e mostradas no horÃ¡rio local de cada membro.", visibleToEveryone: "VisÃ­vel para todos", leaderOnlyEntry: "Entrada sÃ³ para lÃ­deres", saveChanges: "Salvar alteraÃ§Ãµes", addToCalendar: "Adicionar ao calendÃ¡rio", cancelEditing: "Cancelar ediÃ§Ã£o", repeatsDaily: "Repete diariamente", repeatsEveryOtherDay: "Repete em dias alternados", repeatsWeekly: "Repete semanalmente", repeatsWeekdays: "Repete {value}" }
+  ko: { title: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬ÂºÂ˜Ã«Â¦Â°Ã«ÂÂ”", hint: "Ã«Â‚Â Ã¬Â§ÂœÃ«Â¥Â¼ Ã«ÂˆÂŒÃ«ÂŸÂ¬ Ã¬ÂÂ¼Ã¬Â Â•ÃªÂ³Â¼ Ã­Â•Â´Ã¬Â•Â¼ Ã­Â•Â  Ã¬ÂÂ¼Ã¬ÂÂ„ Ã­Â™Â•Ã¬ÂÂ¸Ã­Â•Â˜Ã¬Â„Â¸Ã¬ÂšÂ”.", today: "Ã¬Â˜Â¤Ã«ÂŠÂ˜", week: "Ã¬Â£Â¼ÃªÂ°Â„", month: "Ã¬Â›Â”ÃªÂ°Â„", selectedDay: "Ã¬Â„Â Ã­ÂƒÂÃ­Â•Âœ Ã«Â‚Â Ã¬Â§Âœ", noEventsScheduled: "Ã¬Â˜ÂˆÃ¬Â Â•Ã«ÂÂœ Ã¬ÂÂ¼Ã¬Â Â•Ã¬ÂÂ´ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤", oneEventScheduled: "Ã¬ÂÂ¼Ã¬Â Â• 1ÃªÂ°Âœ", manyEventsScheduled: "Ã¬ÂÂ¼Ã¬Â Â• {count}ÃªÂ°Âœ", allDay: "Ã­Â•Â˜Ã«Â£Â¨ Ã¬Â¢Â…Ã¬ÂÂ¼", leaderOnly: "Ã«Â¦Â¬Ã«ÂÂ” Ã¬Â Â„Ã¬ÂšÂ©", edit: "Ã¬ÂˆÂ˜Ã¬Â Â•", delete: "Ã¬Â‚Â­Ã¬Â Âœ", anchoredTo: "{value} ÃªÂ¸Â°Ã¬Â¤Â€", linkedDesertStorm: "Ã«ÂÂ°Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â°ÃªÂ³Â¼ Ã¬Â—Â°ÃªÂ²Â°Ã«ÂÂ¨", linkedZombieSiege: "Ã¬Â¢Â€Ã«Â¹Â„ Ã¬Â‹ÂœÃ¬Â¦ÂˆÃ¬Â™Â€ Ã¬Â—Â°ÃªÂ²Â°Ã«ÂÂ¨", addedBy: "{name} Ã«Â‹Â˜Ã¬ÂÂ´ Ã¬Â¶Â”ÃªÂ°Â€", nothingToday: "Ã¬Â˜Â¤Ã«ÂŠÂ˜ Ã¬Â˜ÂˆÃ¬Â Â•Ã«ÂÂœ Ã¬ÂÂ¼Ã¬Â Â•Ã¬ÂÂ´ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.", tapAnotherDay: "Ã«Â‹Â¤Ã«Â¥Â¸ Ã«Â‚Â Ã¬Â§ÂœÃ«Â¥Â¼ Ã«ÂˆÂŒÃ«ÂŸÂ¬ ÃªÂ³Â„Ã­ÂšÂÃ¬ÂÂ„ Ã­Â™Â•Ã¬ÂÂ¸Ã­Â•Â˜Ã¬Â„Â¸Ã¬ÂšÂ”.", editEntry: "Ã¬ÂºÂ˜Ã«Â¦Â°Ã«ÂÂ” Ã­Â•Â­Ã«ÂªÂ© Ã¬ÂˆÂ˜Ã¬Â Â•", addEntry: "Ã¬ÂºÂ˜Ã«Â¦Â°Ã«ÂÂ” Ã­Â•Â­Ã«ÂªÂ© Ã¬Â¶Â”ÃªÂ°Â€", manualEvent: "Ã¬ÂˆÂ˜Ã«ÂÂ™ Ã¬ÂÂ¼Ã¬Â Â•", reminder: "Ã«Â¦Â¬Ã«Â§ÂˆÃ¬ÂÂ¸Ã«ÂÂ”", linkDesertStorm: "Ã«ÂÂ°Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° Ã¬Â—Â°ÃªÂ²Â°", linkZombieSiege: "Ã¬Â¢Â€Ã«Â¹Â„ Ã¬Â‹ÂœÃ¬Â¦Âˆ Ã¬Â—Â°ÃªÂ²Â°", eventTitle: "Ã¬ÂÂ´Ã«Â²Â¤Ã­ÂŠÂ¸ Ã¬Â ÂœÃ«ÂªÂ©", allDayEntry: "Ã­Â•Â˜Ã«Â£Â¨ Ã¬Â¢Â…Ã¬ÂÂ¼ Ã¬ÂÂ¼Ã¬Â Â•", timeSpecificEntry: "Ã¬Â‹ÂœÃªÂ°Â„ Ã¬Â§Â€Ã¬Â Â• Ã¬ÂÂ¼Ã¬Â Â•", startTime: "Ã¬Â‹ÂœÃ¬ÂžÂ‘ HH:MM", endTime: "Ã¬Â¢Â…Ã«Â£ÂŒ HH:MM", eventTimezone: "Ã¬ÂÂ´Ã«Â²Â¤Ã­ÂŠÂ¸ Ã¬Â‹ÂœÃªÂ°Â„Ã«ÂŒÂ€ (IANA, Ã¬Â˜Âˆ: America/Chicago)", chooseLinkedEvent: "Ã¬Â—Â°ÃªÂ²Â°Ã­Â•Â  Ã¬ÂÂ´Ã«Â²Â¤Ã­ÂŠÂ¸ Ã¬Â„Â Ã­ÂƒÂ", repeat: "Ã«Â°Â˜Ã«Â³Âµ", noRepeat: "Ã«Â°Â˜Ã«Â³Âµ Ã¬Â—Â†Ã¬ÂÂŒ", daily: "Ã«Â§Â¤Ã¬ÂÂ¼", everyOtherDay: "ÃªÂ²Â©Ã¬ÂÂ¼", weekly: "Ã«Â§Â¤Ã¬Â£Â¼", customWeekdays: "Ã¬ÂšÂ”Ã¬ÂÂ¼ Ã¬Â§Â€Ã¬Â Â•", repeatEndDate: "Ã«Â°Â˜Ã«Â³Âµ Ã¬Â¢Â…Ã«Â£ÂŒÃ¬ÂÂ¼ (Ã¬Â„Â Ã­ÂƒÂ YYYY-MM-DD)", reminderPlaceholder: "Ã«Â©Â¤Ã«Â²Â„Ã«Â“Â¤Ã¬ÂÂ´ Ã«Â¬Â´Ã¬Â—Â‡Ã¬ÂÂ„ ÃªÂ¸Â°Ã¬Â–ÂµÃ­Â•Â´Ã¬Â•Â¼ Ã­Â•Â˜Ã«Â‚Â˜Ã¬ÂšÂ”?", manualPlaceholder: "Ã«Â©Â¤Ã«Â²Â„Ã«Â“Â¤Ã¬Â—ÂÃªÂ²ÂŒ Ã«Â¬Â´Ã¬Â—Â‡Ã¬ÂÂ„ Ã¬Â•ÂŒÃ«Â Â¤Ã¬Â•Â¼ Ã­Â•Â˜Ã«Â‚Â˜Ã¬ÂšÂ”?", leaderNotes: "Ã«Â¦Â¬Ã«ÂÂ” Ã¬Â Â„Ã¬ÂšÂ© Ã«Â©Â”Ã«ÂªÂ¨", timezoneHint: "Ã¬Â‹ÂœÃªÂ°Â„ Ã¬Â§Â€Ã¬Â Â• Ã¬ÂÂ¼Ã¬Â Â•Ã¬ÂÂ€ {value} ÃªÂ¸Â°Ã¬Â¤Â€Ã¬ÂÂ´Ã«Â©Â°, ÃªÂ°Â Ã«Â©Â¤Ã«Â²Â„Ã¬ÂÂ˜ Ã­Â˜Â„Ã¬Â§Â€ Ã¬Â‹ÂœÃªÂ°Â„Ã¬ÂœÂ¼Ã«Â¡Âœ Ã­Â‘ÂœÃ¬Â‹ÂœÃ«ÂÂ©Ã«Â‹ÂˆÃ«Â‹Â¤.", visibleToEveryone: "Ã¬Â Â„Ã¬Â²Â´ ÃªÂ³ÂµÃªÂ°Âœ", leaderOnlyEntry: "Ã«Â¦Â¬Ã«ÂÂ” Ã¬Â Â„Ã¬ÂšÂ© Ã¬ÂÂ¼Ã¬Â Â•", saveChanges: "Ã«Â³Â€ÃªÂ²Â½ Ã¬Â Â€Ã¬ÂžÂ¥", addToCalendar: "Ã¬ÂºÂ˜Ã«Â¦Â°Ã«ÂÂ”Ã¬Â—Â Ã¬Â¶Â”ÃªÂ°Â€", cancelEditing: "Ã¬ÂˆÂ˜Ã¬Â Â• Ã¬Â·Â¨Ã¬Â†ÂŒ", repeatsDaily: "Ã«Â§Â¤Ã¬ÂÂ¼ Ã«Â°Â˜Ã«Â³Âµ", repeatsEveryOtherDay: "ÃªÂ²Â©Ã¬ÂÂ¼ Ã«Â°Â˜Ã«Â³Âµ", repeatsWeekly: "Ã«Â§Â¤Ã¬Â£Â¼ Ã«Â°Â˜Ã«Â³Âµ", repeatsWeekdays: "{value} Ã«Â°Â˜Ã«Â³Âµ" },
+  es: { title: "Calendario de la alianza", hint: "Toca un dÃƒÂ­a para ver lo programado y lo que requiere atenciÃƒÂ³n.", today: "Hoy", week: "Semana", month: "Mes", selectedDay: "DÃƒÂ­a seleccionado", noEventsScheduled: "No hay eventos programados", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Todo el dÃƒÂ­a", leaderOnly: "Solo lÃƒÂ­deres", edit: "Editar", delete: "Eliminar", anchoredTo: "Anclado a {value}", linkedDesertStorm: "Vinculado a Desert Storm", linkedZombieSiege: "Vinculado a Zombie Siege", addedBy: "Agregado por {name}", nothingToday: "No hay nada programado para hoy.", tapAnotherDay: "Toca otro dÃƒÂ­a para revisar lo planeado.", editEntry: "Editar entrada del calendario", addEntry: "Agregar entrada al calendario", manualEvent: "Evento manual", reminder: "Recordatorio", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃƒÂ­tulo del evento", allDayEntry: "Evento de todo el dÃƒÂ­a", timeSpecificEntry: "Evento con hora", startTime: "Inicio HH:MM", endTime: "Fin HH:MM", eventTimezone: "Zona horaria del evento (IANA, ej. America/Chicago)", chooseLinkedEvent: "Elige el evento vinculado", repeat: "Repetir", noRepeat: "No repetir", daily: "Diario", everyOtherDay: "Cada dos dÃƒÂ­as", weekly: "Semanal", customWeekdays: "DÃƒÂ­as personalizados", repeatEndDate: "Fecha de fin de repeticiÃƒÂ³n (opcional YYYY-MM-DD)", reminderPlaceholder: "Ã‚Â¿QuÃƒÂ© deben recordar hacer los miembros?", manualPlaceholder: "Ã‚Â¿QuÃƒÂ© deben saber o hacer los miembros?", leaderNotes: "Notas solo para lÃƒÂ­deres", timezoneHint: "Las entradas con hora se anclan a {value} y se muestran en la hora local de cada miembro.", visibleToEveryone: "Visible para todos", leaderOnlyEntry: "Entrada solo para lÃƒÂ­deres", saveChanges: "Guardar cambios", addToCalendar: "Agregar al calendario", cancelEditing: "Cancelar ediciÃƒÂ³n", repeatsDaily: "Se repite a diario", repeatsEveryOtherDay: "Se repite cada dos dÃƒÂ­as", repeatsWeekly: "Se repite semanalmente", repeatsWeekdays: "Se repite {value}" },
+  pt: { title: "CalendÃƒÂ¡rio da alianÃƒÂ§a", hint: "Toque em um dia para ver o que estÃƒÂ¡ programado e o que precisa de atenÃƒÂ§ÃƒÂ£o.", today: "Hoje", week: "Semana", month: "MÃƒÂªs", selectedDay: "Dia selecionado", noEventsScheduled: "Nenhum evento programado", oneEventScheduled: "1 evento programado", manyEventsScheduled: "{count} eventos programados", allDay: "Dia inteiro", leaderOnly: "Somente lÃƒÂ­deres", edit: "Editar", delete: "Excluir", anchoredTo: "Ancorado em {value}", linkedDesertStorm: "Vinculado ao Desert Storm", linkedZombieSiege: "Vinculado ao Zombie Siege", addedBy: "Adicionado por {name}", nothingToday: "Nada estÃƒÂ¡ programado para hoje.", tapAnotherDay: "Toque em outro dia para revisar o planejamento.", editEntry: "Editar entrada do calendÃƒÂ¡rio", addEntry: "Adicionar entrada ao calendÃƒÂ¡rio", manualEvent: "Evento manual", reminder: "Lembrete", linkDesertStorm: "Vincular Desert Storm", linkZombieSiege: "Vincular Zombie Siege", eventTitle: "TÃƒÂ­tulo do evento", allDayEntry: "Evento de dia inteiro", timeSpecificEntry: "Evento com horÃƒÂ¡rio", startTime: "InÃƒÂ­cio HH:MM", endTime: "Fim HH:MM", eventTimezone: "Fuso do evento (IANA, ex. America/Chicago)", chooseLinkedEvent: "Escolha o evento vinculado", repeat: "Repetir", noRepeat: "NÃƒÂ£o repetir", daily: "Diariamente", everyOtherDay: "Dia sim, dia nÃƒÂ£o", weekly: "Semanal", customWeekdays: "Dias personalizados", repeatEndDate: "Data final da repetiÃƒÂ§ÃƒÂ£o (opcional YYYY-MM-DD)", reminderPlaceholder: "O que os membros precisam lembrar de fazer?", manualPlaceholder: "O que os membros precisam saber ou fazer?", leaderNotes: "Notas apenas para lÃƒÂ­deres", timezoneHint: "Entradas com horÃƒÂ¡rio sÃƒÂ£o ancoradas em {value} e mostradas no horÃƒÂ¡rio local de cada membro.", visibleToEveryone: "VisÃƒÂ­vel para todos", leaderOnlyEntry: "Entrada sÃƒÂ³ para lÃƒÂ­deres", saveChanges: "Salvar alteraÃƒÂ§ÃƒÂµes", addToCalendar: "Adicionar ao calendÃƒÂ¡rio", cancelEditing: "Cancelar ediÃƒÂ§ÃƒÂ£o", repeatsDaily: "Repete diariamente", repeatsEveryOtherDay: "Repete em dias alternados", repeatsWeekly: "Repete semanalmente", repeatsWeekdays: "Repete {value}" }
+};
+const CALENDAR_TRANSLATIONS = {
+  en: RAW_CALENDAR_TRANSLATIONS.en,
+  ko: repairMojibakeDeep(RAW_CALENDAR_TRANSLATIONS.ko),
+  es: repairMojibakeDeep(RAW_CALENDAR_TRANSLATIONS.es),
+  pt: repairMojibakeDeep(RAW_CALENDAR_TRANSLATIONS.pt)
 };
 const SUPPORTED_LANGUAGES = [
   { code: "en", label: "English" },
-  { code: "ko", label: "???" },
+  { code: "ko", label: "한국어" },
   { code: "es", label: "Español" },
   { code: "pt", label: "Português" }
 ];
@@ -62,7 +98,7 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false
   })
 });
-const TRANSLATIONS = {
+const RAW_TRANSLATIONS = {
   en: {
     appTitle: "PAKX Alliance App",
     authSignIn: "Sign In",
@@ -111,7 +147,7 @@ const TRANSLATIONS = {
     submitFeedback: "Submit Feedback",
     allianceFeedback: "Alliance Feedback",
     noFeedback: "No feedback has been submitted yet.",
-    feedbackFrom: "From {name} â¢ {date}",
+    feedbackFrom: "From {name} Ã¢Â€Â¢ {date}",
     allianceTitle: "Alliance",
     accountLabel: "Account: {value}",
     allianceLabel: "Alliance: {value}",
@@ -158,131 +194,131 @@ const TRANSLATIONS = {
     resultLoss: "Loss"
   },
   ko: {
-    appTitle: "PAKX ì¼ë¼ì´ì¸ì¤ ì±",
-    authSignIn: "ë¡ê·¸ì¸",
-    authCreateAccount: "ê³ì  ë§ë¤ê¸°",
-    username: "ì¬ì©ì ì´ë¦",
-    password: "ë¹ë°ë²í¸",
-    welcome: "{name}ë, íìí©ëë¤",
-    notInAlliance: "ì´ ê³ì ì ìì§ ì¼ë¼ì´ì¸ì¤ì ì°ê²°ëì´ ìì§ ììµëë¤.",
-    joinAlliance: "ì¼ë¼ì´ì¸ì¤ ê°ì",
-    createAlliance: "ì¼ë¼ì´ì¸ì¤ ìì±",
-    allianceName: "ì¼ë¼ì´ì¸ì¤ ì´ë¦",
-    allianceCode: "ì¼ë¼ì´ì¸ì¤ ì½ë",
-    previewAlliance: "ì¼ë¼ì´ì¸ì¤ ë¯¸ë¦¬ë³´ê¸°",
-    foundAlliance: "ì°¾ì: {name}",
-    signOut: "ë¡ê·¸ìì",
-    joinRequestPending: "ê°ì ìì²­ ëê¸° ì¤",
-    pendingApproval: "R4 ëë R5ì ì¹ì¸ì ê¸°ë¤ë¦¬ê³  ììµëë¤.",
-    refreshStatus: "ìí ìë¡ê³ ì¹¨",
-    language: "ì¸ì´",
-    signedInAs: "{name} ({rank})ë¡ ë¡ê·¸ì¸ë¨",
-    playersWaiting: "{count}ëªì íë ì´ì´ê° ì¹ì¸ ëê¸° ì¤ìëë¤",
-    onePlayerWaiting: "1ëªì íë ì´ì´ê° ì¹ì¸ ëê¸° ì¤ìëë¤",
-    tapReviewRequests: "ì¼ë¼ì´ì¸ì¤ í­ìì ê°ì ìì²­ì íì¸íì¸ì.",
-    restoringSession: "ì¸ìì ë³µìíë ì¤...",
-    sessionExpired: "ì¸ìì´ ë§ë£ëììµëë¤. ë¤ì ë¡ê·¸ì¸í´ ì£¼ì¸ì.",
-    choosePlayer: "íë ì´ì´ ì í",
-    votedMembers: "í¬íí ë©¤ë²",
-    entireAlliance: "ì ì²´ ì¼ë¼ì´ì¸ì¤",
-    showingAllAlliance: "ì´ ì¬ë¡¯ì ëí´ ì¼ë¼ì´ì¸ì¤ ì ì²´ ë©¤ë²ë¥¼ íìí©ëë¤.",
-    searchNameOrRank: "ì´ë¦ ëë ë±ê¸ ê²ì",
-    clearSelection: "ì í í´ì ",
-    noPlayersMatchSearch: "ê²ìê³¼ ì¼ì¹íë íë ì´ì´ê° ììµëë¤.",
-    noMembersMatchVoteFilter: "ëì í¸ ì¤í° í¬í ì¡°ê±´ì ë§ë ë©¤ë²ê° ììµëë¤.",
-    tabMyInfo: "ë´ ì ë³´",
-    tabMembers: "ë©¤ë²",
-    tabAlliance: "ì¤ì ",
-    tabTaskForceA: "íì¤í¬í¬ì¤ A",
-    tabTaskForceB: "íì¤í¬í¬ì¤ B",
-    tabDSHistory: "DS ê¸°ë¡",
-    tabFeedback: "í¼ëë°±",
-    tabDashboard: "ëìë³´ë",
-    feedbackTitle: "ì± í¼ëë°±",
-    feedbackHint: "ì±ì ëí ìê²¬, ë²ê·¸, ìë°ì´í¸ ì ìì ë¨ê²¨ì£¼ì¸ì.",
-    feedbackExample: "ìì:\nëì í¸ ì¤í° ê¸°ë¡ í­ì ì í¬ë ¥ í©ê³ë íìëë©´ ì¢ê² ìµëë¤.",
-    submitFeedback: "í¼ëë°± ë³´ë´ê¸°",
-    allianceFeedback: "ì¼ë¼ì´ì¸ì¤ í¼ëë°±",
-    noFeedback: "ìì§ ë±ë¡ë í¼ëë°±ì´ ììµëë¤.",
-    feedbackFrom: "{name} â¢ {date}",
-    allianceTitle: "ì¼ë¼ì´ì¸ì¤",
-    accountLabel: "ê³ì : {value}",
-    allianceLabel: "ì¼ë¼ì´ì¸ì¤: {value}",
-    codeLabel: "ì½ë: {value}",
-    signedInAsPlayer: "ë¡ê·¸ì¸ íë ì´ì´: {value}",
-    pendingJoinRequests: "ëê¸° ì¤ì¸ ê°ì ìì²­",
-    noPendingRequests: "ëê¸° ì¤ì¸ ê°ì ìì²­ì´ ììµëë¤.",
-    requestedWithCode: "ìì²­ ì½ë: {code}",
-    approve: "ì¹ì¸",
-    reject: "ê±°ì ",
-    rotateCode: "ì½ë ë³ê²½",
-    updateCode: "ì½ë ìë°ì´í¸",
-    addMember: "ë©¤ë² ì¶ê°",
-    name: "ì´ë¦",
-    rank: "ë±ê¸",
-    power: "ì í¬ë ¥",
-    memberOptions: "ë©¤ë² ìµì",
-    leaveAnyTime: "ì¸ì ë ì§ ì¼ë¼ì´ì¸ì¤ë¥¼ ë ë  ì ììµëë¤.",
-    leaveAlliance: "ì¼ë¼ì´ì¸ì¤ íí´",
-    leaveAllianceTitle: "ì¼ë¼ì´ì¸ì¤ íí´",
-    leaveAllianceConfirm: "ì ë§ ì´ ì¼ë¼ì´ì¸ì¤ë¥¼ ë ëìê² ìµëê¹?",
-    cancel: "ì·¨ì",
-    leave: "íí´",
-    signedInPlayer: "ë¡ê·¸ì¸í íë ì´ì´",
-    totalBasePower: "ì´ ê¸°ë³¸ ì í¬ë ¥",
-    totalSquadPower: "ì´ ë¶ë ì í¬ë ¥",
-    desertStormTitle: "ëì í¸ ì¤í°",
-    selectedForDesertStorm: "ëì í¸ ì¤í°ì ì íë¨",
-    notCurrentlyAssigned: "íì¬ ë°°ì ëì§ ìì",
-    taskForceLabel: "íì¤í¬í¬ì¤: {value}",
-    squadLabel: "ë¶ë: {value}",
-    slotLabel: "ì¬ë¡¯: {value}",
-    notListedInTaskForces: "íì¬ Task Force A ëë Task Force Bì ë°°ì ëì´ ìì§ ììµëë¤.",
-    desertStormRecord: "ëì í¸ ì¤í° ê¸°ë¡",
-    lockInsPlayed: "ëì í¸ ì¤í° {count}í íë ì´",
-    noLockedHistoryYet: "ìì§ ì ê¸´ ëì í¸ ì¤í° ê¸°ë¡ì´ ììµëë¤",
-    appearancesWillShow: "ë¦¬ëê° ëì í¸ ì¤í° ë°°ì¹ë¥¼ ì ê·¸ë©´ ì¬ê¸°ì ì°¸ì¬ ê¸°ë¡ì´ íìë©ëë¤.",
-    basePowerSection: "ê¸°ë³¸ ì í¬ë ¥",
-    squadPowerBreakdown: "ë¶ë ì í¬ë ¥ ì¸ë¶",
-    squadNumber: "{number} ë¶ë",
-    resultPending: "ëê¸° ì¤",
-    resultWin: "ì¹ë¦¬",
-    resultLoss: "í¨ë°°"
+    appTitle: "PAKX Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬Â•Â±",
+    authSignIn: "Ã«Â¡ÂœÃªÂ·Â¸Ã¬ÂÂ¸",
+    authCreateAccount: "ÃªÂ³Â„Ã¬Â Â• Ã«Â§ÂŒÃ«Â“Â¤ÃªÂ¸Â°",
+    username: "Ã¬Â‚Â¬Ã¬ÂšÂ©Ã¬ÂžÂ Ã¬ÂÂ´Ã«Â¦Â„",
+    password: "Ã«Â¹Â„Ã«Â°Â€Ã«Â²ÂˆÃ­Â˜Â¸",
+    welcome: "{name}Ã«Â‹Â˜, Ã­Â™Â˜Ã¬Â˜ÂÃ­Â•Â©Ã«Â‹ÂˆÃ«Â‹Â¤",
+    notInAlliance: "Ã¬ÂÂ´ ÃªÂ³Â„Ã¬Â Â•Ã¬ÂÂ€ Ã¬Â•Â„Ã¬Â§Â Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤Ã¬Â—Â Ã¬Â—Â°ÃªÂ²Â°Ã«ÂÂ˜Ã¬Â–Â´ Ã¬ÂžÂˆÃ¬Â§Â€ Ã¬Â•ÂŠÃ¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    joinAlliance: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ ÃªÂ°Â€Ã¬ÂžÂ…",
+    createAlliance: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬ÂƒÂÃ¬Â„Â±",
+    allianceName: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬ÂÂ´Ã«Â¦Â„",
+    allianceCode: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬Â½Â”Ã«Â“Âœ",
+    previewAlliance: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã«Â¯Â¸Ã«Â¦Â¬Ã«Â³Â´ÃªÂ¸Â°",
+    foundAlliance: "Ã¬Â°Â¾Ã¬ÂÂŒ: {name}",
+    signOut: "Ã«Â¡ÂœÃªÂ·Â¸Ã¬Â•Â„Ã¬Â›Âƒ",
+    joinRequestPending: "ÃªÂ°Â€Ã¬ÂžÂ… Ã¬ÂšÂ”Ã¬Â²Â­ Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘",
+    pendingApproval: "R4 Ã«Â˜ÂÃ«ÂŠÂ” R5Ã¬ÂÂ˜ Ã¬ÂŠÂ¹Ã¬ÂÂ¸Ã¬ÂÂ„ ÃªÂ¸Â°Ã«Â‹Â¤Ã«Â¦Â¬ÃªÂ³Â  Ã¬ÂžÂˆÃ¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    refreshStatus: "Ã¬ÂƒÂÃ­ÂƒÂœ Ã¬ÂƒÂˆÃ«Â¡ÂœÃªÂ³Â Ã¬Â¹Â¨",
+    language: "Ã¬Â–Â¸Ã¬Â–Â´",
+    signedInAs: "{name} ({rank})Ã«Â¡Âœ Ã«Â¡ÂœÃªÂ·Â¸Ã¬ÂÂ¸Ã«ÂÂ¨",
+    playersWaiting: "{count}Ã«ÂªÂ…Ã¬ÂÂ˜ Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´ÃªÂ°Â€ Ã¬ÂŠÂ¹Ã¬ÂÂ¸ Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘Ã¬ÂžÂ…Ã«Â‹ÂˆÃ«Â‹Â¤",
+    onePlayerWaiting: "1Ã«ÂªÂ…Ã¬ÂÂ˜ Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´ÃªÂ°Â€ Ã¬ÂŠÂ¹Ã¬ÂÂ¸ Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘Ã¬ÂžÂ…Ã«Â‹ÂˆÃ«Â‹Â¤",
+    tapReviewRequests: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã­ÂƒÂ­Ã¬Â—ÂÃ¬Â„Âœ ÃªÂ°Â€Ã¬ÂžÂ… Ã¬ÂšÂ”Ã¬Â²Â­Ã¬ÂÂ„ Ã­Â™Â•Ã¬ÂÂ¸Ã­Â•Â˜Ã¬Â„Â¸Ã¬ÂšÂ”.",
+    restoringSession: "Ã¬Â„Â¸Ã¬Â…Â˜Ã¬ÂÂ„ Ã«Â³ÂµÃ¬Â›ÂÃ­Â•Â˜Ã«ÂŠÂ” Ã¬Â¤Â‘...",
+    sessionExpired: "Ã¬Â„Â¸Ã¬Â…Â˜Ã¬ÂÂ´ Ã«Â§ÂŒÃ«Â£ÂŒÃ«ÂÂ˜Ã¬Â—ÂˆÃ¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤. Ã«Â‹Â¤Ã¬Â‹Âœ Ã«Â¡ÂœÃªÂ·Â¸Ã¬ÂÂ¸Ã­Â•Â´ Ã¬Â£Â¼Ã¬Â„Â¸Ã¬ÂšÂ”.",
+    choosePlayer: "Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´ Ã¬Â„Â Ã­ÂƒÂ",
+    votedMembers: "Ã­ÂˆÂ¬Ã­Â‘ÂœÃ­Â•Âœ Ã«Â©Â¤Ã«Â²Â„",
+    entireAlliance: "Ã¬Â Â„Ã¬Â²Â´ Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤",
+    showingAllAlliance: "Ã¬ÂÂ´ Ã¬ÂŠÂ¬Ã«Â¡Â¯Ã¬Â—Â Ã«ÂŒÂ€Ã­Â•Â´ Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã¬Â Â„Ã¬Â²Â´ Ã«Â©Â¤Ã«Â²Â„Ã«Â¥Â¼ Ã­Â‘ÂœÃ¬Â‹ÂœÃ­Â•Â©Ã«Â‹ÂˆÃ«Â‹Â¤.",
+    searchNameOrRank: "Ã¬ÂÂ´Ã«Â¦Â„ Ã«Â˜ÂÃ«ÂŠÂ” Ã«Â“Â±ÃªÂ¸Â‰ ÃªÂ²Â€Ã¬ÂƒÂ‰",
+    clearSelection: "Ã¬Â„Â Ã­ÂƒÂ Ã­Â•Â´Ã¬Â Âœ",
+    noPlayersMatchSearch: "ÃªÂ²Â€Ã¬ÂƒÂ‰ÃªÂ³Â¼ Ã¬ÂÂ¼Ã¬Â¹Â˜Ã­Â•Â˜Ã«ÂŠÂ” Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´ÃªÂ°Â€ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    noMembersMatchVoteFilter: "Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° Ã­ÂˆÂ¬Ã­Â‘Âœ Ã¬Â¡Â°ÃªÂ±Â´Ã¬Â—Â Ã«Â§ÂžÃ«ÂŠÂ” Ã«Â©Â¤Ã«Â²Â„ÃªÂ°Â€ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    tabMyInfo: "Ã«Â‚Â´ Ã¬Â Â•Ã«Â³Â´",
+    tabMembers: "Ã«Â©Â¤Ã«Â²Â„",
+    tabAlliance: "Ã¬Â„Â¤Ã¬Â Â•",
+    tabTaskForceA: "Ã­ÂƒÂœÃ¬ÂŠÂ¤Ã­ÂÂ¬Ã­ÂÂ¬Ã¬ÂŠÂ¤ A",
+    tabTaskForceB: "Ã­ÂƒÂœÃ¬ÂŠÂ¤Ã­ÂÂ¬Ã­ÂÂ¬Ã¬ÂŠÂ¤ B",
+    tabDSHistory: "DS ÃªÂ¸Â°Ã«Â¡Â",
+    tabFeedback: "Ã­Â”Â¼Ã«Â“ÂœÃ«Â°Â±",
+    tabDashboard: "Ã«ÂŒÂ€Ã¬Â‹ÂœÃ«Â³Â´Ã«Â“Âœ",
+    feedbackTitle: "Ã¬Â•Â± Ã­Â”Â¼Ã«Â“ÂœÃ«Â°Â±",
+    feedbackHint: "Ã¬Â•Â±Ã¬Â—Â Ã«ÂŒÂ€Ã­Â•Âœ Ã¬ÂÂ˜ÃªÂ²Â¬, Ã«Â²Â„ÃªÂ·Â¸, Ã¬Â—Â…Ã«ÂÂ°Ã¬ÂÂ´Ã­ÂŠÂ¸ Ã¬Â ÂœÃ¬Â•ÂˆÃ¬ÂÂ„ Ã«Â‚Â¨ÃªÂ²Â¨Ã¬Â£Â¼Ã¬Â„Â¸Ã¬ÂšÂ”.",
+    feedbackExample: "Ã¬Â˜ÂˆÃ¬Â‹Âœ:\nÃ«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° ÃªÂ¸Â°Ã«Â¡Â Ã­ÂƒÂ­Ã¬Â—Â Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥ Ã­Â•Â©ÃªÂ³Â„Ã«ÂÂ„ Ã­Â‘ÂœÃ¬Â‹ÂœÃ«ÂÂ˜Ã«Â©Â´ Ã¬Â¢Â‹ÃªÂ²Â Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    submitFeedback: "Ã­Â”Â¼Ã«Â“ÂœÃ«Â°Â± Ã«Â³Â´Ã«Â‚Â´ÃªÂ¸Â°",
+    allianceFeedback: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã­Â”Â¼Ã«Â“ÂœÃ«Â°Â±",
+    noFeedback: "Ã¬Â•Â„Ã¬Â§Â Ã«Â“Â±Ã«Â¡ÂÃ«ÂÂœ Ã­Â”Â¼Ã«Â“ÂœÃ«Â°Â±Ã¬ÂÂ´ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    feedbackFrom: "{name} Ã¢Â€Â¢ {date}",
+    allianceTitle: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤",
+    accountLabel: "ÃªÂ³Â„Ã¬Â Â•: {value}",
+    allianceLabel: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤: {value}",
+    codeLabel: "Ã¬Â½Â”Ã«Â“Âœ: {value}",
+    signedInAsPlayer: "Ã«Â¡ÂœÃªÂ·Â¸Ã¬ÂÂ¸ Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´: {value}",
+    pendingJoinRequests: "Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘Ã¬ÂÂ¸ ÃªÂ°Â€Ã¬ÂžÂ… Ã¬ÂšÂ”Ã¬Â²Â­",
+    noPendingRequests: "Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘Ã¬ÂÂ¸ ÃªÂ°Â€Ã¬ÂžÂ… Ã¬ÂšÂ”Ã¬Â²Â­Ã¬ÂÂ´ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    requestedWithCode: "Ã¬ÂšÂ”Ã¬Â²Â­ Ã¬Â½Â”Ã«Â“Âœ: {code}",
+    approve: "Ã¬ÂŠÂ¹Ã¬ÂÂ¸",
+    reject: "ÃªÂ±Â°Ã¬Â Âˆ",
+    rotateCode: "Ã¬Â½Â”Ã«Â“Âœ Ã«Â³Â€ÃªÂ²Â½",
+    updateCode: "Ã¬Â½Â”Ã«Â“Âœ Ã¬Â—Â…Ã«ÂÂ°Ã¬ÂÂ´Ã­ÂŠÂ¸",
+    addMember: "Ã«Â©Â¤Ã«Â²Â„ Ã¬Â¶Â”ÃªÂ°Â€",
+    name: "Ã¬ÂÂ´Ã«Â¦Â„",
+    rank: "Ã«Â“Â±ÃªÂ¸Â‰",
+    power: "Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥",
+    memberOptions: "Ã«Â©Â¤Ã«Â²Â„ Ã¬Â˜ÂµÃ¬Â…Â˜",
+    leaveAnyTime: "Ã¬Â–Â¸Ã¬Â ÂœÃ«Â“Â Ã¬Â§Â€ Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤Ã«Â¥Â¼ Ã«Â–Â Ã«Â‚Â  Ã¬ÂˆÂ˜ Ã¬ÂžÂˆÃ¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    leaveAlliance: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã­ÂƒÂˆÃ­Â‡Â´",
+    leaveAllianceTitle: "Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤ Ã­ÂƒÂˆÃ­Â‡Â´",
+    leaveAllianceConfirm: "Ã¬Â Â•Ã«Â§Â Ã¬ÂÂ´ Ã¬Â–Â¼Ã«ÂÂ¼Ã¬ÂÂ´Ã¬Â–Â¸Ã¬ÂŠÂ¤Ã«Â¥Â¼ Ã«Â–Â Ã«Â‚Â˜Ã¬Â‹ÂœÃªÂ²Â Ã¬ÂŠÂµÃ«Â‹ÂˆÃªÂ¹ÂŒ?",
+    cancel: "Ã¬Â·Â¨Ã¬Â†ÂŒ",
+    leave: "Ã­ÂƒÂˆÃ­Â‡Â´",
+    signedInPlayer: "Ã«Â¡ÂœÃªÂ·Â¸Ã¬ÂÂ¸Ã­Â•Âœ Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´Ã¬Â–Â´",
+    totalBasePower: "Ã¬Â´Â ÃªÂ¸Â°Ã«Â³Â¸ Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥",
+    totalSquadPower: "Ã¬Â´Â Ã«Â¶Â„Ã«ÂŒÂ€ Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥",
+    desertStormTitle: "Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â°",
+    selectedForDesertStorm: "Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â°Ã¬Â—Â Ã¬Â„Â Ã­ÂƒÂÃ«ÂÂ¨",
+    notCurrentlyAssigned: "Ã­Â˜Â„Ã¬ÂžÂ¬ Ã«Â°Â°Ã¬Â Â•Ã«ÂÂ˜Ã¬Â§Â€ Ã¬Â•ÂŠÃ¬ÂÂŒ",
+    taskForceLabel: "Ã­ÂƒÂœÃ¬ÂŠÂ¤Ã­ÂÂ¬Ã­ÂÂ¬Ã¬ÂŠÂ¤: {value}",
+    squadLabel: "Ã«Â¶Â„Ã«ÂŒÂ€: {value}",
+    slotLabel: "Ã¬ÂŠÂ¬Ã«Â¡Â¯: {value}",
+    notListedInTaskForces: "Ã­Â˜Â„Ã¬ÂžÂ¬ Task Force A Ã«Â˜ÂÃ«ÂŠÂ” Task Force BÃ¬Â—Â Ã«Â°Â°Ã¬Â Â•Ã«ÂÂ˜Ã¬Â–Â´ Ã¬ÂžÂˆÃ¬Â§Â€ Ã¬Â•ÂŠÃ¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤.",
+    desertStormRecord: "Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° ÃªÂ¸Â°Ã«Â¡Â",
+    lockInsPlayed: "Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° {count}Ã­ÂšÂŒ Ã­Â”ÂŒÃ«Â ÂˆÃ¬ÂÂ´",
+    noLockedHistoryYet: "Ã¬Â•Â„Ã¬Â§Â Ã¬ÂžÂ ÃªÂ¸Â´ Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° ÃªÂ¸Â°Ã«Â¡ÂÃ¬ÂÂ´ Ã¬Â—Â†Ã¬ÂŠÂµÃ«Â‹ÂˆÃ«Â‹Â¤",
+    appearancesWillShow: "Ã«Â¦Â¬Ã«ÂÂ”ÃªÂ°Â€ Ã«Â”Â”Ã¬Â Â€Ã­ÂŠÂ¸ Ã¬ÂŠÂ¤Ã­Â†Â° Ã«Â°Â°Ã¬Â¹Â˜Ã«Â¥Â¼ Ã¬ÂžÂ ÃªÂ·Â¸Ã«Â©Â´ Ã¬Â—Â¬ÃªÂ¸Â°Ã¬Â—Â Ã¬Â°Â¸Ã¬Â—Â¬ ÃªÂ¸Â°Ã«Â¡ÂÃ¬ÂÂ´ Ã­Â‘ÂœÃ¬Â‹ÂœÃ«ÂÂ©Ã«Â‹ÂˆÃ«Â‹Â¤.",
+    basePowerSection: "ÃªÂ¸Â°Ã«Â³Â¸ Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥",
+    squadPowerBreakdown: "Ã«Â¶Â„Ã«ÂŒÂ€ Ã¬Â Â„Ã­ÂˆÂ¬Ã«Â Â¥ Ã¬Â„Â¸Ã«Â¶Â€",
+    squadNumber: "{number} Ã«Â¶Â„Ã«ÂŒÂ€",
+    resultPending: "Ã«ÂŒÂ€ÃªÂ¸Â° Ã¬Â¤Â‘",
+    resultWin: "Ã¬ÂŠÂ¹Ã«Â¦Â¬",
+    resultLoss: "Ã­ÂŒÂ¨Ã«Â°Â°"
   },
   es: {
     appTitle: "App de Alianza PAKX",
-    authSignIn: "Iniciar sesiÃ³n",
+    authSignIn: "Iniciar sesiÃƒÂ³n",
     authCreateAccount: "Crear cuenta",
     username: "Usuario",
-    password: "ContraseÃ±a",
+    password: "ContraseÃƒÂ±a",
     welcome: "Bienvenido, {name}",
-    notInAlliance: "Esta cuenta todavÃ­a no estÃ¡ asociada a una alianza.",
+    notInAlliance: "Esta cuenta todavÃƒÂ­a no estÃƒÂ¡ asociada a una alianza.",
     joinAlliance: "Unirse a alianza",
     createAlliance: "Crear alianza",
     allianceName: "Nombre de la alianza",
-    allianceCode: "CÃ³digo de alianza",
+    allianceCode: "CÃƒÂ³digo de alianza",
     previewAlliance: "Ver alianza",
     foundAlliance: "Encontrada: {name}",
-    signOut: "Cerrar sesiÃ³n",
+    signOut: "Cerrar sesiÃƒÂ³n",
     joinRequestPending: "Solicitud de ingreso pendiente",
-    pendingApproval: "Tu solicitud estÃ¡ esperando la aprobaciÃ³n de un R4 o R5.",
+    pendingApproval: "Tu solicitud estÃƒÂ¡ esperando la aprobaciÃƒÂ³n de un R4 o R5.",
     refreshStatus: "Actualizar estado",
     language: "Idioma",
-    signedInAs: "SesiÃ³n iniciada como {name} ({rank})",
-    playersWaiting: "{count} jugadores esperan aprobaciÃ³n",
-    onePlayerWaiting: "1 jugador espera aprobaciÃ³n",
-    tapReviewRequests: "Toca para revisar solicitudes en la pestaÃ±a Alianza.",
-    restoringSession: "Restaurando tu sesiÃ³n...",
-    sessionExpired: "Tu sesiÃ³n expirÃ³. Vuelve a iniciar sesiÃ³n.",
+    signedInAs: "SesiÃƒÂ³n iniciada como {name} ({rank})",
+    playersWaiting: "{count} jugadores esperan aprobaciÃƒÂ³n",
+    onePlayerWaiting: "1 jugador espera aprobaciÃƒÂ³n",
+    tapReviewRequests: "Toca para revisar solicitudes en la pestaÃƒÂ±a Alianza.",
+    restoringSession: "Restaurando tu sesiÃƒÂ³n...",
+    sessionExpired: "Tu sesiÃƒÂ³n expirÃƒÂ³. Vuelve a iniciar sesiÃƒÂ³n.",
     choosePlayer: "Elegir jugador",
     votedMembers: "Miembros que votaron",
     entireAlliance: "Toda la alianza",
     showingAllAlliance: "Mostrando todos los miembros de la alianza para este puesto.",
     searchNameOrRank: "Buscar por nombre o rango",
-    clearSelection: "Quitar selecciÃ³n",
-    noPlayersMatchSearch: "No hay jugadores que coincidan con la bÃºsqueda.",
+    clearSelection: "Quitar selecciÃƒÂ³n",
+    noPlayersMatchSearch: "No hay jugadores que coincidan con la bÃƒÂºsqueda.",
     noMembersMatchVoteFilter: "No hay miembros que coincidan con ese filtro de voto de Desert Storm.",
-    tabMyInfo: "Mi informaciÃ³n",
+    tabMyInfo: "Mi informaciÃƒÂ³n",
     tabMembers: "Miembros",
     tabAlliance: "Configuracion",
     tabTaskForceA: "Task Force A",
@@ -292,23 +328,23 @@ const TRANSLATIONS = {
     tabDashboard: "Panel",
     feedbackTitle: "Comentarios de la app",
     feedbackHint: "Comparte comentarios, errores y mejoras recomendadas con la alianza.",
-    feedbackExample: "Ejemplo:\nCreo que el historial de Desert Storm deberÃ­a mostrar tambiÃ©n el poder total.",
+    feedbackExample: "Ejemplo:\nCreo que el historial de Desert Storm deberÃƒÂ­a mostrar tambiÃƒÂ©n el poder total.",
     submitFeedback: "Enviar comentario",
     allianceFeedback: "Comentarios de la alianza",
-    noFeedback: "TodavÃ­a no hay comentarios.",
-    feedbackFrom: "De {name} â¢ {date}",
+    noFeedback: "TodavÃƒÂ­a no hay comentarios.",
+    feedbackFrom: "De {name} Ã¢Â€Â¢ {date}",
     allianceTitle: "Alianza",
     accountLabel: "Cuenta: {value}",
     allianceLabel: "Alianza: {value}",
-    codeLabel: "CÃ³digo: {value}",
-    signedInAsPlayer: "SesiÃ³n iniciada como: {value}",
+    codeLabel: "CÃƒÂ³digo: {value}",
+    signedInAsPlayer: "SesiÃƒÂ³n iniciada como: {value}",
     pendingJoinRequests: "Solicitudes pendientes",
     noPendingRequests: "No hay solicitudes pendientes.",
-    requestedWithCode: "SolicitÃ³ con el cÃ³digo {code}",
+    requestedWithCode: "SolicitÃƒÂ³ con el cÃƒÂ³digo {code}",
     approve: "Aprobar",
     reject: "Rechazar",
-    rotateCode: "Cambiar cÃ³digo",
-    updateCode: "Actualizar cÃ³digo",
+    rotateCode: "Cambiar cÃƒÂ³digo",
+    updateCode: "Actualizar cÃƒÂ³digo",
     addMember: "Agregar miembro",
     name: "Nombre",
     rank: "Rango",
@@ -317,7 +353,7 @@ const TRANSLATIONS = {
     leaveAnyTime: "Puedes salir de esta alianza en cualquier momento.",
     leaveAlliance: "Salir de la alianza",
     leaveAllianceTitle: "Salir de la alianza",
-    leaveAllianceConfirm: "Â¿Seguro que quieres salir de esta alianza?",
+    leaveAllianceConfirm: "Ã‚Â¿Seguro que quieres salir de esta alianza?",
     cancel: "Cancelar",
     leave: "Salir",
     signedInPlayer: "Jugador conectado",
@@ -332,8 +368,8 @@ const TRANSLATIONS = {
     notListedInTaskForces: "No apareces actualmente en Task Force A ni Task Force B.",
     desertStormRecord: "Historial de Desert Storm",
     lockInsPlayed: "{count} Desert Storm jugados",
-    noLockedHistoryYet: "TodavÃ­a no hay historial bloqueado de Desert Storm",
-    appearancesWillShow: "Cuando los lÃ­deres bloqueen una alineaciÃ³n de Desert Storm, tus apariciones se mostrarÃ¡n aquÃ­.",
+    noLockedHistoryYet: "TodavÃƒÂ­a no hay historial bloqueado de Desert Storm",
+    appearancesWillShow: "Cuando los lÃƒÂ­deres bloqueen una alineaciÃƒÂ³n de Desert Storm, tus apariciones se mostrarÃƒÂ¡n aquÃƒÂ­.",
     basePowerSection: "Poder Base",
     squadPowerBreakdown: "Desglose de poder por escuadra",
     squadNumber: "Escuadra {number}",
@@ -342,97 +378,103 @@ const TRANSLATIONS = {
     resultLoss: "Derrota"
   },
   pt: {
-    appTitle: "App da AlianÃ§a PAKX",
+    appTitle: "App da AlianÃƒÂ§a PAKX",
     authSignIn: "Entrar",
     authCreateAccount: "Criar conta",
-    username: "UsuÃ¡rio",
+    username: "UsuÃƒÂ¡rio",
     password: "Senha",
     welcome: "Bem-vindo, {name}",
-    notInAlliance: "Esta conta ainda nÃ£o estÃ¡ associada a uma alianÃ§a.",
-    joinAlliance: "Entrar na alianÃ§a",
-    createAlliance: "Criar alianÃ§a",
-    allianceName: "Nome da alianÃ§a",
-    allianceCode: "CÃ³digo da alianÃ§a",
-    previewAlliance: "Ver alianÃ§a",
+    notInAlliance: "Esta conta ainda nÃƒÂ£o estÃƒÂ¡ associada a uma alianÃƒÂ§a.",
+    joinAlliance: "Entrar na alianÃƒÂ§a",
+    createAlliance: "Criar alianÃƒÂ§a",
+    allianceName: "Nome da alianÃƒÂ§a",
+    allianceCode: "CÃƒÂ³digo da alianÃƒÂ§a",
+    previewAlliance: "Ver alianÃƒÂ§a",
     foundAlliance: "Encontrada: {name}",
     signOut: "Sair",
     joinRequestPending: "Pedido de entrada pendente",
-    pendingApproval: "Seu pedido estÃ¡ aguardando aprovaÃ§Ã£o de um R4 ou R5.",
+    pendingApproval: "Seu pedido estÃƒÂ¡ aguardando aprovaÃƒÂ§ÃƒÂ£o de um R4 ou R5.",
     refreshStatus: "Atualizar status",
     language: "Idioma",
     signedInAs: "Conectado como {name} ({rank})",
-    playersWaiting: "{count} jogadores aguardando aprovaÃ§Ã£o",
-    onePlayerWaiting: "1 jogador aguardando aprovaÃ§Ã£o",
-    tapReviewRequests: "Toque para revisar pedidos na aba AlianÃ§a.",
-    restoringSession: "Restaurando sua sessÃ£o...",
-    sessionExpired: "Sua sessÃ£o expirou. Entre novamente.",
+    playersWaiting: "{count} jogadores aguardando aprovaÃƒÂ§ÃƒÂ£o",
+    onePlayerWaiting: "1 jogador aguardando aprovaÃƒÂ§ÃƒÂ£o",
+    tapReviewRequests: "Toque para revisar pedidos na aba AlianÃƒÂ§a.",
+    restoringSession: "Restaurando sua sessÃƒÂ£o...",
+    sessionExpired: "Sua sessÃƒÂ£o expirou. Entre novamente.",
     choosePlayer: "Escolher jogador",
     votedMembers: "Membros que votaram",
-    entireAlliance: "AlianÃ§a inteira",
-    showingAllAlliance: "Mostrando todos os membros da alianÃ§a para esta vaga.",
+    entireAlliance: "AlianÃƒÂ§a inteira",
+    showingAllAlliance: "Mostrando todos os membros da alianÃƒÂ§a para esta vaga.",
     searchNameOrRank: "Buscar por nome ou patente",
-    clearSelection: "Limpar seleÃ§Ã£o",
-    noPlayersMatchSearch: "Nenhum jogador corresponde Ã  busca.",
+    clearSelection: "Limpar seleÃƒÂ§ÃƒÂ£o",
+    noPlayersMatchSearch: "Nenhum jogador corresponde ÃƒÂ  busca.",
     noMembersMatchVoteFilter: "Nenhum membro corresponde a esse filtro de voto do Desert Storm.",
-    tabMyInfo: "Minhas informaÃ§Ãµes",
+    tabMyInfo: "Minhas informaÃƒÂ§ÃƒÂµes",
     tabMembers: "Membros",
     tabAlliance: "Configuracoes",
     tabTaskForceA: "Task Force A",
     tabTaskForceB: "Task Force B",
-    tabDSHistory: "HistÃ³rico DS",
+    tabDSHistory: "HistÃƒÂ³rico DS",
     tabFeedback: "Feedback",
     tabDashboard: "Painel",
     feedbackTitle: "Feedback do app",
-    feedbackHint: "Compartilhe comentÃ¡rios, bugs e melhorias sugeridas com a alianÃ§a.",
-    feedbackExample: "Exemplo:\nAcho que o histÃ³rico do Desert Storm deveria mostrar tambÃ©m o poder total.",
+    feedbackHint: "Compartilhe comentÃƒÂ¡rios, bugs e melhorias sugeridas com a alianÃƒÂ§a.",
+    feedbackExample: "Exemplo:\nAcho que o histÃƒÂ³rico do Desert Storm deveria mostrar tambÃƒÂ©m o poder total.",
     submitFeedback: "Enviar feedback",
-    allianceFeedback: "Feedback da alianÃ§a",
+    allianceFeedback: "Feedback da alianÃƒÂ§a",
     noFeedback: "Nenhum feedback foi enviado ainda.",
-    feedbackFrom: "De {name} â¢ {date}",
-    allianceTitle: "AlianÃ§a",
+    feedbackFrom: "De {name} Ã¢Â€Â¢ {date}",
+    allianceTitle: "AlianÃƒÂ§a",
     accountLabel: "Conta: {value}",
-    allianceLabel: "AlianÃ§a: {value}",
-    codeLabel: "CÃ³digo: {value}",
+    allianceLabel: "AlianÃƒÂ§a: {value}",
+    codeLabel: "CÃƒÂ³digo: {value}",
     signedInAsPlayer: "Conectado como: {value}",
     pendingJoinRequests: "Pedidos pendentes",
-    noPendingRequests: "NÃ£o hÃ¡ pedidos pendentes.",
-    requestedWithCode: "Solicitado com o cÃ³digo {code}",
+    noPendingRequests: "NÃƒÂ£o hÃƒÂ¡ pedidos pendentes.",
+    requestedWithCode: "Solicitado com o cÃƒÂ³digo {code}",
     approve: "Aprovar",
     reject: "Rejeitar",
-    rotateCode: "Alterar cÃ³digo",
-    updateCode: "Atualizar cÃ³digo",
+    rotateCode: "Alterar cÃƒÂ³digo",
+    updateCode: "Atualizar cÃƒÂ³digo",
     addMember: "Adicionar membro",
     name: "Nome",
     rank: "Patente",
     power: "Poder",
-    memberOptions: "OpÃ§Ãµes do membro",
-    leaveAnyTime: "VocÃª pode sair desta alianÃ§a a qualquer momento.",
-    leaveAlliance: "Sair da alianÃ§a",
-    leaveAllianceTitle: "Sair da alianÃ§a",
-    leaveAllianceConfirm: "Tem certeza de que deseja sair desta alianÃ§a?",
+    memberOptions: "OpÃƒÂ§ÃƒÂµes do membro",
+    leaveAnyTime: "VocÃƒÂª pode sair desta alianÃƒÂ§a a qualquer momento.",
+    leaveAlliance: "Sair da alianÃƒÂ§a",
+    leaveAllianceTitle: "Sair da alianÃƒÂ§a",
+    leaveAllianceConfirm: "Tem certeza de que deseja sair desta alianÃƒÂ§a?",
     cancel: "Cancelar",
     leave: "Sair",
     signedInPlayer: "Jogador conectado",
     totalBasePower: "Poder Base Total",
-    totalSquadPower: "Poder Total de EsquadrÃ£o",
+    totalSquadPower: "Poder Total de EsquadrÃƒÂ£o",
     desertStormTitle: "Desert Storm",
     selectedForDesertStorm: "Selecionado para Desert Storm",
-    notCurrentlyAssigned: "NÃ£o atribuÃ­do no momento",
+    notCurrentlyAssigned: "NÃƒÂ£o atribuÃƒÂ­do no momento",
     taskForceLabel: "Task Force: {value}",
-    squadLabel: "EsquadrÃ£o: {value}",
-    slotLabel: "PosiÃ§Ã£o: {value}",
-    notListedInTaskForces: "VocÃª nÃ£o estÃ¡ listado atualmente na Task Force A ou Task Force B.",
-    desertStormRecord: "HistÃ³rico do Desert Storm",
+    squadLabel: "EsquadrÃƒÂ£o: {value}",
+    slotLabel: "PosiÃƒÂ§ÃƒÂ£o: {value}",
+    notListedInTaskForces: "VocÃƒÂª nÃƒÂ£o estÃƒÂ¡ listado atualmente na Task Force A ou Task Force B.",
+    desertStormRecord: "HistÃƒÂ³rico do Desert Storm",
     lockInsPlayed: "{count} Desert Storm jogados",
-    noLockedHistoryYet: "Ainda nÃ£o hÃ¡ histÃ³rico travado de Desert Storm",
-    appearancesWillShow: "Quando os lÃ­deres travarem uma formaÃ§Ã£o do Desert Storm, suas participaÃ§Ãµes aparecerÃ£o aqui.",
+    noLockedHistoryYet: "Ainda nÃƒÂ£o hÃƒÂ¡ histÃƒÂ³rico travado de Desert Storm",
+    appearancesWillShow: "Quando os lÃƒÂ­deres travarem uma formaÃƒÂ§ÃƒÂ£o do Desert Storm, suas participaÃƒÂ§ÃƒÂµes aparecerÃƒÂ£o aqui.",
     basePowerSection: "Poder Base",
-    squadPowerBreakdown: "Detalhamento do poder dos esquadrÃµes",
-    squadNumber: "EsquadrÃ£o {number}",
+    squadPowerBreakdown: "Detalhamento do poder dos esquadrÃƒÂµes",
+    squadNumber: "EsquadrÃƒÂ£o {number}",
     resultPending: "Pendente",
-    resultWin: "VitÃ³ria",
+    resultWin: "VitÃƒÂ³ria",
     resultLoss: "Derrota"
   }
+};
+const TRANSLATIONS = {
+  en: RAW_TRANSLATIONS.en,
+  ko: repairMojibakeDeep(RAW_TRANSLATIONS.ko),
+  es: repairMojibakeDeep(RAW_TRANSLATIONS.es),
+  pt: repairMojibakeDeep(RAW_TRANSLATIONS.pt)
 };
 
 function getTranslator(language) {
@@ -485,6 +527,10 @@ function ScreenContainer(props) {
 
 function SectionHeader(props) {
   return <SharedSectionHeader {...props} styles={styles} />;
+}
+
+function AppBackHeader(props) {
+  return <SharedAppBackHeader {...props} styles={styles} />;
 }
 
 function AppCard(props) {
@@ -625,6 +671,9 @@ export default function App() {
   const [newMemberRank, setNewMemberRank] = useState("R1");
   const [newMemberPower, setNewMemberPower] = useState("");
   const [leaderBroadcastMessage, setLeaderBroadcastMessage] = useState("");
+  const [leaderBroadcastAudience, setLeaderBroadcastAudience] = useState("all");
+  const [leaderBroadcastSelectedMemberIds, setLeaderBroadcastSelectedMemberIds] = useState([]);
+  const [leaderBroadcastMemberSearchText, setLeaderBroadcastMemberSearchText] = useState("");
   const [reminders, setReminders] = useState([]);
   const [calendarView, setCalendarView] = useState("today");
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
@@ -694,6 +743,30 @@ export default function App() {
       setMoreSelection("");
     }
   }
+
+  const backNavigation = useMemo(() => {
+    if (activeTab === "events" && eventsSelection) {
+      return {
+        visible: true,
+        title: eventsSelection === "desertStorm" ? "Desert Storm" : "Zombie Siege",
+        onBack: () => setEventsSelection("")
+      };
+    }
+    if (activeTab === "more" && moreSelection) {
+      return {
+        visible: true,
+        title: moreSelection === "leaderControls"
+          ? "Leader Controls"
+          : moreSelection === "members"
+            ? "Members"
+            : moreSelection === "settings"
+              ? "Settings"
+              : "Feedback",
+        onBack: () => setMoreSelection("")
+      };
+    }
+    return { visible: false, title: "", onBack: null };
+  }, [activeTab, eventsSelection, moreSelection]);
   const options = useMemo(() => createPlayerOptions(players), [players]);
   const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
   const archivedDesertStormEvents = useMemo(() => desertStormEvents.filter((event) => event.status === "archived"), [desertStormEvents]);
@@ -1170,12 +1243,30 @@ export default function App() {
     run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
   }
 
+  function applyUpdatedCurrentPlayer(updatedPlayer) {
+    if (!updatedPlayer?.id) {
+      return;
+    }
+    setCurrentUser(updatedPlayer);
+    setAlliance((current) => current ? {
+      ...current,
+      players: (current.players || []).map((player) => player.id === updatedPlayer.id ? { ...player, ...updatedPlayer } : player)
+    } : current);
+  }
+
   const handleSetDesertStormVoteNotificationsEnabled = (enabled) => run(async () => {
     if (enabled) {
       setPushPromptDismissed(false);
       await AsyncStorage.removeItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY);
     }
-    await updateMember(session.backendUrl, session.token, currentUser.id, { desertStormVoteNotificationsEnabled: Boolean(enabled) });
+    const updatedPlayer = await updateMember(session.backendUrl, session.token, currentUser.id, { desertStormVoteNotificationsEnabled: Boolean(enabled) });
+    applyUpdatedCurrentPlayer(updatedPlayer);
+    await refresh();
+  });
+
+  const handleSetDigNotificationsEnabled = (enabled) => run(async () => {
+    const updatedPlayer = await updateMember(session.backendUrl, session.token, currentUser.id, { digNotificationsEnabled: Boolean(enabled) });
+    applyUpdatedCurrentPlayer(updatedPlayer);
     await refresh();
   });
 
@@ -1439,12 +1530,27 @@ export default function App() {
       setErrorMessage("Enter a note before sending the alliance push notification.");
       return false;
     }
+    if (leaderBroadcastAudience === "selected" && !leaderBroadcastSelectedMemberIds.length) {
+      Alert.alert("Select members", "Choose at least one member before sending a targeted notification.");
+      return false;
+    }
     try {
       setLoading(true);
       setErrorMessage("");
-      const result = await sendAllianceBroadcastPushRequest(session.backendUrl, session.token, message);
+      const result = await sendAllianceBroadcastPushRequest(session.backendUrl, session.token, {
+        message,
+        audience: leaderBroadcastAudience,
+        memberIds: leaderBroadcastAudience === "selected" ? leaderBroadcastSelectedMemberIds : []
+      });
       setLeaderBroadcastMessage("");
-      Alert.alert("Broadcast sent", result?.targetedDevices ? `Push notification sent to ${result.targetedDevices} registered device${result.targetedDevices === 1 ? "" : "s"}.` : "No registered push-enabled devices were available to receive this broadcast.");
+      setLeaderBroadcastSelectedMemberIds([]);
+      setLeaderBroadcastMemberSearchText("");
+      Alert.alert(
+        "Broadcast sent",
+        result?.targetedDevices
+          ? `Push notification sent to ${result.targetedDevices} registered device${result.targetedDevices === 1 ? "" : "s"}.`
+          : "No registered push-enabled devices were available to receive this broadcast."
+      );
       return true;
     } catch (error) {
       await handleRequestError(error);
@@ -1452,6 +1558,56 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSendLeadersDigPreset() {
+    const memberIds = (alliance?.players || []).map((member) => member.id).filter(Boolean);
+    if (!memberIds.length) {
+      Alert.alert("No members found", "No alliance members are available to receive this preset notification.");
+      return false;
+    }
+    return new Promise((resolve) => {
+      Alert.alert(
+        "Send preset to all members",
+        "Send \"dig\" to all members who have not opted out?",
+        [
+          { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+          {
+            text: "Send",
+            onPress: async () => {
+              try {
+                setLoading(true);
+                setErrorMessage("");
+                const result = await sendAllianceBroadcastPushRequest(session.backendUrl, session.token, {
+                  message: "dig",
+                  preset: "dig",
+                  audience: "selected",
+                  memberIds
+                });
+                Alert.alert(
+                  "Broadcast sent",
+                  result?.targetedDevices
+                    ? `Push notification sent to ${result.targetedDevices} registered device${result.targetedDevices === 1 ? "" : "s"}.`
+                    : "No registered push-enabled member devices were available to receive this broadcast."
+                );
+                resolve(true);
+              } catch (error) {
+                await handleRequestError(error);
+                resolve(false);
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        ]
+      );
+    });
+  }
+
+  function toggleLeaderBroadcastSelectedMemberId(memberId) {
+    setLeaderBroadcastSelectedMemberIds((current) => current.includes(memberId)
+      ? current.filter((entry) => entry !== memberId)
+      : [...current, memberId]);
   }
 
   async function handleDeleteReminder(reminder) {
@@ -1641,7 +1797,9 @@ export default function App() {
     <ScreenContainer>
         <View style={styles.screen}>
           <View style={styles.screenContent}>
-            <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />
+            {backNavigation.visible
+              ? <AppBackHeader title={backNavigation.title} onBack={backNavigation.onBack} />
+              : <SectionHeader eyebrow="Alliance Command" title={alliance?.name} detail={t("signedInAs", { name: account?.displayName, rank: currentUser?.rank })} />}
             {leader && joinRequests.length ? <AppCard variant="warning" onPress={() => openMoreDestination("settings")}><Text style={styles.alertBannerTitle}>{joinRequests.length === 1 ? t("onePlayerWaiting") : t("playersWaiting", { count: joinRequests.length })}</Text><Text style={styles.alertBannerText}>{t("tapReviewRequests")}</Text></AppCard> : null}
             {activeTab === "home" && desertStormVoteNeedsResponse ? <AppCard variant="info" onPress={() => openDesertStormVoteArea()}><View style={styles.bannerHeader}><Text style={styles.voteBannerTitle}>Desert Storm vote is live - tap to respond</Text><StatusBadge label="Response Needed" tone="warning" /></View><Text style={styles.voteBannerText}>Open the Desert Storm event to submit your vote.</Text></AppCard> : null}
             {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
@@ -1681,9 +1839,14 @@ export default function App() {
             </EventsHubScreen> : null}
             {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} /> : null}
             {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} joinRequests={joinRequests} onSelectLeaderControls={() => setMoreSelection("leaderControls")} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
-              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} pushMessage={leaderBroadcastMessage} onChangePushMessage={setLeaderBroadcastMessage} onSendBroadcastPush={handleSendAllianceBroadcastPush} sending={loading} currentUserHasPushToken={Boolean(currentUser?.hasExpoPushToken)} /> : null}
+              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
+                setLeaderBroadcastAudience(value);
+                if (value === "all") {
+                  setLeaderBroadcastMemberSearchText("");
+                }
+              }} selectedMemberIds={leaderBroadcastSelectedMemberIds} onToggleSelectedMemberId={toggleLeaderBroadcastSelectedMemberId} memberSearchText={leaderBroadcastMemberSearchText} onChangeMemberSearchText={setLeaderBroadcastMemberSearchText} pushMessage={leaderBroadcastMessage} onChangePushMessage={setLeaderBroadcastMessage} onSendBroadcastPush={handleSendAllianceBroadcastPush} onSendLeadersDigPreset={handleSendLeadersDigPreset} sending={loading} currentUserHasPushToken={Boolean(currentUser?.hasExpoPushToken)} /> : null}
               {moreSelection === "members" && leader ? <MembersScreen styles={styles} players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} RankSelector={RankSelector} rankOptions={RANK_OPTIONS} /> : null}
-              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const departingPlayerId = currentUser?.id; const result = await leaveAlliance(session.backendUrl, session.token); if (departingPlayerId) { await clearCalendarNotificationsForMember(departingPlayerId).catch(() => {}); } setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const departingPlayerId = currentUser?.id; const result = await leaveAlliance(session.backendUrl, session.token); if (departingPlayerId) { await clearCalendarNotificationsForMember(departingPlayerId).catch(() => {}); } setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onSetDigNotificationsEnabled={handleSetDigNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
                 const enabled = await syncPushNotifications({ requestPermission: true });
                 if (!enabled) {
                   Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
@@ -1738,6 +1901,11 @@ const styles = StyleSheet.create({
   hint: { fontSize: 14, color: DESIGN_TOKENS.colors.textMuted },
   line: { color: DESIGN_TOKENS.colors.textSoft, fontSize: DESIGN_TOKENS.type.body },
   error: { color: DESIGN_TOKENS.colors.red, fontWeight: "700" },
+  appBackHeader: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: DESIGN_TOKENS.spacing.sm },
+  appBackButton: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 2, paddingRight: DESIGN_TOKENS.spacing.sm },
+  appBackButtonText: { color: DESIGN_TOKENS.colors.text, fontSize: 16, fontWeight: "700" },
+  appBackHeaderTitle: { flex: 1, textAlign: "center", color: DESIGN_TOKENS.colors.text, fontSize: DESIGN_TOKENS.type.cardTitle, fontWeight: "800" },
+  appBackHeaderSpacer: { minWidth: 60 },
   sectionHeader: { gap: 4, paddingBottom: 4 },
   sectionEyebrow: { fontSize: DESIGN_TOKENS.type.meta, color: DESIGN_TOKENS.colors.textMuted, textTransform: "uppercase", letterSpacing: 1.4, fontWeight: "700" },
   sectionHeaderTitle: { fontSize: DESIGN_TOKENS.type.title, color: DESIGN_TOKENS.colors.text, fontWeight: "800" },
@@ -1991,6 +2159,7 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
+
 
 
 

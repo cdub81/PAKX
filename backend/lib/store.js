@@ -88,6 +88,10 @@ function normalizeDesertStormVoteNotificationsEnabled(value) {
   return value !== false;
 }
 
+function normalizeDigNotificationsEnabled(value) {
+  return value !== false;
+}
+
 function normalizeDesertStormLayout(value) {
   return {
     id: value.id || crypto.randomUUID(),
@@ -425,6 +429,7 @@ function createPlayer(name, rank, overallPower) {
     squadPowers: normalizeSquadPowers(),
     desertStormStats: normalizeDesertStormStats(),
     desertStormVoteNotificationsEnabled: true,
+    digNotificationsEnabled: true,
     expoPushTokens: [],
     reminders: []
   };
@@ -485,6 +490,7 @@ function normalizeAlliance(alliance) {
       squadPowers: normalizeSquadPowers(player.squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
+      digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
       expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens),
       reminders: normalizeReminders(player.reminders, player.id || "")
     })),
@@ -579,6 +585,7 @@ function createStore(config = {}) {
       totalSquadPower: totalSquadPower(squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
+      digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
       hasExpoPushToken: normalizeExpoPushTokens(player.expoPushTokens).length > 0,
       desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
     };
@@ -996,14 +1003,22 @@ function createStore(config = {}) {
     return messages;
   }
 
-  function buildAllianceBroadcastMessages(alliance, message, triggeringPlayerId = "") {
+  function buildAllianceBroadcastMessages(alliance, message, triggeringPlayerId = "", allowedMemberIds = null, options = {}) {
     const normalizedMessage = String(message || "").trim();
     if (!normalizedMessage) {
       return [];
     }
+    const allowedIds = allowedMemberIds ? new Set(allowedMemberIds) : null;
+    const respectDigOptOut = options?.preset === "dig";
     const uniqueTokens = new Set();
     const messages = [];
     alliance.players.forEach((member) => {
+      if (allowedIds && !allowedIds.has(member.id)) {
+        return;
+      }
+      if (respectDigOptOut && !normalizeDigNotificationsEnabled(member.digNotificationsEnabled)) {
+        return;
+      }
       normalizeExpoPushTokens(member.expoPushTokens).forEach((expoPushToken) => {
         if (uniqueTokens.has(expoPushToken)) {
           return;
@@ -1368,6 +1383,9 @@ function createStore(config = {}) {
     }
     if (updates.desertStormVoteNotificationsEnabled !== undefined) {
       member.desertStormVoteNotificationsEnabled = normalizeDesertStormVoteNotificationsEnabled(updates.desertStormVoteNotificationsEnabled);
+    }
+    if (updates.digNotificationsEnabled !== undefined) {
+      member.digNotificationsEnabled = normalizeDigNotificationsEnabled(updates.digNotificationsEnabled);
     }
 
     const linkedAccount = state.accounts.find((account) => account.playerId === member.id);
@@ -1913,23 +1931,44 @@ function createStore(config = {}) {
     return publicPlayer(member, alliance.desertStormLayouts, alliance.desertStormEvents);
   }
 
-  function sendAllianceBroadcastPush(allianceId, player, message) {
+  function sendAllianceBroadcastPush(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
       throw new Error("Alliance not found.");
     }
-    const normalizedMessage = String(message || "").trim();
+    const normalizedMessage = String(payload?.message || "").trim();
     if (!normalizedMessage) {
       throw new Error("message is required.");
     }
-    const messages = buildAllianceBroadcastMessages(alliance, normalizedMessage, player?.id || "");
+    const audience = payload?.audience === "selected" ? "selected" : "all";
+    const preset = payload?.preset === "dig" ? "dig" : "";
+    const normalizedMemberIds = Array.isArray(payload?.memberIds)
+      ? [...new Set(payload.memberIds.map((value) => String(value || "").trim()).filter(Boolean))]
+      : [];
+    if (audience === "selected" && !normalizedMemberIds.length) {
+      throw new Error("Select at least one member.");
+    }
+    const validMemberIds = normalizedMemberIds.filter((memberId) => alliance.players.some((member) => member.id === memberId));
+    if (audience === "selected" && !validMemberIds.length) {
+      throw new Error("Selected members were not found in the alliance.");
+    }
+    const messages = buildAllianceBroadcastMessages(
+      alliance,
+      normalizedMessage,
+      player?.id || "",
+      audience === "selected" ? validMemberIds : null,
+      { preset }
+    );
     if (messages.length) {
       queueExpoPushMessages(messages);
     }
     return {
       ok: true,
       targetedDevices: messages.length,
-      message: normalizedMessage
+      message: normalizedMessage,
+      audience,
+      preset,
+      memberIds: audience === "selected" ? validMemberIds : []
     };
   }
 
