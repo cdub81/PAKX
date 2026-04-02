@@ -1109,7 +1109,9 @@ export default function App() {
     setCurrentUser(me.player);
     setReminders(reminderResponse.reminders || []);
     setJoinRequest(me.joinRequest || null);
-    setAlliancePreview(me.alliance ? { id: me.alliance.id, name: me.alliance.name, code: me.alliance.code, players: me.alliance.players } : null);
+    setAlliancePreview((current) => me.alliance
+      ? { id: me.alliance.id, name: me.alliance.name, code: me.alliance.code, players: me.alliance.players }
+      : (me.joinRequest ? current : null));
     setNewAllianceCode(me.alliance?.code || "");
     if (me.alliance && me.player && isLeader(me.player.rank)) {
       const jr = await getJoinRequests(backendUrl, token);
@@ -1874,7 +1876,16 @@ export default function App() {
 
   if (!session.token) return <AuthScreen {...{ authMode, setAuthMode, authUsername, setAuthUsername, authPassword, setAuthPassword, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onSignIn={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await signIn(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); await refresh(result.token, url); })} onCreate={() => run(async () => { const url = normalizeBaseUrl(backendUrlInput); const result = await createAccount(url, { username: authUsername, password: authPassword }); setSetupMode("join"); await persistSession({ backendUrl: url, token: result.token }); setAccount(result.account); setAlliance(null); setCurrentUser(null); })} />;
 
-  if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => { const result = await joinAlliance(session.backendUrl, session.token, allianceCodeInput); setAccount(result.account); setJoinRequest(result.joinRequest); setAlliance(null); setCurrentUser(null); setAlliancePreview(result.alliance); setSetupMode("join"); })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
+  if (session.token && !alliance) return <AllianceSetupScreen {...{ account, setupMode, setSetupMode, allianceCodeInput, setAllianceCodeInput, allianceNameInput, setAllianceNameInput, alliancePreview, joinRequest, loading, errorMessage, language, onChangeLanguage: changeLanguage, t }} onPreview={() => run(async () => setAlliancePreview(await getAlliancePreview(normalizeBaseUrl(session.backendUrl || backendUrlInput), allianceCodeInput)))} onJoin={() => run(async () => {
+    const result = await joinAlliance(session.backendUrl || normalizeBaseUrl(backendUrlInput), session.token, allianceCodeInput);
+    setAccount(result.account);
+    setJoinRequest(result.joinRequest);
+    setAlliance(null);
+    setCurrentUser(null);
+    setAlliancePreview(result.alliance ? { id: result.alliance.id, name: result.alliance.name, code: result.alliance.code, players: result.alliance.players } : alliancePreview);
+    setSetupMode("join");
+    Alert.alert("Join request sent", "Your request was sent to the alliance leaders for approval.");
+  })} onCreateAlliance={() => run(async () => { const result = await createAlliance(session.backendUrl, session.token, { name: allianceNameInput, code: allianceCodeInput }); setAccount(result.account); setAlliance(result.alliance); setCurrentUser(result.player); setJoinRequest(null); setNewAllianceCode(result.alliance.code); })} onRefreshStatus={() => run(async () => { await refresh(); })} onSignOut={signOut} />;
 
   return (
     <ScreenContainer>
@@ -2276,9 +2287,6 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
-
-
-
 
 
 

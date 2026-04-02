@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { AppCard, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
@@ -16,6 +16,14 @@ export function HomeScreen({
   styles,
   t
 }) {
+  const [powerDraft, setPowerDraft] = useState({
+    overallPower: "",
+    heroPower: "",
+    squad1: "",
+    squad2: "",
+    squad3: "",
+    squad4: ""
+  });
   const squadPowers = currentUser?.squadPowers || {};
   const totalSquadPower = Number(currentUser?.totalSquadPower || 0);
   const desertStormTone = desertStormViewState === "vote_open_not_voted"
@@ -41,6 +49,34 @@ export function HomeScreen({
         : desertStormViewState === "vote_open_not_voted"
           ? "Voting is open. Respond before the Wednesday cutoff."
           : "No current assignment published.";
+
+  useEffect(() => {
+    setPowerDraft({
+      overallPower: String(currentUser?.overallPower ?? ""),
+      heroPower: String(currentUser?.heroPower ?? ""),
+      squad1: String(squadPowers.squad1 ?? ""),
+      squad2: String(squadPowers.squad2 ?? ""),
+      squad3: String(squadPowers.squad3 ?? ""),
+      squad4: String(squadPowers.squad4 ?? "")
+    });
+  }, [currentUser?.overallPower, currentUser?.heroPower, squadPowers.squad1, squadPowers.squad2, squadPowers.squad3, squadPowers.squad4]);
+
+  function updateDraft(field, value) {
+    setPowerDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function commitField(field) {
+    if (field === "overallPower" || field === "heroPower") {
+      onChangeField(field, powerDraft[field]);
+      return;
+    }
+    onChangeField("squadPowers", {
+      squad1: powerDraft.squad1,
+      squad2: powerDraft.squad2,
+      squad3: powerDraft.squad3,
+      squad4: powerDraft.squad4
+    });
+  }
 
   return <View style={styles.section}>
     <AppCard style={styles.homeHeroCard} styles={styles}>
@@ -75,9 +111,9 @@ export function HomeScreen({
         <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Hero Power</Text><Text style={styles.memberStatValue}>{Number(currentUser?.heroPower || 0).toFixed(2)}M</Text></View>
         <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad Total</Text><Text style={styles.memberStatValue}>{totalSquadPower.toFixed(2)}M</Text></View>
       </View>
-      <View style={styles.row}><TextInput value={String(currentUser?.overallPower ?? "")} onChangeText={(value) => onChangeField("overallPower", value)} style={[styles.input, styles.half]} placeholder="Total Power" keyboardType="decimal-pad" /><TextInput value={String(currentUser?.heroPower ?? "")} onChangeText={(value) => onChangeField("heroPower", value)} style={[styles.input, styles.half]} placeholder="Hero Power" keyboardType="decimal-pad" /></View>
-      <View style={styles.row}><TextInput value={String(squadPowers.squad1 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad1: value })} style={[styles.input, styles.half]} placeholder="Squad 1" keyboardType="decimal-pad" /><TextInput value={String(squadPowers.squad2 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad2: value })} style={[styles.input, styles.half]} placeholder="Squad 2" keyboardType="decimal-pad" /></View>
-      <View style={styles.row}><TextInput value={String(squadPowers.squad3 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad3: value })} style={[styles.input, styles.half]} placeholder="Squad 3" keyboardType="decimal-pad" /><TextInput value={String(squadPowers.squad4 ?? "")} onChangeText={(value) => onChangeField("squadPowers", { ...squadPowers, squad4: value })} style={[styles.input, styles.half]} placeholder="Squad 4" keyboardType="decimal-pad" /></View>
+      <View style={styles.row}><TextInput value={powerDraft.overallPower} onChangeText={(value) => updateDraft("overallPower", value)} onBlur={() => commitField("overallPower")} style={[styles.input, styles.half]} placeholder="Total Power" keyboardType="decimal-pad" /><TextInput value={powerDraft.heroPower} onChangeText={(value) => updateDraft("heroPower", value)} onBlur={() => commitField("heroPower")} style={[styles.input, styles.half]} placeholder="Hero Power" keyboardType="decimal-pad" /></View>
+      <View style={styles.row}><TextInput value={powerDraft.squad1} onChangeText={(value) => updateDraft("squad1", value)} onBlur={() => commitField("squad1")} style={[styles.input, styles.half]} placeholder="Squad 1" keyboardType="decimal-pad" /><TextInput value={powerDraft.squad2} onChangeText={(value) => updateDraft("squad2", value)} onBlur={() => commitField("squad2")} style={[styles.input, styles.half]} placeholder="Squad 2" keyboardType="decimal-pad" /></View>
+      <View style={styles.row}><TextInput value={powerDraft.squad3} onChangeText={(value) => updateDraft("squad3", value)} onBlur={() => commitField("squad3")} style={[styles.input, styles.half]} placeholder="Squad 3" keyboardType="decimal-pad" /><TextInput value={powerDraft.squad4} onChangeText={(value) => updateDraft("squad4", value)} onBlur={() => commitField("squad4")} style={[styles.input, styles.half]} placeholder="Squad 4" keyboardType="decimal-pad" /></View>
     </AppCard>
   </View>;
 }
