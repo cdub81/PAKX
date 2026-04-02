@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
@@ -19,6 +19,8 @@ export function LeaderControlsScreen({
   sending,
   currentUserHasPushToken
 }) {
+  const [historyOpen, setHistoryOpen] = useState(false);
+
   const filteredMembers = useMemo(() => {
     const query = String(memberSearchText || "").trim().toLowerCase();
     const members = Array.isArray(alliance?.players) ? alliance.players : [];
@@ -26,6 +28,7 @@ export function LeaderControlsScreen({
       .sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || "")))
       .filter((member) => !query || String(member?.name || "").toLowerCase().includes(query) || String(member?.rank || "").toLowerCase().includes(query));
   }, [alliance?.players, memberSearchText]);
+
   const selectedCount = Array.isArray(selectedMemberIds) ? selectedMemberIds.length : 0;
   const pushHistory = Array.isArray(history) ? history : [];
 
@@ -93,8 +96,18 @@ export function LeaderControlsScreen({
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="History" title="Recent Pushes" detail="Review who sent recent broadcasts and dig presets." styles={styles} />
-      <View style={styles.settingsStack}>
+      <Pressable onPress={() => setHistoryOpen((value) => !value)}>
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.flexOne}>
+            <SectionHeader eyebrow="History" title="Recent Pushes" detail={historyOpen ? "Tap to hide recent push history." : "Tap to open the recent push history folder."} styles={styles} />
+          </View>
+          <View style={styles.row}>
+            <StatusBadge label={pushHistory.length ? `${pushHistory.length} Logged` : "Empty"} tone={pushHistory.length ? "info" : "neutral"} styles={styles} />
+            <StatusBadge label={historyOpen ? "Open" : "Closed"} tone={historyOpen ? "success" : "neutral"} styles={styles} />
+          </View>
+        </View>
+      </Pressable>
+      {historyOpen ? <View style={styles.settingsStack}>
         {pushHistory.length
           ? pushHistory.map((entry) => <AppCard key={entry.id || `${entry.createdAt}-${entry.senderPlayerId}`} style={styles.settingsNestedCard} styles={styles}>
             <View style={styles.cardHeaderRow}>
@@ -117,7 +130,7 @@ export function LeaderControlsScreen({
             <Text style={styles.statusTitle}>No push history yet</Text>
             <Text style={styles.hint}>New broadcasts and dig presets will appear here after they are sent.</Text>
           </AppCard>}
-      </View>
+      </View> : null}
     </AppCard>
   </View>;
 }

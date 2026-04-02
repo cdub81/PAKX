@@ -7,7 +7,7 @@ export function HomeScreen({
   account,
   alliance,
   desertStormAssignment,
-  desertStormVoteStatus,
+  desertStormViewState,
   todayCalendarEntries,
   currentZombieSiegeEvent,
   onChangeField,
@@ -18,8 +18,29 @@ export function HomeScreen({
 }) {
   const squadPowers = currentUser?.squadPowers || {};
   const totalSquadPower = Number(currentUser?.totalSquadPower || 0);
-  const desertStormTone = desertStormVoteStatus === "needed" ? "warning" : desertStormVoteStatus === "submitted" ? "success" : desertStormAssignment ? "info" : "neutral";
-  const desertStormLabel = desertStormVoteStatus === "needed" ? "Response needed" : desertStormVoteStatus === "submitted" ? "Vote submitted" : desertStormAssignment ? "Assigned" : "Idle";
+  const desertStormTone = desertStormViewState === "vote_open_not_voted"
+    ? "warning"
+    : desertStormViewState === "vote_open_voted_waiting"
+      ? "success"
+      : desertStormViewState === "teams_published"
+        ? "info"
+        : "neutral";
+  const desertStormLabel = desertStormViewState === "vote_open_not_voted"
+    ? "Response needed"
+    : desertStormViewState === "vote_open_voted_waiting"
+      ? "Vote submitted"
+      : desertStormViewState === "teams_published"
+        ? "Teams published"
+        : "Idle";
+  const desertStormDetail = desertStormViewState === "teams_published" && desertStormAssignment
+    ? `Assigned to ${desertStormAssignment.taskForceLabel || desertStormAssignment.taskForceKey || "task force"}`
+    : desertStormViewState === "teams_published"
+      ? "Teams are published for members."
+      : desertStormViewState === "vote_open_voted_waiting"
+        ? "Your vote is in. Wait for leaders to publish the roster."
+        : desertStormViewState === "vote_open_not_voted"
+          ? "Voting is open. Respond before the Wednesday cutoff."
+          : "No current assignment published.";
 
   return <View style={styles.section}>
     <AppCard style={styles.homeHeroCard} styles={styles}>
@@ -37,7 +58,7 @@ export function HomeScreen({
     </AppCard>
 
     <AppCard variant={desertStormTone === "warning" ? "warning" : desertStormTone === "success" ? "active" : "info"} onPress={onOpenDesertStormVote || onOpenZombieSiege} styles={styles}>
-      <SectionHeader eyebrow="Active Operations" title="Desert Storm" detail={desertStormAssignment ? `Assigned to ${desertStormAssignment.taskForceLabel || desertStormAssignment.taskForceKey || "task force"}` : "No current assignment published."} styles={styles} />
+      <SectionHeader eyebrow="Active Operations" title="Desert Storm" detail={desertStormDetail} styles={styles} />
       <StatusBadge label={desertStormLabel} tone={desertStormTone} styles={styles} />
     </AppCard>
 

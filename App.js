@@ -14,7 +14,7 @@ import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { DesertStormScreen } from "./src/screens/DesertStormScreen";
 import { EventsHubScreen } from "./src/screens/EventsHubScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
-import { LeaderControlsScreen } from "./src/screens/LeaderControlsScreen";
+import { LeaderControlsScreen } from "./src/screens/LeaderControlsScreen.js";
 import { MembersScreen } from "./src/screens/MembersScreen";
 import { MoreScreen } from "./src/screens/MoreScreen";
 import { RemindersScreen } from "./src/screens/RemindersScreen";
@@ -26,7 +26,7 @@ import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/l
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
 import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
 import { buildCalendarNotificationCandidates, CALENDAR_NOTIFICATION_CHANNEL_ID, getCalendarNotificationStorageKey } from "./src/lib/calendarNotifications";
-import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormHistoryEvents, getDesertStormStatusLabel, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
+import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormHistoryEvents, getDesertStormStatusLabel, getDesertStormViewState, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
 import { formatReminderCountdown, formatReminderDuration } from "./src/lib/uiFormatters";
 
 const DEFAULT_BACKEND_URL = "https://pakx-production.up.railway.app";
@@ -659,7 +659,7 @@ export default function App() {
   const [moreSelection, setMoreSelection] = useState("");
   const [alliancePreview, setAlliancePreview] = useState(null);
   const [playerModal, setPlayerModal] = useState(null);
-  const [playerPickerMode, setPlayerPickerMode] = useState("voted");
+  const [playerPickerFilter, setPlayerPickerFilter] = useState("players");
   const [searchText, setSearchText] = useState("");
   const [memberSearchText, setMemberSearchText] = useState("");
   const [memberSortMode, setMemberSortMode] = useState("rankDesc");
@@ -788,21 +788,73 @@ export default function App() {
     if (!zombieSiegeEvents.length) return null;
     return zombieSiegeEvents.find((event) => event.id === selectedZombieSiegeEventId) || zombieSiegeEvents[0];
   }, [zombieSiegeEvents, selectedZombieSiegeEventId]);
+  const desertStormVoteResponseByPlayerId = useMemo(() => {
+    const entries = selectedDesertStormEvent?.vote?.responses || [];
+    return new Map(entries.map((entry) => [entry.playerId, entry]));
+  }, [selectedDesertStormEvent?.vote?.responses]);
+  const defaultPlayerPickerFilter = playerModal?.memberType === "Sub" ? "subs" : "players";
   const filteredOptions = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    const unassignedOptions = options.filter((player) => !assignedPlayerNames.has(player.name));
-    const roleFiltered = !playerModal || playerPickerMode === "all" ? unassignedOptions : unassignedOptions.filter((player) => {
-      const response = selectedDesertStormEvent?.vote?.responses?.find((entry) => entry.playerId === player.id);
-      if (!response) return false;
-      if (playerModal.memberType === "Sub") return response.optionId === "sub";
-      return response.optionId === "play";
+    const issueNames = new Set(desertStormDashboard.duplicatePlayers || []);
+    const filtered = options.filter((player) => {
+      const response = desertStormVoteResponseByPlayerId.get(player.id);
+      const isAssigned = assignedPlayerNames.has(player.name);
+      if (!playerModal) {
+        return !isAssigned;
+      }
+      switch (playerPickerFilter) {
+        case "players":
+          return response?.optionId === "play" && !isAssigned;
+        case "subs":
+          return response?.optionId === "sub" && !isAssigned;
+        case "all":
+          return true;
+        case "assigned":
+          return isAssigned;
+        case "unassigned":
+          return !isAssigned;
+        case "issues":
+          return issueNames.has(player.name) || isAssigned || !response || response.optionId === "no";
+        default:
+          return !isAssigned;
+      }
     });
-    return !q ? roleFiltered : roleFiltered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
-  }, [options, searchText, playerModal, playerPickerMode, selectedDesertStormEvent, assignedPlayerNames]);
+    return !q ? filtered : filtered.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q));
+  }, [options, searchText, playerModal, playerPickerFilter, assignedPlayerNames, desertStormVoteResponseByPlayerId, desertStormDashboard.duplicatePlayers]);
+  const playerPickerRows = useMemo(() => {
+    const duplicateNames = new Set(desertStormDashboard.duplicatePlayers || []);
+    return filteredOptions.map((player) => {
+      const response = desertStormVoteResponseByPlayerId.get(player.id);
+      const isAssigned = assignedPlayerNames.has(player.name);
+      const issueBadges = [];
+      if (!response) {
+        issueBadges.push({ label: "No Vote", tone: "warning" });
+      } else if (response.optionId === "no") {
+        issueBadges.push({ label: "Not Playing", tone: "danger" });
+      }
+      if (duplicateNames.has(player.name)) {
+        issueBadges.push({ label: "Duplicate", tone: "danger" });
+      }
+      if (isAssigned) {
+        issueBadges.push({ label: "Assigned", tone: "info" });
+      }
+      return {
+        ...player,
+        voteLabel: !response ? "No response" : response.optionId === "play" ? "Player" : response.optionId === "sub" ? "Sub" : "Not Playing",
+        statusLabel: isAssigned ? "Assigned" : "Available",
+        statusTone: isAssigned ? "info" : "success",
+        issueBadges
+      };
+    });
+  }, [filteredOptions, desertStormDashboard.duplicatePlayers, desertStormVoteResponseByPlayerId, assignedPlayerNames]);
   const filteredMembers = useMemo(() => { const q = memberSearchText.trim().toLowerCase(); const rankWeight = { R5: 5, R4: 4, R3: 3, R2: 2, R1: 1 }; const rankFilteredPlayers = memberRankFilter === "all" ? players : players.filter((p) => p.rank === memberRankFilter); const matchingPlayers = !q ? rankFilteredPlayers : rankFilteredPlayers.filter((p) => p.name.toLowerCase().includes(q) || p.rank.toLowerCase().includes(q)); return [...matchingPlayers].sort((a, b) => memberSortMode === "name" ? a.name.localeCompare(b.name) : (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0) || a.name.localeCompare(b.name)); }, [players, memberSearchText, memberSortMode, memberRankFilter]);
   const activeDesertStormVote = activeDesertStormEvent?.vote?.status === "open" ? activeDesertStormEvent.vote : null;
-  const desertStormVoteNeedsResponse = Boolean(activeDesertStormVote && !activeDesertStormVote.didVote);
-  const desertStormVoteSubmitted = Boolean(activeDesertStormVote && activeDesertStormVote.didVote);
+  const desertStormViewState = useMemo(() => getDesertStormViewState({
+    activeEvent: activeDesertStormEvent,
+    hasVoted: Boolean(activeDesertStormEvent?.vote?.didVote),
+    isPublished: Boolean(activeDesertStormEvent?.publishedAt) || activeDesertStormEvent?.status === "published"
+  }), [activeDesertStormEvent]);
+  const desertStormVoteNeedsResponse = desertStormViewState === "vote_open_not_voted";
   const androidPushTemporarilyDisabled = Platform.OS === "android";
   const shouldShowPushNotificationsPrompt = Boolean(session.token && alliance && currentUser && !androidPushTemporarilyDisabled && currentUser.desertStormVoteNotificationsEnabled !== false && !currentUser.hasExpoPushToken && notificationPermissionStatus !== "granted" && !pushPromptDismissed);
   const todayCalendarEntries = useMemo(() => {
@@ -869,6 +921,21 @@ export default function App() {
       setSelectedDesertStormEventId(eventId);
     } else if (activeDesertStormEvent?.id) {
       setSelectedDesertStormEventId(activeDesertStormEvent.id);
+    }
+  }
+
+  function openDesertStormTaskForceArea(eventId = "") {
+    const targetEvent = (desertStormEvents || []).find((event) => event.id === eventId)
+      || (activeDesertStormEvent?.id === eventId ? activeDesertStormEvent : null)
+      || activeDesertStormEvent
+      || null;
+    const targetSection = targetEvent?.myAssignment?.taskForceKey === "taskForceB" ? "taskForceB" : "taskForceA";
+    openEventsDestination("desertStorm");
+    setDesertStormSection(targetSection);
+    if (eventId) {
+      setSelectedDesertStormEventId(eventId);
+    } else if (targetEvent?.id) {
+      setSelectedDesertStormEventId(targetEvent.id);
     }
   }
 
@@ -1109,28 +1176,27 @@ export default function App() {
   }, [session.token, session.backendUrl, alliance, activeTab]);
 
   useEffect(() => {
-    Notifications.getLastNotificationResponseAsync().then((response) => {
+    const handleNotificationNavigation = (response) => {
       const data = response?.notification?.request?.content?.data || {};
       if (data?.type === "desertStormVote") {
         openDesertStormVoteArea(String(data.eventId || ""));
+      } else if (data?.type === "desertStormAssignmentsPublished") {
+        openDesertStormTaskForceArea(String(data.eventId || ""));
       } else if (data?.type === "calendarEvent") {
         handleTabPress("calendar");
       } else if (data?.type === "reminder") {
         handleTabPress("reminders");
       }
+    };
+
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      handleNotificationNavigation(response);
     }).catch(() => {});
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response?.notification?.request?.content?.data || {};
-      if (data?.type === "desertStormVote") {
-        openDesertStormVoteArea(String(data.eventId || ""));
-      } else if (data?.type === "calendarEvent") {
-        handleTabPress("calendar");
-      } else if (data?.type === "reminder") {
-        handleTabPress("reminders");
-      }
+      handleNotificationNavigation(response);
     });
     return () => subscription.remove();
-  }, []);
+  }, [desertStormEvents, activeDesertStormEvent?.id]);
 
   useEffect(() => {
     if (!session.token || !session.backendUrl || !alliance || !currentUser) {
@@ -1822,7 +1888,7 @@ export default function App() {
             {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
             {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
-            {activeTab === "home" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormVoteStatus={activeDesertStormVote ? (desertStormVoteNeedsResponse ? "needed" : desertStormVoteSubmitted ? "submitted" : "") : ""} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormVote ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => handleTabPress("calendar")} onOpenReminders={() => handleTabPress("reminders")} onOpenZombieSiege={() => openEventsDestination("zombieSiege")} onOpenFeedback={() => openMoreDestination("feedback")} onOpenSettings={() => openMoreDestination("settings")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+            {activeTab === "home" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormViewState={desertStormViewState} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormEvent ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => handleTabPress("calendar")} onOpenReminders={() => handleTabPress("reminders")} onOpenZombieSiege={() => openEventsDestination("zombieSiege")} onOpenFeedback={() => openMoreDestination("feedback")} onOpenSettings={() => openMoreDestination("settings")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
               const enabled = await syncPushNotifications({ requestPermission: true });
               if (!enabled) {
                 Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
@@ -1849,7 +1915,7 @@ export default function App() {
               {eventsSelection === "desertStorm" ? <DesertStormScreen styles={styles} section={desertStormSection} onChangeSection={setDesertStormSection} currentUser={currentUser} currentUserIsLeader={leader} players={players} events={desertStormEvents} archivedEvents={archivedDesertStormEvents} selectedEvent={selectedDesertStormEvent} selectedEventId={selectedDesertStormEventId} onSelectEvent={setSelectedDesertStormEventId} taskForce={selectedTaskForce} draftTaskForces={desertStormLeaderTaskForces} visibleTaskForces={desertStormVisibleTaskForces} moveSource={desertStormMoveSource} onSelectMoveSource={setDesertStormMoveSource} onMovePlayer={handleDesertStormMove} onPickPlayer={(context) => {
                 if (!leader || !selectedDesertStormEvent || selectedDesertStormEvent.status === "completed" || selectedDesertStormEvent.status === "archived") return;
                 setPlayerModal({ ...context, eventId: selectedDesertStormEvent.id });
-                setPlayerPickerMode("voted");
+                setPlayerPickerFilter(context.memberType === "Sub" ? "subs" : "players");
                 setSearchText("");
               }} onCreateEvent={handleCreateDesertStormEvent} newEventTitle={newDesertStormEventTitle} onChangeNewEventTitle={setNewDesertStormEventTitle} canCreateEvent={!activeDesertStormEvent} onSubmitVote={handleDesertStormVote} onOpenVote={(eventId) => handleDesertStormVoteState(eventId, "open")} onCloseVote={(eventId) => handleDesertStormVoteState(eventId, "closed")} onReopenVote={(eventId) => handleDesertStormVoteState(eventId, "reopen")} onPublishTeams={handleDesertStormPublish} onEditTeams={handleDesertStormEdit} onEndEvent={handleDesertStormEnd} onArchiveEvent={handleDesertStormArchive} onDeleteEvent={handleDesertStormDelete} helpers={{ getDesertStormStatusLabel, getDesertStormVoteOptionLabel }} /> : null}
               {eventsSelection === "zombieSiege" ? <ZombieSiegeScreen styles={styles} events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
@@ -1882,24 +1948,50 @@ export default function App() {
           </View>
         </View>
       <BottomSheetModal visible={Boolean(playerModal)} onClose={() => setPlayerModal(null)}>
-        <KeyboardAvoidingView style={styles.modalKeyboardShell} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+        <KeyboardAvoidingView style={[styles.modalKeyboardShell, styles.playerPickerSheet]} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
           <SectionHeader eyebrow="Assignment" title={t("choosePlayer")} detail="Choose from voted members or the full alliance without leaving the Desert Storm workflow." />
-          {playerModal ? <View style={styles.row}><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "voted" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("voted")}><Text style={[styles.secondaryButtonText, playerPickerMode === "voted" && styles.modeButtonTextActive]}>{t("votedMembers")}</Text></Pressable><Pressable style={[styles.secondaryButton, styles.half, playerPickerMode === "all" && styles.modeButtonActive]} onPress={() => setPlayerPickerMode("all")}><Text style={[styles.secondaryButtonText, playerPickerMode === "all" && styles.modeButtonTextActive]}>{t("entireAlliance")}</Text></Pressable></View> : null}
-          {playerModal && selectedDesertStormEvent?.vote && playerPickerMode === "voted" ? <Text style={styles.hint}>{playerModal.memberType === "Sub" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent.title}.` : `Showing members who voted "Play" for ${selectedDesertStormEvent.title}.`}</Text> : null}
-          {playerModal && playerPickerMode === "all" ? <Text style={styles.hint}>{t("showingAllAlliance")}</Text> : null}
-          <TextInput value={searchText} onChangeText={setSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
-          <ScrollView style={styles.modalListScroll} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
+          {playerModal ? <View style={styles.rankFilterRow}>
+            {[
+              { id: "players", label: "Players" },
+              { id: "subs", label: "Subs" },
+              { id: "all", label: "All" },
+              { id: "assigned", label: "Assigned" },
+              { id: "unassigned", label: "Unassigned" },
+              { id: "issues", label: "Issues" }
+            ].map((filter) => <Pressable key={filter.id} style={[styles.rankFilterButton, playerPickerFilter === filter.id && styles.rankFilterButtonActive]} onPress={() => setPlayerPickerFilter(filter.id)}><Text style={[styles.rankFilterButtonText, playerPickerFilter === filter.id && styles.rankFilterButtonTextActive]}>{filter.label}</Text></Pressable>)}
+          </View> : null}
+          {playerModal ? <View style={styles.row}>
+            <Pressable style={[styles.secondaryButton, styles.half, playerPickerFilter === "players" && styles.modeButtonActive]} onPress={() => setPlayerPickerFilter("players")}><Text style={[styles.secondaryButtonText, playerPickerFilter === "players" && styles.modeButtonTextActive]}>{defaultPlayerPickerFilter === "players" ? "From Players" : "Choose From Players"}</Text></Pressable>
+            <Pressable style={[styles.secondaryButton, styles.half, playerPickerFilter === "subs" && styles.modeButtonActive]} onPress={() => setPlayerPickerFilter("subs")}><Text style={[styles.secondaryButtonText, playerPickerFilter === "subs" && styles.modeButtonTextActive]}>{defaultPlayerPickerFilter === "subs" ? "From Subs" : "Choose From Subs"}</Text></Pressable>
+          </View> : null}
+          {playerModal ? <Text style={styles.hint}>{playerPickerFilter === "players" ? `Showing members who voted "Play" for ${selectedDesertStormEvent?.title || "this event"}.` : playerPickerFilter === "subs" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent?.title || "this event"}.` : playerPickerFilter === "all" ? t("showingAllAlliance") : playerPickerFilter === "assigned" ? "Showing members already assigned somewhere in the current draft." : playerPickerFilter === "unassigned" ? "Showing members not yet assigned in the current draft." : "Showing members with draft or vote issues to review."}</Text> : null}
+          <TextInput value={searchText} onChangeText={setSearchText} style={[styles.input, styles.playerPickerSearch]} placeholder={t("searchNameOrRank")} />
+          <ScrollView style={[styles.modalListScroll, styles.playerPickerList]} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
             <Pressable style={styles.pick} onPress={() => run(async () => {
               await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });
               setPlayerModal(null);
               await refresh();
             })}><Text style={styles.pickText}>{t("clearSelection")}</Text></Pressable>
-            {filteredOptions.map((player) => <Pressable key={player.id} style={styles.pick} onPress={() => run(async () => {
+            {playerPickerRows.map((player) => <Pressable key={player.id} style={styles.playerPickerRow} onPress={() => run(async () => {
               await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: player.name });
               setPlayerModal(null);
               await refresh();
-            })}><Text style={styles.pickText}>{player.name} - {player.rank} - {player.overallPower.toFixed(2)}M</Text></Pressable>)}
-            {!filteredOptions.length ? <Text style={styles.hint}>{playerPickerMode === "voted" && selectedDesertStormEvent?.vote ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
+            })}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.listRowContent}>
+                  <Text style={styles.cardTitle}>{player.name}</Text>
+                  <Text style={styles.hint}>{player.rank} • {player.overallPower.toFixed(2)}M</Text>
+                </View>
+                <StatusBadge label={player.statusLabel} tone={player.statusTone} />
+              </View>
+              <View style={styles.row}>
+                <StatusBadge label={player.voteLabel} tone={player.voteLabel === "Player" ? "success" : player.voteLabel === "Sub" ? "warning" : "neutral"} />
+              </View>
+              {player.issueBadges.length ? <View style={styles.rankFilterRow}>
+                {player.issueBadges.map((badge) => <StatusBadge key={`${player.id}-${badge.label}`} label={badge.label} tone={badge.tone} />)}
+              </View> : null}
+            </Pressable>)}
+            {!playerPickerRows.length ? <Text style={styles.hint}>{playerPickerFilter === "players" || playerPickerFilter === "subs" ? t("noMembersMatchVoteFilter") : t("noPlayersMatchSearch")}</Text> : null}
           </ScrollView>
           <SecondaryButton label="Close" onPress={() => setPlayerModal(null)} />
         </KeyboardAvoidingView>
@@ -2047,12 +2139,18 @@ const styles = StyleSheet.create({
   modalKeyboardShell: { gap: 12, maxHeight: "100%" },
   modalListScroll: { maxHeight: 320 },
   modalListContent: { gap: 10, paddingBottom: 6 },
+  playerPickerSheet: { minHeight: 620 },
+  playerPickerList: { maxHeight: 540, flexGrow: 1 },
+  playerPickerSearch: { minHeight: 48 },
+  playerPickerRow: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: DESIGN_TOKENS.radius.md, padding: 14, gap: 10, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong },
   quickActionGrid: { gap: 10 },
   quickActionCard: { gap: 6 },
   quickActionTitle: { color: DESIGN_TOKENS.colors.text, fontSize: 18, fontWeight: "800" },
   quickActionDetail: { color: DESIGN_TOKENS.colors.textSoft, fontSize: 14, lineHeight: 19 },
   desertStormTaskForceCard: { gap: 6 },
   desertStormSlotCard: { padding: 8, gap: 4 },
+  desertStormSlotCardAssigned: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green, borderWidth: 1 },
+  desertStormSlotCardVoteChanged: { backgroundColor: DESIGN_TOKENS.colors.redSoft, borderColor: DESIGN_TOKENS.colors.red, borderWidth: 1 },
   desertStormSlotName: { fontSize: 15, fontWeight: "700", color: DESIGN_TOKENS.colors.text },
   desertStormLeaderControls: { gap: 10 },
   voteStatusRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
@@ -2178,17 +2276,6 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 

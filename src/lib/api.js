@@ -320,6 +320,15 @@ export function archiveDesertStormEvent(baseUrl, token, eventId) {
   });
 }
 
+export function deleteDesertStormEvent(baseUrl, token, eventId) {
+  return request(baseUrl, `/api/desert-storm/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function registerExpoPushToken(baseUrl, token, expoPushToken) {
   return request(baseUrl, "/api/me/expo-push-token", {
     method: "POST",

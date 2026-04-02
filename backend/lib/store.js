@@ -190,6 +190,9 @@ function normalizeDesertStormEvent(value) {
     votingCloseAt: value?.votingCloseAt || value?.vote?.closedAt || cycle.votingCloseAt,
     matchStartsAt: value?.matchStartsAt || cycle.matchStartsAt,
     hasUnpublishedChanges: value?.hasUnpublishedChanges === undefined ? normalizedStatus !== "published" : Boolean(value?.hasUnpublishedChanges),
+    voteChangedDraftedMemberIds: Array.isArray(value?.voteChangedDraftedMemberIds)
+      ? [...new Set(value.voteChangedDraftedMemberIds.map((entry) => String(entry || "").trim()).filter(Boolean))]
+      : [],
     calendarEventId: value?.calendarEventId || "",
     vote: normalizeDesertStormEventVote(value?.vote),
     draftTaskForces,
@@ -917,7 +920,7 @@ function createStore(config = {}) {
     };
   }
 
-  function findAssignmentInTaskForces(taskForces, playerName) {
+function findAssignmentInTaskForces(taskForces, playerName) {
     for (const taskForce of Object.values(taskForces || {})) {
       for (const squad of taskForce.squads || []) {
         for (const slot of squad.slots || []) {
@@ -934,8 +937,24 @@ function createStore(config = {}) {
         }
       }
     }
-    return null;
-  }
+  return null;
+}
+
+function getDraftedPlayerIdsForEvent(alliance, event) {
+  const draftedPlayerNames = new Set();
+  Object.values(event?.draftTaskForces || {}).forEach((taskForce) => {
+    (taskForce.squads || []).forEach((squad) => {
+      (squad.slots || []).forEach((slot) => {
+        if (slot.playerName) {
+          draftedPlayerNames.add(slot.playerName);
+        }
+      });
+    });
+  });
+  return alliance.players
+    .filter((player) => draftedPlayerNames.has(player.name))
+    .map((player) => player.id);
+}
 
   function publicDesertStormEvent(event, alliance, viewerPlayerId = "", viewerIsLeader = false) {
     const publishedAssignment = event.publishedTaskForces ? findAssignmentInTaskForces(event.publishedTaskForces, alliance.players.find((player) => player.id === viewerPlayerId)?.name) : null;
@@ -976,6 +995,7 @@ function createStore(config = {}) {
 
     return {
       ...base,
+      voteChangedDraftedMemberIds: [...event.voteChangedDraftedMemberIds],
       draftTaskForces: clone(event.draftTaskForces),
       publishedTaskForces: event.publishedTaskForces ? clone(event.publishedTaskForces) : null
     };
@@ -1028,10 +1048,12 @@ function createStore(config = {}) {
           to: expoPushToken,
           sound: "default",
           title: "Desert Storm",
-          body: isRepublish ? `${event.title} assignments were updated.` : `${event.title} assignments are now published.`,
+          body: "Desert Storm teams have been published",
           data: {
             type: "desertStormAssignmentsPublished",
-            eventId: event.id
+            eventId: event.id,
+            target: "taskForce",
+            isRepublish
           }
         });
       });
@@ -2248,6 +2270,7 @@ function createStore(config = {}) {
       throw new Error("Vote option not found.");
     }
     const existing = (event.vote.responses || []).find((entry) => entry.playerId === player.id);
+    const previousOptionId = existing?.optionId || "";
     if (existing) {
       existing.optionId = optionId;
       existing.createdAt = new Date().toISOString();
@@ -2259,6 +2282,12 @@ function createStore(config = {}) {
         optionId,
         createdAt: new Date().toISOString()
       });
+    }
+    if (previousOptionId && previousOptionId !== optionId) {
+      const draftedPlayerIds = new Set(getDraftedPlayerIdsForEvent(alliance, event));
+      if (draftedPlayerIds.has(player.id)) {
+        event.voteChangedDraftedMemberIds = [...new Set([...(event.voteChangedDraftedMemberIds || []), player.id])];
+      }
     }
     event.updatedAt = new Date().toISOString();
     commit();
@@ -2306,6 +2335,7 @@ function createStore(config = {}) {
     }
     target.slot.playerName = normalizedPlayerName;
     event.hasUnpublishedChanges = true;
+    event.voteChangedDraftedMemberIds = [];
     event.updatedAt = new Date().toISOString();
     commit();
     return publicDesertStormEvent(event, alliance, player.id, true);
@@ -2332,6 +2362,7 @@ function createStore(config = {}) {
     source.slot.playerName = targetPlayerName;
     target.slot.playerName = sourcePlayerName;
     event.hasUnpublishedChanges = true;
+    event.voteChangedDraftedMemberIds = [];
     event.updatedAt = new Date().toISOString();
     commit();
     return publicDesertStormEvent(event, alliance, player.id, true);
@@ -2351,6 +2382,7 @@ function createStore(config = {}) {
     event.version = Number(event.version || 1) + 1;
     event.status = "published";
     event.hasUnpublishedChanges = false;
+    event.voteChangedDraftedMemberIds = [];
     event.updatedAt = event.publishedAt;
     queueExpoPushMessages(buildDesertStormAssignmentsPublishedMessages(alliance, event, isRepublish));
     commit();
