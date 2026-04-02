@@ -612,15 +612,16 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
       </AppCard>
       <AppCard>
         <View style={styles.row}>
-          <Pressable style={[styles.secondaryButton, styles.half, setupMode === "join" && styles.modeButtonActive]} onPress={() => setSetupMode("join")}><Text style={[styles.secondaryButtonText, setupMode === "join" && styles.modeButtonTextActive]}>Join</Text></Pressable>
-          <Pressable style={[styles.secondaryButton, styles.half, setupMode === "create" && styles.modeButtonActive]} onPress={() => setSetupMode("create")}><Text style={[styles.secondaryButtonText, setupMode === "create" && styles.modeButtonTextActive]}>Create</Text></Pressable>
+          <Pressable style={[styles.secondaryButton, styles.half, setupMode === "join" && styles.modeButtonActive]} onPress={() => setSetupMode("join")}><Text style={[styles.secondaryButtonText, setupMode === "join" && styles.modeButtonTextActive]}>Join Mode</Text></Pressable>
+          <Pressable style={[styles.secondaryButton, styles.half, setupMode === "create" && styles.modeButtonActive]} onPress={() => setSetupMode("create")}><Text style={[styles.secondaryButtonText, setupMode === "create" && styles.modeButtonTextActive]}>Create Mode</Text></Pressable>
         </View>
         {setupMode === "join" ? <>
           <TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" autoCapitalize="characters" />
           <View style={styles.row}>
             <PrimaryButton label="Preview Alliance" onPress={onPreview} style={styles.half} disabled={loading} />
-            <SecondaryButton label="Refresh Status" onPress={onRefreshStatus} style={styles.half} disabled={loading} />
+            <PrimaryButton label={joinRequest ? "Request Pending" : "Join Alliance"} onPress={onJoin} style={styles.half} disabled={Boolean(joinRequest) || loading || !String(allianceCodeInput || "").trim()} tone="blue" />
           </View>
+          <SecondaryButton label="Refresh Status" onPress={onRefreshStatus} disabled={loading} />
           {alliancePreview ? <AppCard style={styles.settingsNestedCard}><Text style={styles.cardTitle}>{alliancePreview.name}</Text><Text style={styles.hint}>Code: {alliancePreview.code}</Text><PrimaryButton label={joinRequest ? "Request Pending" : "Join Alliance"} onPress={onJoin} disabled={Boolean(joinRequest) || loading} /></AppCard> : null}
           {joinRequest ? <Text style={styles.hint}>Your join request is pending leader approval.</Text> : null}
         </> : <>
@@ -2290,7 +2291,6 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
-
 
 
 
