@@ -1355,7 +1355,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       id: alliance.id,
       name: alliance.name,
       code: alliance.code,
-      players: alliance.players.map(publicPlayer)
+      players: alliance.players.map((player) => publicPlayer(player, alliance.desertStormLayouts, alliance.desertStormEvents))
     };
   }
 
