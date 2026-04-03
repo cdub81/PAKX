@@ -33,89 +33,95 @@ export function SettingsScreen({
   onEnablePushNotifications,
   LanguageSelector,
   RankSelector,
-  powerInputHint,
+  hasTranslationKey,
   styles
 }) {
+  const st = (key, values = {}) => {
+    if (__DEV__ && language !== "en" && typeof hasTranslationKey === "function" && !hasTranslationKey(key)) {
+      console.warn(`[SettingsScreen] Missing translation for ${language}: ${key}`);
+    }
+    return t(key, values);
+  };
   const notificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
   const digNotificationsEnabled = currentUser?.digNotificationsEnabled !== false;
 
   return <View style={styles.section}>
     <AppCard style={styles.settingsHeroCard} styles={styles}>
-      <SectionHeader eyebrow="Settings" title={t("allianceTitle")} detail="Manage account context, app preferences, alerts, and alliance controls from grouped sections." styles={styles} />
+      <SectionHeader eyebrow={st("settings.hero.eyebrow")} title={st("settings.title")} detail={st("settings.hero.description")} styles={styles} />
       <View style={styles.row}>
-        <StatusBadge label={currentUserIsLeader ? "Leader Access" : "Member Access"} tone={currentUserIsLeader ? "info" : "neutral"} styles={styles} />
-        <StatusBadge label={joinRequests?.length ? `${joinRequests.length} Pending` : "Stable"} tone={joinRequests?.length ? "warning" : "success"} styles={styles} />
+        <StatusBadge label={currentUserIsLeader ? st("settings.hero.statusLeader") : st("settings.hero.statusMember")} tone={currentUserIsLeader ? "info" : "neutral"} styles={styles} />
+        <StatusBadge label={joinRequests?.length ? st("settings.hero.statusPending", { count: joinRequests.length }) : st("settings.hero.statusStable")} tone={joinRequests?.length ? "warning" : "success"} styles={styles} />
       </View>
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="Account" title="Signed-in context" detail="Current account, alliance, and player identity are grouped here for quick reference." styles={styles} />
-      <ListRow title={t("accountLabel", { value: account?.username })} styles={styles} />
-      <ListRow title={t("allianceLabel", { value: alliance?.name })} styles={styles} />
-      <ListRow title={t("codeLabel", { value: alliance?.code })} styles={styles} />
-      <ListRow title={t("signedInAsPlayer", { value: currentUser?.name })} styles={styles} />
+      <SectionHeader eyebrow={st("settings.account.eyebrow")} title={st("settings.account.title")} detail={st("settings.account.description")} styles={styles} />
+      <ListRow title={st("settings.account.accountLabel", { value: account?.username })} styles={styles} />
+      <ListRow title={st("settings.account.allianceLabel", { value: alliance?.name })} styles={styles} />
+      <ListRow title={st("settings.account.codeLabel", { value: alliance?.code })} styles={styles} />
+      <ListRow title={st("settings.account.playerLabel", { value: currentUser?.name })} styles={styles} />
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="Notifications" title="Alert preferences" detail="Manage personal alert preferences without changing existing reminder or event logic." styles={styles} />
+      <SectionHeader eyebrow={st("settings.notifications.eyebrow")} title={st("settings.notifications.title")} detail={st("settings.notifications.description")} styles={styles} />
       {showPushNotificationControls ? <Pressable onPress={() => onSetDesertStormVoteNotificationsEnabled(!notificationsEnabled)}>
-        <ListRow title="Desert Storm vote alerts" detail={notificationsEnabled ? "Enabled for your account." : "Disabled for your account."} right={<StatusBadge label={notificationsEnabled ? "Enabled" : "Disabled"} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
+        <ListRow title={st("settings.notifications.desertStormVoteAlerts.title")} detail={notificationsEnabled ? st("settings.notifications.desertStormVoteAlerts.enabled") : st("settings.notifications.desertStormVoteAlerts.disabled")} right={<StatusBadge label={notificationsEnabled ? st("settings.notifications.badgeEnabled") : st("settings.notifications.badgeDisabled")} tone={notificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
       </Pressable> : null}
       <Pressable onPress={() => onSetDigNotificationsEnabled(!digNotificationsEnabled)}>
-        <ListRow title="Dig notifications" detail={digNotificationsEnabled ? "Enabled for your account." : "Opted out for your account."} right={<StatusBadge label={digNotificationsEnabled ? "Enabled" : "Disabled"} tone={digNotificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
+        <ListRow title={st("settings.notifications.dig.title")} detail={digNotificationsEnabled ? st("settings.notifications.dig.enabled") : st("settings.notifications.dig.disabled")} right={<StatusBadge label={digNotificationsEnabled ? st("settings.notifications.badgeEnabled") : st("settings.notifications.badgeDisabled")} tone={digNotificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
       </Pressable>
       {showPushNotificationControls && showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
-        <Text style={styles.cardTitle}>Enable push notifications</Text>
-        <Text style={styles.hint}>Turn on device notifications to receive Desert Storm vote alerts on this device.</Text>
-        <PrimaryButton label={notificationSetupInFlight ? "Enabling..." : "Enable Notifications"} onPress={onEnablePushNotifications} disabled={notificationSetupInFlight} tone="blue" styles={styles} />
+        <Text style={styles.cardTitle}>{st("settings.notifications.enablePush.title")}</Text>
+        <Text style={styles.hint}>{st("settings.notifications.enablePush.description")}</Text>
+        <PrimaryButton label={notificationSetupInFlight ? st("settings.notifications.enablePush.buttonLoading") : st("settings.notifications.enablePush.button")} onPress={onEnablePushNotifications} disabled={notificationSetupInFlight} tone="blue" styles={styles} />
       </AppCard> : null}
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="Preferences" title="Language" detail="Update app-level preferences without changing alliance data." styles={styles} />
-      <LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={t} />
+      <SectionHeader eyebrow={st("settings.preferences.eyebrow")} title={st("settings.language.title")} detail={st("settings.language.description")} styles={styles} />
+      <LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={(key, values) => key === "language" ? st("settings.language.title", values) : t(key, values)} />
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
-      <SectionHeader eyebrow="App Controls" title="Session and device actions" detail="Keep account-level controls separated from alliance management actions." styles={styles} />
-      <SecondaryButton label={t("signOut")} onPress={onSignOut} styles={styles} />
+      <SectionHeader eyebrow={st("settings.appControls.eyebrow")} title={st("settings.session.title")} detail={st("settings.session.description")} styles={styles} />
+      <SecondaryButton label={st("settings.session.signOut")} onPress={onSignOut} styles={styles} />
     </AppCard>
 
     {currentUserIsLeader ? <>
       <AppCard style={styles.settingsSectionCard} styles={styles}>
-        <SectionHeader eyebrow="Requests" title={t("pendingJoinRequests")} detail="Approve or reject new join requests without leaving the settings workflow." styles={styles} />
+        <SectionHeader eyebrow={st("settings.requests.eyebrow")} title={st("settings.requests.title")} detail={st("settings.requests.description")} styles={styles} />
         {joinRequests?.length ? <View style={styles.settingsStack}>
           {joinRequests.map((req) => <AppCard key={req.id} style={styles.settingsNestedCard} styles={styles}>
             <Text style={styles.cardTitle}>{req.displayName}</Text>
-            <Text style={styles.hint}>{t("requestedWithCode", { code: req.allianceCode })}</Text>
+            <Text style={styles.hint}>{st("settings.requests.requestedWithCode", { code: req.allianceCode })}</Text>
             <View style={styles.row}>
-              <PrimaryButton label={t("approve")} onPress={() => onApproveJoinRequest(req.id)} style={styles.half} styles={styles} />
-              <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{t("reject")}</Text></Pressable>
+              <PrimaryButton label={st("settings.requests.approve")} onPress={() => onApproveJoinRequest(req.id)} style={styles.half} styles={styles} />
+              <Pressable style={[styles.dangerButton, styles.half]} onPress={() => onRejectJoinRequest(req.id)}><Text style={styles.dangerButtonText}>{st("settings.requests.reject")}</Text></Pressable>
             </View>
           </AppCard>)}
-        </View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{t("noPendingRequests")}</Text><Text style={styles.hint}>New join requests will appear here when they are ready for review.</Text></AppCard>}
+        </View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{st("settings.requests.emptyTitle")}</Text><Text style={styles.hint}>{st("settings.requests.emptyDescription")}</Text></AppCard>}
       </AppCard>
 
       <AppCard style={styles.settingsSectionCard} styles={styles}>
-        <SectionHeader eyebrow="Alliance" title={t("rotateCode")} detail="Rotate or update the alliance code with a single clear action." styles={styles} />
+        <SectionHeader eyebrow={st("settings.alliance.eyebrow")} title={st("settings.alliance.rotateCode")} detail={st("settings.alliance.description")} styles={styles} />
         <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} />
-        <PrimaryButton label={t("updateCode")} onPress={onRotateAllianceCode} styles={styles} />
+        <PrimaryButton label={st("settings.alliance.updateCode")} onPress={onRotateAllianceCode} styles={styles} />
       </AppCard>
 
       <AppCard style={styles.settingsSectionCard} styles={styles}>
-        <SectionHeader eyebrow="Roster" title={t("addMember")} detail="Leaders can add members directly from settings without changing roster behavior." styles={styles} />
-        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={t("name")} />
-        <Text style={styles.hint}>{powerInputHint}</Text>
+        <SectionHeader eyebrow={st("settings.roster.eyebrow")} title={st("settings.roster.title")} detail={st("settings.roster.description")} styles={styles} />
+        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={st("settings.roster.namePlaceholder")} />
+        <Text style={styles.hint}>{st("settings.roster.powerHint")}</Text>
         <View style={styles.row}>
           <RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} />
-          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={t("power")} keyboardType="decimal-pad" />
+          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={st("settings.roster.powerPlaceholder")} keyboardType="decimal-pad" />
         </View>
-        <PrimaryButton label={t("addMember")} onPress={onAddMember} styles={styles} />
+        <PrimaryButton label={st("settings.roster.addMember")} onPress={onAddMember} styles={styles} />
       </AppCard>
     </> : <AppCard variant="danger" style={styles.settingsDangerCard} styles={styles}>
-      <SectionHeader eyebrow="Danger Zone" title={t("memberOptions")} detail="Important account and alliance actions are isolated here so they stay clear but restrained." styles={styles} />
-      <Text style={styles.hint}>{t("leaveAnyTime")}</Text>
-      <Pressable style={styles.dangerButton} onPress={() => Alert.alert(t("leaveAllianceTitle"), t("leaveAllianceConfirm"), [{ text: t("cancel"), style: "cancel" }, { text: t("leave"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{t("leaveAlliance")}</Text></Pressable>
+      <SectionHeader eyebrow={st("settings.danger.eyebrow")} title={st("settings.danger.title")} detail={st("settings.danger.description")} styles={styles} />
+      <Text style={styles.hint}>{st("settings.danger.leaveAnyTime")}</Text>
+      <Pressable style={styles.dangerButton} onPress={() => Alert.alert(st("settings.danger.leaveTitle"), st("settings.danger.leaveConfirm"), [{ text: st("common.cancel"), style: "cancel" }, { text: st("settings.danger.leaveButton"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{st("settings.danger.leaveButton")}</Text></Pressable>
     </AppCard>}
   </View>;
 }

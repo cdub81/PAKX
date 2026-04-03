@@ -26,14 +26,14 @@ export function FeedbackScreen({
 
   return <View style={styles.section}>
     <AppCard style={styles.feedbackHeroCard} styles={styles}>
-      <SectionHeader eyebrow="Feedback" title={t("feedbackTitle")} detail={t("feedbackHint")} styles={styles} />
-      <StatusBadge label={feedbackEntries.length ? `${feedbackEntries.length} entries` : "No entries"} tone={feedbackEntries.length ? "info" : "neutral"} styles={styles} />
+      <SectionHeader eyebrow={t("feedback.section")} title={t("feedbackTitle")} detail={t("feedbackHint")} styles={styles} />
+      <StatusBadge label={feedbackEntries.length ? t("feedback.entriesCount", { count: feedbackEntries.length }) : t("feedback.noEntriesBadge")} tone={feedbackEntries.length ? "info" : "neutral"} styles={styles} />
     </AppCard>
 
     <AppCard style={styles.feedbackComposerCard} styles={styles}>
-      <SectionHeader eyebrow="Submit" title="Share feedback" detail="Send clear notes to the alliance team without changing the existing submission flow." styles={styles} />
+      <SectionHeader eyebrow={t("feedback.submitSection")} title={t("feedback.shareTitle")} detail={t("feedback.shareDetail")} styles={styles} />
       <View style={styles.memberStatCard}>
-        <Text style={styles.memberStatLabel}>Current Build</Text>
+        <Text style={styles.memberStatLabel}>{t("feedback.currentBuild")}</Text>
         <Text style={styles.memberStatValue}>{buildLabel}</Text>
       </View>
       <TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={t("feedbackExample")} multiline />
@@ -41,33 +41,35 @@ export function FeedbackScreen({
     </AppCard>
 
     <AppCard style={styles.feedbackHistoryCard} styles={styles}>
-      <SectionHeader eyebrow="Recent" title={t("allianceFeedback")} detail="Recent feedback and follow-up comments stay readable in a single history stream." styles={styles} />
+      <SectionHeader eyebrow={t("feedback.recentSection")} title={t("allianceFeedback")} detail={t("feedback.historyDetail")} styles={styles} />
       {feedbackEntries.length ? <View style={styles.feedbackEntryList}>
         {feedbackEntries.map((entry) => {
           const commentDraft = commentDrafts[entry.id] || "";
+          const authorName = entry.createdByName || t("common.member");
+
           return <AppCard key={entry.id} style={styles.feedbackEntryCard} styles={styles}>
             <View style={styles.cardHeaderRow}>
               <View style={styles.listRowContent}>
-                <Text style={styles.cardTitle}>{entry.createdByName || "Member"}</Text>
+                <Text style={styles.cardTitle}>{authorName}</Text>
                 <Text style={styles.hint}>{String(entry.createdAt).slice(0, 10)}</Text>
               </View>
-              <StatusBadge label={`${(entry.comments || []).length} comments`} tone={(entry.comments || []).length ? "info" : "neutral"} styles={styles} />
+              <StatusBadge label={t("feedback.commentCount", { count: (entry.comments || []).length })} tone={(entry.comments || []).length ? "info" : "neutral"} styles={styles} />
             </View>
             <Text style={styles.line}>{entry.message}</Text>
-            <Text style={styles.hint}>{t("feedbackFrom", { name: entry.createdByName || "Member", date: String(entry.createdAt).slice(0, 10) })}</Text>
+            <Text style={styles.hint}>{t("feedbackFrom", { name: authorName, date: String(entry.createdAt).slice(0, 10) })}</Text>
             <View style={styles.feedbackCommentList}>
               {(entry.comments || []).length ? entry.comments.map((comment) => <View key={comment.id} style={styles.feedbackCommentCard}>
                 <Text style={styles.line}>{comment.message}</Text>
-                <Text style={styles.hint}>{comment.createdByName || "Member"} • {String(comment.createdAt).slice(0, 10)}</Text>
-              </View>) : <Text style={styles.hint}>No comments yet.</Text>}
+                <Text style={styles.hint}>{t("feedbackFrom", { name: comment.createdByName || t("common.member"), date: String(comment.createdAt).slice(0, 10) })}</Text>
+              </View>) : <Text style={styles.hint}>{t("feedback.noCommentsYet")}</Text>}
             </View>
             <View style={styles.feedbackCommentComposer}>
-              <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder="Add a comment" multiline />
-              <SecondaryButton label="Comment" onPress={() => onSubmitFeedbackComment(entry.id, commentDraft, () => updateCommentDraft(entry.id, ""))} styles={styles} />
+              <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder={t("feedback.addComment")} multiline />
+              <SecondaryButton label={t("feedback.commentButton")} onPress={() => onSubmitFeedbackComment(entry.id, commentDraft, () => updateCommentDraft(entry.id, ""))} styles={styles} />
             </View>
           </AppCard>;
         })}
-      </View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>No feedback yet</Text><Text style={styles.hint}>{t("noFeedback")}</Text></AppCard>}
+      </View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{t("feedback.noFeedbackTitle")}</Text><Text style={styles.hint}>{t("noFeedback")}</Text></AppCard>}
     </AppCard>
   </View>;
 }

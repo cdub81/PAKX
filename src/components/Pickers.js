@@ -50,7 +50,7 @@ function CalendarTimeWheelColumn({ value, values, onChange, styles, itemHeight }
   </View>;
 }
 
-export function CalendarTimePickerModal({ visible, title, value, minValue = "", onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton }) {
+export function CalendarTimePickerModal({ visible, title, value, minValue = "", onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton, t }) {
   const parsedValue = parseReminderTimeValue(value || "00:00") || { hours: 0, minutes: 0 };
   const parsedMin = parseReminderTimeValue(minValue || "") || null;
   const [hourValue, setHourValue] = useState(parsedValue.hours);
@@ -84,20 +84,20 @@ export function CalendarTimePickerModal({ visible, title, value, minValue = "", 
   if (!visible) return null;
 
   return <BottomSheetModal visible={visible} onClose={onClose}>
-    <SectionHeader eyebrow="Picker" title={title} detail="" />
+    <SectionHeader eyebrow={t("picker.eyebrow")} title={title} detail="" />
     <View style={styles.calendarWheelHeader}>
-      <Text style={styles.hint}>Hour</Text>
-      <Text style={styles.hint}>Minute</Text>
+      <Text style={styles.hint}>{t("picker.hour")}</Text>
+      <Text style={styles.hint}>{t("picker.minute")}</Text>
     </View>
     <View style={styles.calendarWheelRow}>
       <CalendarTimeWheelColumn value={hourValue} values={hourOptions} onChange={setHourValue} styles={styles} itemHeight={itemHeight} />
       <CalendarTimeWheelColumn value={minuteValue} values={minuteOptions} onChange={setMinuteValue} styles={styles} itemHeight={itemHeight} />
     </View>
-    <PrimaryButton label="Done" onPress={onClose} />
+    <PrimaryButton label={t("picker.done")} onPress={onClose} />
   </BottomSheetModal>;
 }
 
-export function CalendarDatePickerModal({ visible, title, value, onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton }) {
+export function CalendarDatePickerModal({ visible, title, value, onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton, t }) {
   const safeValue = isValidReminderDateKey(value) ? value : formatReminderDateKey(new Date());
   const [yearValue, setYearValue] = useState(Number.parseInt(safeValue.slice(0, 4), 10));
   const [monthValue, setMonthValue] = useState(Number.parseInt(safeValue.slice(5, 7), 10));
@@ -127,22 +127,22 @@ export function CalendarDatePickerModal({ visible, title, value, onChange, onClo
   if (!visible) return null;
 
   return <BottomSheetModal visible={visible} onClose={onClose}>
-    <SectionHeader eyebrow="Picker" title={title} />
+    <SectionHeader eyebrow={t("picker.eyebrow")} title={title} />
     <View style={styles.calendarWheelHeader}>
-      <Text style={styles.hint}>Month</Text>
-      <Text style={styles.hint}>Day</Text>
-      <Text style={styles.hint}>Year</Text>
+      <Text style={styles.hint}>{t("picker.month")}</Text>
+      <Text style={styles.hint}>{t("picker.day")}</Text>
+      <Text style={styles.hint}>{t("picker.year")}</Text>
     </View>
     <View style={styles.calendarWheelRow}>
       <CalendarTimeWheelColumn value={monthValue} values={monthOptions} onChange={setMonthValue} styles={styles} itemHeight={itemHeight} />
       <CalendarTimeWheelColumn value={Math.min(dayValue, maxDay)} values={dayOptions} onChange={setDayValue} styles={styles} itemHeight={itemHeight} />
       <CalendarTimeWheelColumn value={yearValue} values={yearOptions} onChange={setYearValue} styles={styles} itemHeight={itemHeight} />
     </View>
-    <PrimaryButton label="Done" onPress={onClose} />
+    <PrimaryButton label={t("picker.done")} onPress={onClose} />
   </BottomSheetModal>;
 }
 
-export function ReminderDurationPickerModal({ visible, title, valueSeconds, onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton }) {
+export function ReminderDurationPickerModal({ visible, title, valueSeconds, onChange, onClose, styles, itemHeight, BottomSheetModal, SectionHeader, PrimaryButton, t }) {
   const totalSeconds = Math.max(0, Number(valueSeconds) || 0);
   const [hours, setHours] = useState(Math.floor(totalSeconds / 3600));
   const [minutes, setMinutes] = useState(Math.floor((totalSeconds % 3600) / 60));
@@ -162,17 +162,17 @@ export function ReminderDurationPickerModal({ visible, title, valueSeconds, onCh
   if (!visible) return null;
 
   return <BottomSheetModal visible={visible} onClose={onClose}>
-    <SectionHeader eyebrow="Reminder" title={title} detail="Set hours, minutes, and seconds for the countdown." />
+    <SectionHeader eyebrow={t("picker.reminderEyebrow")} title={title} detail={t("picker.detail")} />
     <View style={styles.calendarWheelHeader}>
-      <Text style={styles.hint}>Hours</Text>
-      <Text style={styles.hint}>Minutes</Text>
-      <Text style={styles.hint}>Seconds</Text>
+      <Text style={styles.hint}>{t("picker.hours")}</Text>
+      <Text style={styles.hint}>{t("picker.minutes")}</Text>
+      <Text style={styles.hint}>{t("picker.seconds")}</Text>
     </View>
     <View style={styles.calendarWheelRow}>
       <CalendarTimeWheelColumn value={hours} values={buildWheelValues(0, 23, formatTwoDigit)} onChange={setHours} styles={styles} itemHeight={itemHeight} />
       <CalendarTimeWheelColumn value={minutes} values={buildWheelValues(0, 59, formatTwoDigit)} onChange={setMinutes} styles={styles} itemHeight={itemHeight} />
       <CalendarTimeWheelColumn value={seconds} values={buildWheelValues(0, 59, formatTwoDigit)} onChange={setSeconds} styles={styles} itemHeight={itemHeight} />
     </View>
-    <PrimaryButton label="Done" onPress={onClose} />
+    <PrimaryButton label={t("picker.done")} onPress={onClose} />
   </BottomSheetModal>;
 }

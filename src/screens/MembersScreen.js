@@ -15,7 +15,8 @@ export function MembersScreen({
   onRemovePlayer,
   RankSelector,
   rankOptions,
-  styles
+  styles,
+  t
 }) {
   const [expandedMemberId, setExpandedMemberId] = useState("");
   const [editingMemberIds, setEditingMemberIds] = useState({});
@@ -93,29 +94,29 @@ export function MembersScreen({
 
   function handleRemove(player) {
     Alert.alert(
-      "Remove Member",
-      `Are you sure you want to remove ${player.name} from the alliance?`,
+      t("members.removeTitle"),
+      t("members.removeConfirm", { name: player.name }),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Remove", style: "destructive", onPress: () => onRemovePlayer(player.id) }
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("members.removeButton"), style: "destructive", onPress: () => onRemovePlayer(player.id) }
       ]
     );
   }
 
   return <View style={styles.section}>
     <AppCard style={styles.membersHeroCard} styles={styles}>
-      <SectionHeader eyebrow="Members" title="Operational roster" detail="Search, filter, and manage alliance members without changing roster logic." styles={styles} />
+      <SectionHeader eyebrow={t("tabMembers")} title={t("members.operationalRoster")} detail={t("members.operationalRosterDetail")} styles={styles} />
       <View style={styles.memberStatGrid}>
         <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>Visible</Text>
+          <Text style={styles.memberStatLabel}>{t("members.visible")}</Text>
           <Text style={styles.memberStatValue}>{rosterSummary.totalMembers}</Text>
         </View>
         <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>Total Power</Text>
+          <Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text>
           <Text style={styles.memberStatValue}>{rosterSummary.totalPower.toFixed(2)}M</Text>
         </View>
         <View style={styles.memberStatCard}>
-          <Text style={styles.memberStatLabel}>Hero Power</Text>
+          <Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text>
           <Text style={styles.memberStatValue}>{rosterSummary.totalHeroPower.toFixed(2)}M</Text>
         </View>
       </View>
@@ -129,14 +130,14 @@ export function MembersScreen({
     </AppCard>
 
     <AppCard style={styles.membersFilterCard} styles={styles}>
-      <SectionHeader eyebrow="Filters" title="Roster controls" detail="Keep the list tight and focused while preserving the existing search and sort rules." styles={styles} />
-      <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder="Search name or rank" />
+      <SectionHeader eyebrow={t("members.filters")} title={t("members.rosterControls")} detail={t("members.rosterControlsDetail")} styles={styles} />
+      <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
       <View style={styles.rankFilterRow}>
-        <Pressable style={[styles.rankFilterButton, memberSortMode === "rankDesc" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.rankFilterButtonText, memberSortMode === "rankDesc" && styles.rankFilterButtonTextActive]}>Rank</Text></Pressable>
-        <Pressable style={[styles.rankFilterButton, memberSortMode === "name" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.rankFilterButtonText, memberSortMode === "name" && styles.rankFilterButtonTextActive]}>Name</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, memberSortMode === "rankDesc" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.rankFilterButtonText, memberSortMode === "rankDesc" && styles.rankFilterButtonTextActive]}>{t("members.sortRank")}</Text></Pressable>
+        <Pressable style={[styles.rankFilterButton, memberSortMode === "name" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.rankFilterButtonText, memberSortMode === "name" && styles.rankFilterButtonTextActive]}>{t("members.sortName")}</Text></Pressable>
       </View>
       <View style={styles.rankFilterRow}>
-        {["all", ...rankOptions].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank === "all" ? "All Ranks" : rank}</Text></Pressable>)}
+        {["all", ...rankOptions].map((rank) => <Pressable key={rank} style={[styles.rankFilterButton, memberRankFilter === rank && styles.rankFilterButtonActive]} onPress={() => onChangeMemberRankFilter(rank)}><Text style={[styles.rankFilterButtonText, memberRankFilter === rank && styles.rankFilterButtonTextActive]}>{rank === "all" ? t("members.allRanks") : rank}</Text></Pressable>)}
       </View>
     </AppCard>
 
@@ -150,10 +151,10 @@ export function MembersScreen({
           <Pressable onPress={() => toggleExpanded(player.id)} style={styles.memberCardSummary}>
             <View style={styles.memberSummaryText}>
               <Text style={styles.memberName}>{player.name}</Text>
-              <Text style={styles.memberSubline}>{player.rank} • Total {Number(player.overallPower || 0).toFixed(2)}M • Hero {Number(player.heroPower || 0).toFixed(2)}M</Text>
+              <Text style={styles.memberSubline}>{player.rank} • {t("members.totalPowerShort", { value: Number(player.overallPower || 0).toFixed(2) })} • {t("members.heroPowerShort", { value: Number(player.heroPower || 0).toFixed(2) })}</Text>
             </View>
             <View style={styles.memberSummaryRight}>
-              <StatusBadge label={`${desertStormStats.playedCount || 0} DS`} tone="warning" styles={styles} />
+              <StatusBadge label={t("members.dsCount", { count: desertStormStats.playedCount || 0 })} tone="warning" styles={styles} />
               <Text style={styles.memberExpandIcon}>{isExpanded ? "-" : "+"}</Text>
             </View>
           </Pressable>
@@ -161,49 +162,49 @@ export function MembersScreen({
           {isExpanded ? <View style={styles.memberSection}>
             {!isEditing ? <>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Total Power</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Hero Power</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad Total</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.squadTotal")}</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 1</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad1 || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 2</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad2 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 1 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad1 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 2 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad2 || 0).toFixed(2)}M</Text></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 3</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad3 || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Squad 4</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad4 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 3 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad3 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 4 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad4 || 0).toFixed(2)}M</Text></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Desert Storm Played</Text><Text style={styles.memberStatValue}>{desertStormStats.playedCount || 0}</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>Desert Storm Missed</Text><Text style={styles.memberStatValue}>{desertStormStats.missedCount || 0}</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsPlayed")}</Text><Text style={styles.memberStatValue}>{desertStormStats.playedCount || 0}</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsMissed")}</Text><Text style={styles.memberStatValue}>{desertStormStats.missedCount || 0}</Text></View>
               </View>
               {currentUserIsLeader ? <View style={styles.memberCardActionsRow}>
-                <SecondaryButton label="Edit Member" onPress={() => toggleEditing(player.id, true)} style={styles.half} styles={styles} />
-                <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemove(player)}><Text style={styles.dangerButtonText}>Remove</Text></Pressable>
+                <SecondaryButton label={t("members.editMember")} onPress={() => toggleEditing(player.id, true)} style={styles.half} styles={styles} />
+                <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemove(player)}><Text style={styles.dangerButtonText}>{t("members.removeButton")}</Text></Pressable>
               </View> : null}
             </> : <View style={styles.memberSection}>
-              <TextInput value={draft.name} onChangeText={(value) => updateDraft(player.id, "name", value)} style={styles.input} placeholder="Member name" />
+              <TextInput value={draft.name} onChangeText={(value) => updateDraft(player.id, "name", value)} style={styles.input} placeholder={t("members.memberName")} />
               <RankSelector value={draft.rank || player.rank} onChange={(value) => updateDraft(player.id, "rank", value)} />
               <View style={styles.row}>
-                <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder="Total Power" keyboardType="decimal-pad" />
-                <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder="Hero Power" keyboardType="decimal-pad" />
+                <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder={t("members.totalPower")} keyboardType="decimal-pad" />
+                <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder={t("members.heroPower")} keyboardType="decimal-pad" />
               </View>
               <View style={styles.row}>
-                <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder="Squad 1" keyboardType="decimal-pad" />
-                <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder="Squad 2" keyboardType="decimal-pad" />
+                <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 1 })} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 2 })} keyboardType="decimal-pad" />
               </View>
               <View style={styles.row}>
-                <TextInput value={draft.squad3} onChangeText={(value) => updateDraft(player.id, "squad3", value)} style={[styles.input, styles.half]} placeholder="Squad 3" keyboardType="decimal-pad" />
-                <TextInput value={draft.squad4} onChangeText={(value) => updateDraft(player.id, "squad4", value)} style={[styles.input, styles.half]} placeholder="Squad 4" keyboardType="decimal-pad" />
+                <TextInput value={draft.squad3} onChangeText={(value) => updateDraft(player.id, "squad3", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 3 })} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad4} onChangeText={(value) => updateDraft(player.id, "squad4", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 4 })} keyboardType="decimal-pad" />
               </View>
               <View style={styles.memberCardActionsRow}>
-                <PrimaryButton label="Save Changes" onPress={() => handleSave(player)} style={styles.half} styles={styles} />
-                <SecondaryButton label="Cancel" onPress={() => toggleEditing(player.id, false)} style={styles.half} styles={styles} />
+                <PrimaryButton label={t("members.saveChanges")} onPress={() => handleSave(player)} style={styles.half} styles={styles} />
+                <SecondaryButton label={t("common.cancel")} onPress={() => toggleEditing(player.id, false)} style={styles.half} styles={styles} />
               </View>
             </View>}
           </View> : null}
         </AppCard>;
-      }) : <AppCard styles={styles}><Text style={styles.statusTitle}>No members found</Text><Text style={styles.hint}>Try another search or rank filter.</Text></AppCard>}
+      }) : <AppCard styles={styles}><Text style={styles.statusTitle}>{t("members.noMembersFound")}</Text><Text style={styles.hint}>{t("members.noMembersHint")}</Text></AppCard>}
     </View>
   </View>;
 }

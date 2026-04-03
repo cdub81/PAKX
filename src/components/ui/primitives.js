@@ -19,11 +19,11 @@ export function SectionHeader({ eyebrow, title, detail, styles }) {
   </View>;
 }
 
-export function AppBackHeader({ title, onBack, styles }) {
+export function AppBackHeader({ title, onBack, backLabel = "Back", styles }) {
   return <View style={styles.appBackHeader}>
-    <Pressable onPress={onBack} style={styles.appBackButton} accessibilityRole="button" accessibilityLabel={`Go back from ${title}`}>
+    <Pressable onPress={onBack} style={styles.appBackButton} accessibilityRole="button" accessibilityLabel={`${backLabel}: ${title}`}>
       <Ionicons name="chevron-back" size={20} color="#F4F7FB" />
-      <Text style={styles.appBackButtonText}>Back</Text>
+      <Text style={styles.appBackButtonText}>{backLabel}</Text>
     </Pressable>
     <Text style={styles.appBackHeaderTitle} numberOfLines={1}>{title}</Text>
     <View style={styles.appBackHeaderSpacer} />
