@@ -2228,6 +2228,50 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   }
 
+  function getAlliancePushReachability(allianceId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new Error("Alliance not found.");
+    }
+    const players = Array.isArray(alliance.players) ? alliance.players : [];
+    const withoutPushToken = [];
+    const optedOut = [];
+    const reachableMembers = [];
+    let reachableDeviceCount = 0;
+
+    players.forEach((member) => {
+      const tokenCount = normalizeExpoPushTokens(member.expoPushTokens).length;
+      const digEnabled = normalizeDigNotificationsEnabled(member.digNotificationsEnabled);
+      const base = {
+        id: member.id,
+        name: member.name,
+        rank: member.rank,
+        tokenCount
+      };
+
+      if (!digEnabled) {
+        optedOut.push(base);
+        return;
+      }
+
+      if (!tokenCount) {
+        withoutPushToken.push(base);
+        return;
+      }
+
+      reachableMembers.push(base);
+      reachableDeviceCount += tokenCount;
+    });
+
+    return {
+      totalMembers: players.length,
+      reachableMembers: reachableMembers.length,
+      reachableDeviceCount,
+      withoutPushToken,
+      optedOut
+    };
+  }
+
   function setDesertStormVoteState(allianceId, eventId, player, status) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) throw new Error("Alliance not found.");
@@ -2676,6 +2720,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     createDesertStormEvent,
     registerExpoPushToken,
     sendAllianceBroadcastPush,
+    getAlliancePushReachability,
     listAlliancePushBroadcastLogs,
     submitDesertStormVote,
     setDesertStormVoteState,

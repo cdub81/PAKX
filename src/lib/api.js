@@ -359,6 +359,14 @@ export function getAllianceBroadcastPushHistory(baseUrl, token) {
   });
 }
 
+export function getAlliancePushReachability(baseUrl, token) {
+  return request(baseUrl, "/api/leader-controls/push-reachability", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function addFeedback(baseUrl, token, message) {
   return request(baseUrl, "/api/feedback", {
     method: "POST",

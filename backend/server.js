@@ -213,6 +213,15 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "GET" && pathname === "/api/leader-controls/push-reachability") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      sendJson(response, 200, store.getAlliancePushReachability(context.alliance.id));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/account/join-request") {
       const context = requireAuth(request, response);
       if (!context) {
