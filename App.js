@@ -43,14 +43,23 @@ const POWER_INPUT_HINT = "Please enter power value in millions. Ex. 12,700,000 =
 const REMINDER_NOTIFICATION_CHANNEL_ID = "reminders";
 
 function repairMojibakeString(value) {
+  const getMojibakeScore = (text) => {
+    const matches = String(text ?? "").match(/Ã.|Â.|â€|â€¢|ðŸ|ìÂ|ëÂ|íÂ|êÂ|éÂ|áÂ|óÂ|úÂ/g);
+    return matches ? matches.length : 0;
+  };
   let current = String(value ?? "");
   for (let index = 0; index < 3; index += 1) {
-    if (!/[ÃƒÃ‚Ã¬Ã«Ã°ÃªÃ©Ã³Ã¡ÃºÃ±Ã§]/.test(current)) {
+    const currentScore = getMojibakeScore(current);
+    if (!currentScore) {
       break;
     }
     try {
       const repaired = decodeURIComponent(escape(current));
       if (!repaired || repaired === current) {
+        break;
+      }
+      const repairedScore = getMojibakeScore(repaired);
+      if (repairedScore >= currentScore) {
         break;
       }
       current = repaired;
@@ -59,6 +68,10 @@ function repairMojibakeString(value) {
     }
   }
   return current;
+}
+
+function hasMojibake(value) {
+  return /Ã.|Â.|â€|â€¢|ðŸ|ìÂ|ëÂ|íÂ|êÂ|éÂ|áÂ|óÂ|úÂ/.test(String(value ?? ""));
 }
 
 function repairMojibakeDeep(value) {
@@ -480,7 +493,8 @@ const TRANSLATIONS = {
 function getTranslator(language) {
   const locale = TRANSLATIONS[language] || TRANSLATIONS.en;
   return (key, values = {}) => {
-    const template = locale[key] || TRANSLATIONS.en[key] || key;
+    const localizedTemplate = locale[key];
+    const template = localizedTemplate && !hasMojibake(localizedTemplate) ? localizedTemplate : TRANSLATIONS.en[key] || localizedTemplate || key;
     return String(template).replace(/\{(\w+)\}/g, (_, token) => values[token] ?? "");
   };
 }
@@ -488,7 +502,8 @@ function getTranslator(language) {
 function getCalendarTranslator(language) {
   const locale = CALENDAR_TRANSLATIONS[language] || CALENDAR_TRANSLATIONS.en;
   return (key, values = {}) => {
-    const template = locale[key] || CALENDAR_TRANSLATIONS.en[key] || key;
+    const localizedTemplate = locale[key];
+    const template = localizedTemplate && !hasMojibake(localizedTemplate) ? localizedTemplate : CALENDAR_TRANSLATIONS.en[key] || localizedTemplate || key;
     return String(template).replace(/\{(\w+)\}/g, (_, token) => values[token] ?? "");
   };
 }
@@ -2291,9 +2306,6 @@ const styles = StyleSheet.create({
   zombieSelectedCard: { backgroundColor: DESIGN_TOKENS.colors.greenSoft, borderColor: DESIGN_TOKENS.colors.green },
   zombiePlanCard: { backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, padding: 14, gap: 8, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.borderStrong }
 });
-
-
-
 
 
 
