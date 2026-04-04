@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function FeedbackScreen({
   appBuild,
   appVersion,
@@ -36,7 +39,7 @@ export function FeedbackScreen({
         <Text style={styles.memberStatLabel}>{t("feedback.currentBuild")}</Text>
         <Text style={styles.memberStatValue}>{buildLabel}</Text>
       </View>
-      <TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={t("feedbackExample")} multiline />
+      <TextInput value={newFeedbackText} onChangeText={onChangeNewFeedbackText} style={[styles.input, styles.textArea]} placeholder={t("feedbackExample")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} multiline />
       <PrimaryButton label={t("submitFeedback")} onPress={onSubmitFeedback} styles={styles} />
     </AppCard>
 
@@ -64,7 +67,7 @@ export function FeedbackScreen({
               </View>) : <Text style={styles.hint}>{t("feedback.noCommentsYet")}</Text>}
             </View>
             <View style={styles.feedbackCommentComposer}>
-              <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder={t("feedback.addComment")} multiline />
+              <TextInput value={commentDraft} onChangeText={(value) => updateCommentDraft(entry.id, value)} style={[styles.input, styles.feedbackCommentInput]} placeholder={t("feedback.addComment")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} multiline />
               <SecondaryButton label={t("feedback.commentButton")} onPress={() => onSubmitFeedbackComment(entry.id, commentDraft, () => updateCommentDraft(entry.id, ""))} styles={styles} />
             </View>
           </AppCard>;

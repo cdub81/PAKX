@@ -2,11 +2,16 @@ import React, { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function LeaderControlsScreen({
   styles,
   alliance,
   history,
   reachability,
+  currentUserPushDebug,
+  pushRepairMessage,
   audience,
   onChangeAudience,
   selectedMemberIds,
@@ -17,7 +22,10 @@ export function LeaderControlsScreen({
   onChangePushMessage,
   onSendBroadcastPush,
   onSendLeadersDigPreset,
+  onRepairMyNotifications,
+  onRefreshPushDiagnostics,
   sending,
+  notificationSetupInFlight,
   currentUserHasPushToken,
   t
 }) {
@@ -33,6 +41,7 @@ export function LeaderControlsScreen({
 
   const selectedCount = Array.isArray(selectedMemberIds) ? selectedMemberIds.length : 0;
   const pushHistory = Array.isArray(history) ? history : [];
+  const reachabilityMembers = Array.isArray(reachability?.members) ? reachability.members : [];
   const unreachableWithoutToken = Array.isArray(reachability?.withoutPushToken) ? reachability.withoutPushToken : [];
   const unreachableOptedOut = Array.isArray(reachability?.optedOut) ? reachability.optedOut : [];
   const hasReachabilityIssues = unreachableWithoutToken.length > 0 || unreachableOptedOut.length > 0;
@@ -43,6 +52,21 @@ export function LeaderControlsScreen({
       return t("leaderControls.history.unknownTime");
     }
     return `${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  };
+
+  const getReachabilityStatusLabel = (status) => t(`leaderControls.reachability.status.${status || "no_push_token_saved"}`);
+
+  const formatLastSynced = (value) => {
+    if (!value) {
+      return t("leaderControls.repair.none");
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return t("leaderControls.repair.none");
+    }
+    return t("leaderControls.reachability.lastSynced", {
+      value: `${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    });
   };
 
   return <View style={styles.section}>
@@ -64,6 +88,24 @@ export function LeaderControlsScreen({
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} styles={styles}>
+      <SectionHeader eyebrow={t("leaderControls.repair.eyebrow")} title={t("leaderControls.repair.title")} detail={t("leaderControls.repair.description")} styles={styles} />
+      <View style={styles.settingsStack}>
+        <ListRow title={t("leaderControls.repair.permission")} detail={String(currentUserPushDebug?.permissionStatus || "unknown")} styles={styles} />
+        <ListRow title={t("leaderControls.repair.token")} detail={String(currentUserPushDebug?.tokenFetchStatus || "not_attempted")} styles={styles} />
+        <ListRow title={t("leaderControls.repair.database")} detail={String(currentUserPushDebug?.databaseSyncStatus || "skipped")} styles={styles} />
+        <ListRow title={t("leaderControls.repair.lastSynced")} detail={formatLastSynced(currentUserPushDebug?.lastSyncedAt)} styles={styles} />
+        <ListRow title={t("leaderControls.repair.lastError")} detail={currentUserPushDebug?.lastError || t("leaderControls.repair.none")} styles={styles} />
+      </View>
+      {pushRepairMessage ? <Text style={styles.hint}>{pushRepairMessage}</Text> : null}
+      <View style={styles.row}>
+        <Pressable style={[styles.secondaryButton, styles.half]} onPress={onRefreshPushDiagnostics}>
+          <Text style={styles.secondaryButtonText}>{t("leaderControls.repair.refresh")}</Text>
+        </Pressable>
+        <PrimaryButton label={notificationSetupInFlight ? t("leaderControls.common.sending") : t("leaderControls.repair.button")} onPress={onRepairMyNotifications} disabled={notificationSetupInFlight} tone="blue" styles={styles} style={styles.half} />
+      </View>
+    </AppCard>
+
+    <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow={t("leaderControls.reachability.eyebrow")} title={t("leaderControls.reachability.title")} detail={t("leaderControls.reachability.description")} styles={styles} />
       <View style={styles.row}>
         <StatusBadge label={t("leaderControls.reachability.reachableMembers", { count: Number(reachability?.reachableMembers || 0) })} tone="success" styles={styles} />
@@ -74,18 +116,16 @@ export function LeaderControlsScreen({
         <StatusBadge label={t("leaderControls.reachability.optedOut", { count: unreachableOptedOut.length })} tone={unreachableOptedOut.length ? "warning" : "neutral"} styles={styles} />
       </View>
       {hasReachabilityIssues ? <View style={styles.settingsStack}>
-        {unreachableWithoutToken.length ? <AppCard style={styles.settingsNestedCard} styles={styles}>
-          <Text style={styles.cardTitle}>{t("leaderControls.reachability.noTokenTitle")}</Text>
-          <View style={styles.settingsStack}>
-            {unreachableWithoutToken.map((member) => <ListRow key={`no-token-${member.id}`} title={member.name} detail={`${member.rank} - ${t("leaderControls.reachability.noTokenReason")}`} styles={styles} />)}
-          </View>
-        </AppCard> : null}
-        {unreachableOptedOut.length ? <AppCard style={styles.settingsNestedCard} styles={styles}>
-          <Text style={styles.cardTitle}>{t("leaderControls.reachability.optedOutTitle")}</Text>
-          <View style={styles.settingsStack}>
-            {unreachableOptedOut.map((member) => <ListRow key={`opted-out-${member.id}`} title={member.name} detail={`${member.rank} - ${t("leaderControls.reachability.optedOutReason")}`} styles={styles} />)}
-          </View>
-        </AppCard> : null}
+        {reachabilityMembers.filter((member) => member.status !== "push_ready").map((member) => <AppCard key={`reachability-${member.id}`} style={styles.settingsNestedCard} styles={styles}>
+          <ListRow
+            title={member.name}
+            detail={`${member.rank} - ${getReachabilityStatusLabel(member.status)}`}
+            right={<StatusBadge label={getReachabilityStatusLabel(member.status)} tone={member.status === "opted_out" ? "warning" : "danger"} styles={styles} />}
+            styles={styles}
+          />
+          <Text style={styles.hint}>{member.lastError || getReachabilityStatusLabel(member.status)}</Text>
+          <Text style={styles.hint}>{formatLastSynced(member.lastSyncedAt)}</Text>
+        </AppCard>)}
       </View> : <Text style={styles.hint}>{t("leaderControls.reachability.noIssues")}</Text>}
     </AppCard>
 
@@ -104,7 +144,7 @@ export function LeaderControlsScreen({
           <Text style={styles.cardTitle}>{t("leaderControls.broadcast.selectedTitle")}</Text>
           <StatusBadge label={t("leaderControls.broadcast.selectedCount", { count: selectedCount })} tone={selectedCount ? "success" : "neutral"} styles={styles} />
         </View>
-        <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder={t("leaderControls.broadcast.searchPlaceholder")} />
+        <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder={t("leaderControls.broadcast.searchPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
         <View style={styles.settingsStack}>
           {filteredMembers.length
             ? filteredMembers.map((member) => {
@@ -121,7 +161,7 @@ export function LeaderControlsScreen({
             </AppCard>}
         </View>
       </AppCard> : null}
-      <TextInput value={pushMessage} onChangeText={onChangePushMessage} style={[styles.input, styles.textArea]} placeholder={t("leaderControls.broadcast.messagePlaceholder")} multiline />
+      <TextInput value={pushMessage} onChangeText={onChangePushMessage} style={[styles.input, styles.textArea]} placeholder={t("leaderControls.broadcast.messagePlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} multiline />
       <Text style={styles.hint}>{audience === "selected" ? t("leaderControls.broadcast.selectedHint") : t("leaderControls.broadcast.allHint")}</Text>
       <PrimaryButton label={sending ? t("leaderControls.common.sending") : t("leaderControls.broadcast.sendButton")} onPress={onSendBroadcastPush} disabled={sending} tone="blue" styles={styles} />
     </AppCard>

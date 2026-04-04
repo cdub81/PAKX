@@ -63,8 +63,13 @@ function normalizeExpoPushTokens(value) {
 function queueExpoPushMessages(messages) {
   const payload = Array.isArray(messages) ? messages.filter((message) => isExpoPushToken(message?.to)) : [];
   if (!payload.length || typeof fetch !== "function") {
+    console.log("[push-send] skipping Expo send", {
+      attemptedMessages: Array.isArray(messages) ? messages.length : 0,
+      validMessages: payload.length
+    });
     return;
   }
+  console.log("[push-send] sending Expo push batch", { attemptedMessages: payload.length });
   fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
@@ -73,9 +78,24 @@ function queueExpoPushMessages(messages) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify(payload)
-  }).catch((error) => {
-    console.error("Failed to send Expo push notifications:", error);
-  });
+  })
+    .then(async (response) => {
+      const body = await response.json().catch(() => null);
+      const tickets = Array.isArray(body?.data) ? body.data : [];
+      const succeeded = tickets.filter((ticket) => ticket?.status === "ok").length;
+      const failed = tickets.filter((ticket) => ticket?.status === "error").length;
+      console.log("[push-send] Expo push batch finished", {
+        attemptedMessages: payload.length,
+        succeeded,
+        failed
+      });
+      if (!response.ok) {
+        console.error("[push-send] Expo push request failed", body || { status: response.status });
+      }
+    })
+    .catch((error) => {
+      console.error("[push-send] Failed to send Expo push notifications:", error);
+    });
 }
 
 function normalizeDesertStormStats(value) {
@@ -91,6 +111,28 @@ function normalizeDesertStormVoteNotificationsEnabled(value) {
 
 function normalizeDigNotificationsEnabled(value) {
   return value !== false;
+}
+
+function normalizePushPermissionStatus(value) {
+  return ["granted", "denied", "undetermined", "error", "unknown"].includes(value) ? value : "unknown";
+}
+
+function normalizePushTokenFetchStatus(value) {
+  return ["success", "missing", "skipped", "error", "not_attempted"].includes(value) ? value : "not_attempted";
+}
+
+function normalizePushDatabaseSyncStatus(value) {
+  return ["updated", "unchanged", "missing_permission", "token_missing", "failed", "skipped"].includes(value) ? value : "skipped";
+}
+
+function normalizePushDebug(value) {
+  return {
+    permissionStatus: normalizePushPermissionStatus(value?.permissionStatus),
+    tokenFetchStatus: normalizePushTokenFetchStatus(value?.tokenFetchStatus),
+    databaseSyncStatus: normalizePushDatabaseSyncStatus(value?.databaseSyncStatus),
+    lastSyncedAt: String(value?.lastSyncedAt || "").trim(),
+    lastError: String(value?.lastError || "").trim()
+  };
 }
 
 function normalizeDesertStormLayout(value) {
@@ -472,6 +514,7 @@ function createPlayer(name, rank, overallPower) {
     desertStormVoteNotificationsEnabled: true,
     digNotificationsEnabled: true,
     expoPushTokens: [],
+    pushDebug: normalizePushDebug(),
     reminders: []
   };
 }
@@ -533,6 +576,7 @@ function normalizeAlliance(alliance) {
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
       digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
       expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens),
+      pushDebug: normalizePushDebug(player.pushDebug),
       reminders: normalizeReminders(player.reminders, player.id || "")
     })),
     taskForces: alliance.taskForces,
@@ -629,6 +673,7 @@ function createStore(config = {}) {
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
       digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
       hasExpoPushToken: normalizeExpoPushTokens(player.expoPushTokens).length > 0,
+      pushDebug: normalizePushDebug(player.pushDebug),
       desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
     };
   }
@@ -1217,24 +1262,48 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function buildAllianceBroadcastMessages(alliance, message, triggeringPlayerId = "", allowedMemberIds = null, options = {}) {
     const normalizedMessage = String(message || "").trim();
     if (!normalizedMessage) {
-      return [];
+      return {
+        messages: [],
+        stats: {
+          evaluatedMembers: 0,
+          tokensFound: 0,
+          tokensMissing: 0,
+          skippedOptedOut: 0,
+          dedupedTokens: 0
+        }
+      };
     }
     const allowedIds = allowedMemberIds ? new Set(allowedMemberIds) : null;
     const respectDigOptOut = options?.preset === "dig";
     const uniqueTokens = new Set();
     const messages = [];
+    const stats = {
+      evaluatedMembers: 0,
+      tokensFound: 0,
+      tokensMissing: 0,
+      skippedOptedOut: 0,
+      dedupedTokens: 0
+    };
     alliance.players.forEach((member) => {
       if (allowedIds && !allowedIds.has(member.id)) {
         return;
       }
+      stats.evaluatedMembers += 1;
       if (respectDigOptOut && !normalizeDigNotificationsEnabled(member.digNotificationsEnabled)) {
+        stats.skippedOptedOut += 1;
         return;
       }
-      normalizeExpoPushTokens(member.expoPushTokens).forEach((expoPushToken) => {
+      const memberTokens = normalizeExpoPushTokens(member.expoPushTokens);
+      if (!memberTokens.length) {
+        stats.tokensMissing += 1;
+      }
+      memberTokens.forEach((expoPushToken) => {
         if (uniqueTokens.has(expoPushToken)) {
+          stats.dedupedTokens += 1;
           return;
         }
         uniqueTokens.add(expoPushToken);
+        stats.tokensFound += 1;
         messages.push({
           to: expoPushToken,
           sound: "default",
@@ -1247,7 +1316,13 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
         });
       });
     });
-    return messages;
+    console.log("[push-send] built alliance broadcast recipients", {
+      audience: allowedIds ? "selected" : "all",
+      preset: options?.preset || "",
+      ...stats,
+      sendsAttempted: messages.length
+    });
+    return { messages, stats };
   }
 
   function isPlayerAssignedToDesertStorm(alliance, playerName) {
@@ -2147,7 +2222,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return publicDesertStormEvent(event, alliance, player.id, true);
   }
 
-  function registerExpoPushToken(allianceId, player, expoPushToken) {
+  function registerExpoPushToken(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
       throw new Error("Alliance not found.");
@@ -2156,12 +2231,63 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (!member) {
       throw new Error("Player not found.");
     }
-    const normalizedToken = String(expoPushToken || "").trim();
-    if (!isExpoPushToken(normalizedToken)) {
-      throw new Error("A valid Expo push token is required.");
+    const now = new Date().toISOString();
+    const normalizedPayload = typeof payload === "object" && payload !== null
+      ? payload
+      : { expoPushToken: payload };
+    const permissionStatus = normalizePushPermissionStatus(normalizedPayload.permissionStatus);
+    let tokenFetchStatus = normalizePushTokenFetchStatus(normalizedPayload.tokenFetchStatus);
+    let databaseSyncStatus = "skipped";
+    let lastError = String(normalizedPayload.lastError || "").trim();
+    const normalizedToken = String(normalizedPayload.expoPushToken || "").trim();
+    const existingTokens = normalizeExpoPushTokens(member.expoPushTokens);
+
+    console.log("[push-sync] syncing member push token", {
+      playerId: member.id,
+      permissionStatus,
+      tokenFetchStatus,
+      hasToken: Boolean(normalizedToken)
+    });
+
+    if (permissionStatus !== "granted") {
+      tokenFetchStatus = tokenFetchStatus === "error" ? "error" : "skipped";
+      databaseSyncStatus = permissionStatus === "error" ? "failed" : "missing_permission";
+    } else if (normalizedToken) {
+      if (!isExpoPushToken(normalizedToken)) {
+        member.pushDebug = normalizePushDebug({
+          permissionStatus,
+          tokenFetchStatus: "error",
+          databaseSyncStatus: "failed",
+          lastSyncedAt: now,
+          lastError: "A valid Expo push token is required."
+        });
+        commit();
+        throw new Error("A valid Expo push token is required.");
+      }
+      tokenFetchStatus = "success";
+      member.expoPushTokens = normalizeExpoPushTokens([...(member.expoPushTokens || []), normalizedToken]);
+      databaseSyncStatus = existingTokens.includes(normalizedToken) ? "unchanged" : "updated";
+      lastError = "";
+    } else {
+      tokenFetchStatus = tokenFetchStatus === "error" ? "error" : "missing";
+      databaseSyncStatus = tokenFetchStatus === "error" ? "failed" : "token_missing";
     }
-    member.expoPushTokens = normalizeExpoPushTokens([...(member.expoPushTokens || []), normalizedToken]);
+
+    member.pushDebug = normalizePushDebug({
+      permissionStatus,
+      tokenFetchStatus,
+      databaseSyncStatus,
+      lastSyncedAt: now,
+      lastError
+    });
     commit();
+    console.log("[push-sync] member push sync result", {
+      playerId: member.id,
+      permissionStatus: member.pushDebug.permissionStatus,
+      tokenFetchStatus: member.pushDebug.tokenFetchStatus,
+      databaseSyncStatus: member.pushDebug.databaseSyncStatus,
+      tokenCount: normalizeExpoPushTokens(member.expoPushTokens).length
+    });
     return publicPlayer(member, alliance.desertStormLayouts, alliance.desertStormEvents);
   }
 
@@ -2186,7 +2312,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (audience === "selected" && !validMemberIds.length) {
       throw new Error("Selected members were not found in the alliance.");
     }
-    const messages = buildAllianceBroadcastMessages(
+    const { messages, stats } = buildAllianceBroadcastMessages(
       alliance,
       normalizedMessage,
       player?.id || "",
@@ -2196,6 +2322,15 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (messages.length) {
       queueExpoPushMessages(messages);
     }
+    console.log("[push-send] alliance broadcast send summary", {
+      preset,
+      audience,
+      evaluatedMembers: stats.evaluatedMembers,
+      tokensFound: stats.tokensFound,
+      tokensMissing: stats.tokensMissing,
+      skippedOptedOut: stats.skippedOptedOut,
+      sendsAttempted: messages.length
+    });
     alliance.pushBroadcastLogs = Array.isArray(alliance.pushBroadcastLogs) ? alliance.pushBroadcastLogs : [];
     alliance.pushBroadcastLogs.unshift(normalizePushBroadcastLog({
       senderPlayerId: player?.id || "",
@@ -2234,41 +2369,59 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       throw new Error("Alliance not found.");
     }
     const players = Array.isArray(alliance.players) ? alliance.players : [];
-    const withoutPushToken = [];
-    const optedOut = [];
-    const reachableMembers = [];
+    const members = [];
     let reachableDeviceCount = 0;
 
     players.forEach((member) => {
       const tokenCount = normalizeExpoPushTokens(member.expoPushTokens).length;
       const digEnabled = normalizeDigNotificationsEnabled(member.digNotificationsEnabled);
-      const base = {
+      const pushDebug = normalizePushDebug(member.pushDebug);
+      let status = "no_push_token_saved";
+      let reason = "No push token saved yet";
+
+      if (!digEnabled) {
+        status = "opted_out";
+        reason = "Dig notifications turned off";
+      } else if (tokenCount > 0) {
+        status = "push_ready";
+        reason = "Push ready";
+      } else if (pushDebug.databaseSyncStatus === "failed" || pushDebug.tokenFetchStatus === "error") {
+        status = "token_sync_failed";
+        reason = pushDebug.lastError || "Token sync failed";
+      } else if (pushDebug.permissionStatus === "denied" || pushDebug.permissionStatus === "undetermined") {
+        status = "permission_not_granted";
+        reason = "Permission not granted";
+      } else if (pushDebug.permissionStatus === "granted" && pushDebug.tokenFetchStatus === "missing") {
+        status = "token_missing_on_device";
+        reason = "Token missing on device";
+      } else if (pushDebug.permissionStatus === "granted" && pushDebug.tokenFetchStatus === "success" && !tokenCount) {
+        status = "token_missing_in_database";
+        reason = "Token missing in database";
+      }
+
+      const entry = {
         id: member.id,
         name: member.name,
         rank: member.rank,
-        tokenCount
+        tokenCount,
+        status,
+        reason,
+        lastSyncedAt: pushDebug.lastSyncedAt || "",
+        lastError: pushDebug.lastError || ""
       };
-
-      if (!digEnabled) {
-        optedOut.push(base);
-        return;
+      members.push(entry);
+      if (status === "push_ready") {
+        reachableDeviceCount += tokenCount;
       }
-
-      if (!tokenCount) {
-        withoutPushToken.push(base);
-        return;
-      }
-
-      reachableMembers.push(base);
-      reachableDeviceCount += tokenCount;
     });
 
     return {
       totalMembers: players.length,
-      reachableMembers: reachableMembers.length,
+      reachableMembers: members.filter((entry) => entry.status === "push_ready").length,
       reachableDeviceCount,
-      withoutPushToken,
-      optedOut
+      withoutPushToken: members.filter((entry) => entry.status !== "push_ready" && entry.status !== "opted_out"),
+      optedOut: members.filter((entry) => entry.status === "opted_out"),
+      members: members.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
     };
   }
 

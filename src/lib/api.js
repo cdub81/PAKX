@@ -330,13 +330,16 @@ export function deleteDesertStormEvent(baseUrl, token, eventId) {
 }
 
 export function registerExpoPushToken(baseUrl, token, expoPushToken) {
+  const body = typeof expoPushToken === "object" && expoPushToken !== null
+    ? expoPushToken
+    : { expoPushToken };
   return request(baseUrl, "/api/me/expo-push-token", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify({ expoPushToken })
+    body: JSON.stringify(body)
   });
 }
 

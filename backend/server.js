@@ -173,12 +173,8 @@ async function handleRequest(request, response) {
         return;
       }
       const body = await readJson(request);
-      if (!body.expoPushToken) {
-        sendError(response, 400, "expoPushToken is required.");
-        return;
-      }
       sendJson(response, 200, {
-        player: store.registerExpoPushToken(context.alliance.id, context.player, body.expoPushToken)
+        player: store.registerExpoPushToken(context.alliance.id, context.player, body)
       });
       return;
     }

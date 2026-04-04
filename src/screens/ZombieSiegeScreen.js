@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function ZombieSiegeScreen({
   events,
   selectedEvent,
@@ -109,13 +112,13 @@ export function ZombieSiegeScreen({
 
     {currentUserIsLeader && folder === "active" ? <AppCard style={styles.zombieSectionCard} styles={styles}>
       <SectionHeader eyebrow="Create" title="Create Zombie Siege Event" detail="Leaders can create a new event without changing the existing scheduling workflow." styles={styles} />
-      <TextInput value={newTitle} onChangeText={onChangeNewTitle} style={styles.input} placeholder="Event title" />
+      <TextInput value={newTitle} onChangeText={onChangeNewTitle} style={styles.input} placeholder="Event title" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
       <Text style={styles.hint}>Event start: when Zombie Siege begins for your alliance.</Text>
-      <TextInput value={newStartAt} onChangeText={onChangeNewStartAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" />
+      <TextInput value={newStartAt} onChangeText={onChangeNewStartAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
       <Text style={styles.hint}>Event end: when the event window is over.</Text>
-      <TextInput value={newEndAt} onChangeText={onChangeNewEndAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" />
+      <TextInput value={newEndAt} onChangeText={onChangeNewEndAt} style={styles.input} placeholder="YYYY-MM-DDTHH:mm" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
       <Text style={styles.hint}>Wave 20 threshold: total defending squad power needed for a base to pass wave 20.</Text>
-      <TextInput value={newThreshold} onChangeText={onChangeNewThreshold} style={styles.input} placeholder="Wave 20 threshold" keyboardType="decimal-pad" />
+      <TextInput value={newThreshold} onChangeText={onChangeNewThreshold} style={styles.input} placeholder="Wave 20 threshold" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
       <PrimaryButton label="Create Event" onPress={onCreateEvent} tone="purple" styles={styles} />
     </AppCard> : null}
 

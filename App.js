@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, AppState, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
 import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
@@ -23,6 +23,7 @@ import { ZombieSiegeScreen } from "./src/screens/ZombieSiegeScreen";
 import { DESIGN_TOKENS } from "./src/theme/designSystem";
 import { addFeedback as addFeedbackRequest, addFeedbackComment as addFeedbackCommentRequest, addMember, approveJoinRequest, archiveDesertStormEvent as archiveDesertStormEventRequest, beginDesertStormEditing as beginDesertStormEditingRequest, closeDesertStormVote as closeDesertStormVoteRequest, createAccount, createAlliance, createCalendarEntry as createCalendarEntryRequest, createDesertStormEvent as createDesertStormEventRequest, createReminder as createReminderRequest, createZombieSiegeEvent as createZombieSiegeEventRequest, deleteCalendarEntry as deleteCalendarEntryRequest, deleteDesertStormEvent as deleteDesertStormEventRequest, deleteReminder as deleteReminderRequest, discardZombieSiegeDraft as discardZombieSiegeDraftRequest, endDesertStormEvent as endDesertStormEventRequest, endZombieSiegeEvent as endZombieSiegeEventRequest, getAllianceBroadcastPushHistory as getAllianceBroadcastPushHistoryRequest, getAlliancePreview, getAlliancePushReachability as getAlliancePushReachabilityRequest, getJoinRequests, getMe, getReminders as getRemindersRequest, joinAlliance, leaveAlliance, moveDesertStormEventPlayer as moveDesertStormEventPlayerRequest, normalizeBaseUrl, openDesertStormVote as openDesertStormVoteRequest, publishDesertStormEvent as publishDesertStormEventRequest, publishZombieSiegePlan as publishZombieSiegePlanRequest, registerExpoPushToken as registerExpoPushTokenRequest, rejectJoinRequest, removeMember, reopenDesertStormVote as reopenDesertStormVoteRequest, runZombieSiegePlan as runZombieSiegePlanRequest, sendAllianceBroadcastPush as sendAllianceBroadcastPushRequest, signIn, submitDesertStormVote as submitDesertStormVoteRequest, submitZombieSiegeAvailability as submitZombieSiegeAvailabilityRequest, updateAllianceCode, updateCalendarEntry as updateCalendarEntryRequest, updateDesertStormEventSlot as updateDesertStormEventSlotRequest, updateMember, updateReminder as updateReminderRequest, updateZombieSiegeWaveOneReview as updateZombieSiegeWaveOneReviewRequest } from "./src/lib/api";
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
+import { getNotificationPermissionStatus, getPushDebugStateForCurrentUser, syncPushTokenForCurrentUser } from "./src/lib/pushRegistration";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
 import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
 import { buildCalendarNotificationCandidates, CALENDAR_NOTIFICATION_CHANNEL_ID, getCalendarNotificationStorageKey } from "./src/lib/calendarNotifications";
@@ -41,6 +42,8 @@ const APP_BUILD = Application.nativeBuildVersion || Constants.nativeBuildVersion
 const RANK_OPTIONS = ["R5", "R4", "R3", "R2", "R1"];
 const POWER_INPUT_HINT = "Please enter power value in millions. Ex. 12,700,000 = 12.7";
 const REMINDER_NOTIFICATION_CHANNEL_ID = "reminders";
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
 
 function repairMojibakeString(value) {
   const getMojibakeScore = (text) => {
@@ -712,6 +715,24 @@ const RAW_TRANSLATIONS = {
     "leaderControls.reachability.optedOutTitle": "Opted out of dig",
     "leaderControls.reachability.noTokenReason": "No push token saved yet",
     "leaderControls.reachability.optedOutReason": "Dig notifications turned off",
+    "leaderControls.reachability.status.push_ready": "Push ready",
+    "leaderControls.reachability.status.permission_not_granted": "Permission not granted",
+    "leaderControls.reachability.status.token_missing_on_device": "Token missing on device",
+    "leaderControls.reachability.status.token_missing_in_database": "Token missing in database",
+    "leaderControls.reachability.status.token_sync_failed": "Token sync failed",
+    "leaderControls.reachability.status.no_push_token_saved": "No push token saved yet",
+    "leaderControls.reachability.lastSynced": "Last synced {value}",
+    "leaderControls.repair.eyebrow": "Repair",
+    "leaderControls.repair.title": "Repair my notifications",
+    "leaderControls.repair.description": "Check permission, fetch the current device token, and sync it to the backend without leaving this screen.",
+    "leaderControls.repair.button": "Repair My Notifications",
+    "leaderControls.repair.refresh": "Refresh Diagnostics",
+    "leaderControls.repair.permission": "Permission",
+    "leaderControls.repair.token": "Token fetch",
+    "leaderControls.repair.database": "Database sync",
+    "leaderControls.repair.lastSynced": "Last synced",
+    "leaderControls.repair.lastError": "Last error",
+    "leaderControls.repair.none": "None",
     "leaderControls.broadcast.eyebrow": "Push Notification",
     "leaderControls.broadcast.titleAll": "Send to all members",
     "leaderControls.broadcast.titleSelected": "Send to specific members",
@@ -1098,6 +1119,24 @@ const RAW_TRANSLATIONS = {
     "leaderControls.reachability.optedOutTitle": "dig 수신 거부",
     "leaderControls.reachability.noTokenReason": "저장된 푸시 토큰이 아직 없습니다",
     "leaderControls.reachability.optedOutReason": "dig 알림이 꺼져 있습니다",
+    "leaderControls.reachability.status.push_ready": "푸시 준비됨",
+    "leaderControls.reachability.status.permission_not_granted": "권한 없음",
+    "leaderControls.reachability.status.token_missing_on_device": "기기 토큰 없음",
+    "leaderControls.reachability.status.token_missing_in_database": "DB에 토큰 없음",
+    "leaderControls.reachability.status.token_sync_failed": "토큰 동기화 실패",
+    "leaderControls.reachability.status.no_push_token_saved": "저장된 푸시 토큰이 없음",
+    "leaderControls.reachability.lastSynced": "마지막 동기화 {value}",
+    "leaderControls.repair.eyebrow": "복구",
+    "leaderControls.repair.title": "내 알림 복구",
+    "leaderControls.repair.description": "이 화면을 벗어나지 않고 권한을 확인하고 현재 기기 토큰을 가져와 백엔드에 동기화합니다.",
+    "leaderControls.repair.button": "내 알림 복구",
+    "leaderControls.repair.refresh": "진단 새로고침",
+    "leaderControls.repair.permission": "권한",
+    "leaderControls.repair.token": "토큰 가져오기",
+    "leaderControls.repair.database": "DB 동기화",
+    "leaderControls.repair.lastSynced": "마지막 동기화",
+    "leaderControls.repair.lastError": "마지막 오류",
+    "leaderControls.repair.none": "없음",
     "leaderControls.broadcast.eyebrow": "푸시 알림",
     "leaderControls.broadcast.titleAll": "전체 멤버에게 보내기",
     "leaderControls.broadcast.titleSelected": "특정 멤버에게 보내기",
@@ -1484,6 +1523,24 @@ const RAW_TRANSLATIONS = {
     "leaderControls.reachability.optedOutTitle": "Excluidos de dig",
     "leaderControls.reachability.noTokenReason": "Todavía no hay token push guardado",
     "leaderControls.reachability.optedOutReason": "Las notificaciones de dig están desactivadas",
+    "leaderControls.reachability.status.push_ready": "Push listo",
+    "leaderControls.reachability.status.permission_not_granted": "Permiso no concedido",
+    "leaderControls.reachability.status.token_missing_on_device": "Falta token en el dispositivo",
+    "leaderControls.reachability.status.token_missing_in_database": "Falta token en la base de datos",
+    "leaderControls.reachability.status.token_sync_failed": "Falló la sincronización del token",
+    "leaderControls.reachability.status.no_push_token_saved": "Aún no hay token push guardado",
+    "leaderControls.reachability.lastSynced": "Última sincronización {value}",
+    "leaderControls.repair.eyebrow": "Reparación",
+    "leaderControls.repair.title": "Reparar mis notificaciones",
+    "leaderControls.repair.description": "Comprueba el permiso, obtiene el token actual del dispositivo y lo sincroniza con el backend sin salir de esta pantalla.",
+    "leaderControls.repair.button": "Reparar mis notificaciones",
+    "leaderControls.repair.refresh": "Actualizar diagnóstico",
+    "leaderControls.repair.permission": "Permiso",
+    "leaderControls.repair.token": "Obtención del token",
+    "leaderControls.repair.database": "Sincronización DB",
+    "leaderControls.repair.lastSynced": "Última sincronización",
+    "leaderControls.repair.lastError": "Último error",
+    "leaderControls.repair.none": "Ninguno",
     "leaderControls.broadcast.eyebrow": "Notificación push",
     "leaderControls.broadcast.titleAll": "Enviar a todos los miembros",
     "leaderControls.broadcast.titleSelected": "Enviar a miembros específicos",
@@ -1870,6 +1927,24 @@ const RAW_TRANSLATIONS = {
     "leaderControls.reachability.optedOutTitle": "Optaram por sair do dig",
     "leaderControls.reachability.noTokenReason": "Ainda não há token push salvo",
     "leaderControls.reachability.optedOutReason": "As notificações de dig estão desligadas",
+    "leaderControls.reachability.status.push_ready": "Push pronto",
+    "leaderControls.reachability.status.permission_not_granted": "Permissão não concedida",
+    "leaderControls.reachability.status.token_missing_on_device": "Token ausente no dispositivo",
+    "leaderControls.reachability.status.token_missing_in_database": "Token ausente no banco",
+    "leaderControls.reachability.status.token_sync_failed": "Falha na sincronização do token",
+    "leaderControls.reachability.status.no_push_token_saved": "Ainda não há token push salvo",
+    "leaderControls.reachability.lastSynced": "Última sincronização {value}",
+    "leaderControls.repair.eyebrow": "Reparo",
+    "leaderControls.repair.title": "Reparar minhas notificações",
+    "leaderControls.repair.description": "Verifique a permissão, obtenha o token atual do dispositivo e sincronize-o com o backend sem sair desta tela.",
+    "leaderControls.repair.button": "Reparar minhas notificações",
+    "leaderControls.repair.refresh": "Atualizar diagnóstico",
+    "leaderControls.repair.permission": "Permissão",
+    "leaderControls.repair.token": "Busca do token",
+    "leaderControls.repair.database": "Sincronização DB",
+    "leaderControls.repair.lastSynced": "Última sincronização",
+    "leaderControls.repair.lastError": "Último erro",
+    "leaderControls.repair.none": "Nenhum",
     "leaderControls.broadcast.eyebrow": "Notificação push",
     "leaderControls.broadcast.titleAll": "Enviar para todos os membros",
     "leaderControls.broadcast.titleSelected": "Enviar para membros específicos",
@@ -2037,8 +2112,8 @@ function AuthScreen({ authMode, setAuthMode, authUsername, setAuthUsername, auth
           <Pressable style={[styles.secondaryButton, styles.half, authMode === "signin" && styles.modeButtonActive]} onPress={() => setAuthMode("signin")}><Text style={[styles.secondaryButtonText, authMode === "signin" && styles.modeButtonTextActive]}>Sign In</Text></Pressable>
           <Pressable style={[styles.secondaryButton, styles.half, authMode === "create" && styles.modeButtonActive]} onPress={() => setAuthMode("create")}><Text style={[styles.secondaryButtonText, authMode === "create" && styles.modeButtonTextActive]}>Create</Text></Pressable>
         </View>
-        <TextInput value={authUsername} onChangeText={setAuthUsername} style={styles.input} placeholder="Username" autoCapitalize="none" />
-        <TextInput value={authPassword} onChangeText={setAuthPassword} style={styles.input} placeholder="Password" secureTextEntry />
+        <TextInput value={authUsername} onChangeText={setAuthUsername} style={styles.input} placeholder="Username" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="none" />
+        <TextInput value={authPassword} onChangeText={setAuthPassword} style={styles.input} placeholder="Password" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry />
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
         <PrimaryButton label={loading ? "Working..." : authMode === "signin" ? "Sign In" : "Create Account"} onPress={authMode === "signin" ? onSignIn : onCreate} disabled={loading} />
       </AppCard>
@@ -2063,7 +2138,7 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
           <Pressable style={[styles.secondaryButton, styles.half, setupMode === "create" && styles.modeButtonActive]} onPress={() => setSetupMode("create")}><Text style={[styles.secondaryButtonText, setupMode === "create" && styles.modeButtonTextActive]}>Create Mode</Text></Pressable>
         </View>
         {setupMode === "join" ? <>
-          <TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" autoCapitalize="characters" />
+          <TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="characters" />
           <View style={styles.row}>
             <PrimaryButton label="Preview Alliance" onPress={onPreview} style={styles.half} disabled={loading} />
             <PrimaryButton label={joinRequest ? "Request Pending" : "Join Alliance"} onPress={onJoin} style={styles.half} disabled={Boolean(joinRequest) || loading || !String(allianceCodeInput || "").trim()} tone="blue" />
@@ -2072,8 +2147,8 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
           {alliancePreview ? <AppCard style={styles.settingsNestedCard}><Text style={styles.cardTitle}>{alliancePreview.name}</Text><Text style={styles.hint}>Code: {alliancePreview.code}</Text><PrimaryButton label={joinRequest ? "Request Pending" : "Join Alliance"} onPress={onJoin} disabled={Boolean(joinRequest) || loading} /></AppCard> : null}
           {joinRequest ? <Text style={styles.hint}>Your join request is pending leader approval.</Text> : null}
         </> : <>
-          <TextInput value={allianceNameInput} onChangeText={setAllianceNameInput} style={styles.input} placeholder="Alliance name" />
-          <TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" autoCapitalize="characters" />
+          <TextInput value={allianceNameInput} onChangeText={setAllianceNameInput} style={styles.input} placeholder="Alliance name" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
+          <TextInput value={allianceCodeInput} onChangeText={setAllianceCodeInput} style={styles.input} placeholder="Alliance code" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="characters" />
           <PrimaryButton label="Create Alliance" onPress={onCreateAlliance} disabled={loading} />
         </>}
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
@@ -2124,6 +2199,8 @@ export default function App() {
   const [leaderBroadcastMemberSearchText, setLeaderBroadcastMemberSearchText] = useState("");
   const [leaderBroadcastHistory, setLeaderBroadcastHistory] = useState([]);
   const [leaderBroadcastReachability, setLeaderBroadcastReachability] = useState(null);
+  const [pushSyncState, setPushSyncState] = useState(null);
+  const [pushRepairMessage, setPushRepairMessage] = useState("");
   const [reminders, setReminders] = useState([]);
   const [calendarView, setCalendarView] = useState("today");
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
@@ -2154,6 +2231,8 @@ export default function App() {
   const [desertStormSection, setDesertStormSection] = useState("vote");
   const [newDesertStormEventTitle, setNewDesertStormEventTitle] = useState("");
   const [desertStormMoveSource, setDesertStormMoveSource] = useState(null);
+  const pushSyncInFlightRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
   const [selectedZombieSiegeEventId, setSelectedZombieSiegeEventId] = useState("");
   const [newZombieSiegeTitle, setNewZombieSiegeTitle] = useState("");
   const [newZombieSiegeStartAt, setNewZombieSiegeStartAt] = useState(formatLocalDateTimeInput(new Date()));
@@ -2304,8 +2383,8 @@ export default function App() {
     isPublished: Boolean(activeDesertStormEvent?.publishedAt) || activeDesertStormEvent?.status === "published"
   }), [activeDesertStormEvent]);
   const desertStormVoteNeedsResponse = desertStormViewState === "vote_open_not_voted";
-  const androidPushTemporarilyDisabled = Platform.OS === "android";
-  const shouldShowPushNotificationsPrompt = Boolean(session.token && alliance && currentUser && !androidPushTemporarilyDisabled && currentUser.desertStormVoteNotificationsEnabled !== false && !currentUser.hasExpoPushToken && notificationPermissionStatus !== "granted" && !pushPromptDismissed);
+  const currentUserPushDebug = useMemo(() => getPushDebugStateForCurrentUser(currentUser, pushSyncState), [currentUser, pushSyncState]);
+  const shouldShowPushNotificationsPrompt = Boolean(session.token && alliance && currentUser && currentUser.desertStormVoteNotificationsEnabled !== false && !currentUser.hasExpoPushToken && notificationPermissionStatus !== "granted" && !pushPromptDismissed);
   const todayCalendarEntries = useMemo(() => {
     const todayKey = formatLocalDateKey(new Date());
     return expandCalendarEntries(calendarEntries, todayKey, todayKey);
@@ -2351,6 +2430,9 @@ export default function App() {
     setJoinRequest(null);
     setJoinRequests([]);
     setLeaderBroadcastHistory([]);
+    setLeaderBroadcastReachability(null);
+    setPushSyncState(null);
+    setPushRepairMessage("");
     setAuthMode("");
     setSetupMode("join");
     setAlliancePreview(null);
@@ -2489,45 +2571,56 @@ export default function App() {
     await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
   }
 
-  async function syncPushNotifications({ requestPermission = false } = {}) {
+  async function performPushSync({ requestPermission = false, reason = "manual", refreshDiagnostics = false } = {}) {
     if (!session.token || !session.backendUrl || !currentUser || !alliance) {
-      return false;
+      return null;
     }
-    if (Platform.OS === "android") {
-      return false;
+    if (pushSyncInFlightRef.current) {
+      console.log("[push-sync] skipping sync because one is already in flight", { reason });
+      return null;
     }
+    pushSyncInFlightRef.current = true;
     try {
       setNotificationSetupInFlight(true);
-      let permission = await Notifications.getPermissionsAsync();
-      let status = permission.status || "undetermined";
-      if (status !== "granted" && requestPermission) {
-        permission = await Notifications.requestPermissionsAsync();
-        status = permission.status || "undetermined";
+      console.log("[push-sync] starting push sync", { reason, requestPermission });
+      const result = await syncPushTokenForCurrentUser({
+        session,
+        currentUser,
+        alliance,
+        requestPermission,
+        syncRequest: (payload) => registerExpoPushTokenRequest(session.backendUrl, session.token, payload)
+      });
+      setNotificationPermissionStatus(result?.permissionStatus || "error");
+      setPushSyncState(result);
+      if (result?.player) {
+        applyUpdatedCurrentPlayer(result.player);
       }
-      setNotificationPermissionStatus(status);
-      if (status !== "granted") {
-        return false;
+      if (requestPermission && result?.permissionStatus === "granted") {
+        setPushPromptDismissed(true);
+        await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
       }
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
-      if (!projectId) {
-        throw new Error("Expo project ID is missing for push notifications.");
+      if (refreshDiagnostics && leader) {
+        const reachabilityResponse = await getAlliancePushReachabilityRequest(session.backendUrl, session.token);
+        setLeaderBroadcastReachability(reachabilityResponse || null);
       }
-      const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
-      const expoPushToken = String(tokenResponse?.data || "");
-      if (!expoPushToken) {
-        throw new Error("Unable to get an Expo push token for this device.");
+      if (requestPermission) {
+        setPushRepairMessage(result?.ok
+          ? "Push notifications are connected on this device."
+          : (result?.lastError || "Push notification setup did not complete."));
       }
-      await registerExpoPushTokenRequest(session.backendUrl, session.token, expoPushToken);
-      setPushPromptDismissed(true);
-      await AsyncStorage.setItem(PUSH_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
-      await refresh();
-      return true;
-    } catch (error) {
-      setErrorMessage(error.message || "Unable to enable push notifications.");
-      return false;
+      return result;
     } finally {
       setNotificationSetupInFlight(false);
+      pushSyncInFlightRef.current = false;
     }
+  }
+
+  async function syncPushNotifications({ requestPermission = false, reason = "manual", refreshDiagnostics = false } = {}) {
+    const result = await performPushSync({ requestPermission, reason, refreshDiagnostics });
+    if (!result) {
+      return false;
+    }
+    return result.permissionStatus === "granted" && (result.databaseSyncStatus === "updated" || result.databaseSyncStatus === "unchanged");
   }
 
   async function handleRequestError(error) {
@@ -2589,15 +2682,9 @@ export default function App() {
         if (alive) {
           setPushPromptDismissed(storedPushPromptDismissed === "true");
         }
-        try {
-          const permission = await Notifications.getPermissionsAsync();
-          if (alive) {
-            setNotificationPermissionStatus(permission.status || "undetermined");
-          }
-        } catch {
-          if (alive) {
-            setNotificationPermissionStatus("unknown");
-          }
+        const permissionResult = await getNotificationPermissionStatus();
+        if (alive) {
+          setNotificationPermissionStatus(permissionResult.status || "error");
         }
         if (!stored) return;
         const parsed = JSON.parse(stored);
@@ -2659,11 +2746,23 @@ export default function App() {
     if (!session.token || !session.backendUrl || !alliance || !currentUser) {
       return;
     }
-    if (Platform.OS === "android" || notificationPermissionStatus !== "granted" || currentUser.hasExpoPushToken) {
-      return;
-    }
-    syncPushNotifications().catch(() => {});
-  }, [session.token, session.backendUrl, alliance, currentUser?.id, currentUser?.hasExpoPushToken, notificationPermissionStatus]);
+    syncPushNotifications({ requestPermission: false, reason: "session-ready" }).catch(() => {});
+  }, [session.token, session.backendUrl, alliance?.id, currentUser?.id]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      const wasBackgrounded = appStateRef.current && appStateRef.current !== "active";
+      appStateRef.current = nextState;
+      if (!wasBackgrounded || nextState !== "active") {
+        return;
+      }
+      if (!session.token || !session.backendUrl || !alliance || !currentUser) {
+        return;
+      }
+      syncPushNotifications({ requestPermission: false, reason: "app-foreground" }).catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [session.token, session.backendUrl, alliance?.id, currentUser?.id]);
 
   useEffect(() => {
     if (!session.token || !currentUser?.id || !alliance) {
@@ -2765,6 +2864,8 @@ export default function App() {
       ? { overallPower: Number.parseFloat(value) || 0 }
       : field === "heroPower"
         ? { heroPower: Number.parseFloat(value) || 0 }
+      : field === "squadPowers"
+        ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
       : field === "desertStormVoteNotificationsEnabled"
         ? { desertStormVoteNotificationsEnabled: Boolean(value) }
         : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
@@ -2797,6 +2898,21 @@ export default function App() {
     applyUpdatedCurrentPlayer(updatedPlayer);
     await refresh();
   });
+
+  async function handleRepairMyNotifications() {
+    setPushRepairMessage("");
+    await syncPushNotifications({ requestPermission: true, reason: "manual-repair", refreshDiagnostics: true });
+  }
+
+  async function handleRefreshPushDiagnostics() {
+    if (!session.token || !session.backendUrl) {
+      return;
+    }
+    setPushRepairMessage("");
+    const permissionResult = await getNotificationPermissionStatus();
+    setNotificationPermissionStatus(permissionResult.status || "error");
+    await refresh();
+  }
 
   async function ensureReminderNotificationPermission({ requestPermission = false } = {}) {
     let permission = await Notifications.getPermissionsAsync();
@@ -3357,8 +3473,8 @@ export default function App() {
             {loading ? <ActivityIndicator color={DESIGN_TOKENS.colors.green} /> : null}
             {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handlePullToRefresh} tintColor={DESIGN_TOKENS.colors.green} colors={[DESIGN_TOKENS.colors.green]} />}>
-            {activeTab === "home" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormViewState={desertStormViewState} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormEvent ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => handleTabPress("calendar")} onOpenReminders={() => handleTabPress("reminders")} onOpenZombieSiege={() => openEventsDestination("zombieSiege")} onOpenFeedback={() => openMoreDestination("feedback")} onOpenSettings={() => openMoreDestination("settings")} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
-              const enabled = await syncPushNotifications({ requestPermission: true });
+            {activeTab === "home" ? <HomeScreen styles={styles} currentUser={currentUser} account={account} alliance={alliance} desertStormAssignment={desertStormAssignment} desertStormViewState={desertStormViewState} todayCalendarEntries={todayCalendarEntries} currentZombieSiegeEvent={selectedZombieSiegeEvent} currentZombieSiegeAssignment={currentZombieSiegeAssignment} onChangeField={saveMyInfo} onOpenDesertStormVote={activeDesertStormEvent ? () => openDesertStormVoteArea() : null} onOpenCalendar={() => handleTabPress("calendar")} onOpenReminders={() => handleTabPress("reminders")} onOpenZombieSiege={() => openEventsDestination("zombieSiege")} onOpenFeedback={() => openMoreDestination("feedback")} onOpenSettings={() => openMoreDestination("settings")} showPushNotificationControls showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+              const enabled = await syncPushNotifications({ requestPermission: true, reason: "home-enable", refreshDiagnostics: true });
               if (!enabled) {
                 Alert.alert("Enable notifications", "Push notifications were not enabled. You can try again later on this screen.");
               }
@@ -3391,15 +3507,15 @@ export default function App() {
             </EventsHubScreen> : null}
             {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} t={t} /> : null}
             {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} joinRequests={joinRequests} t={t} onSelectLeaderControls={() => setMoreSelection("leaderControls")} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
-              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} history={leaderBroadcastHistory} reachability={leaderBroadcastReachability} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
+              {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} history={leaderBroadcastHistory} reachability={leaderBroadcastReachability} currentUserPushDebug={currentUserPushDebug} pushRepairMessage={pushRepairMessage} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
                 setLeaderBroadcastAudience(value);
                 if (value === "all") {
                   setLeaderBroadcastMemberSearchText("");
                 }
-              }} selectedMemberIds={leaderBroadcastSelectedMemberIds} onToggleSelectedMemberId={toggleLeaderBroadcastSelectedMemberId} memberSearchText={leaderBroadcastMemberSearchText} onChangeMemberSearchText={setLeaderBroadcastMemberSearchText} pushMessage={leaderBroadcastMessage} onChangePushMessage={setLeaderBroadcastMessage} onSendBroadcastPush={handleSendAllianceBroadcastPush} onSendLeadersDigPreset={handleSendLeadersDigPreset} sending={loading} currentUserHasPushToken={Boolean(currentUser?.hasExpoPushToken)} t={t} /> : null}
+              }} selectedMemberIds={leaderBroadcastSelectedMemberIds} onToggleSelectedMemberId={toggleLeaderBroadcastSelectedMemberId} memberSearchText={leaderBroadcastMemberSearchText} onChangeMemberSearchText={setLeaderBroadcastMemberSearchText} pushMessage={leaderBroadcastMessage} onChangePushMessage={setLeaderBroadcastMessage} onSendBroadcastPush={handleSendAllianceBroadcastPush} onSendLeadersDigPreset={handleSendLeadersDigPreset} onRepairMyNotifications={handleRepairMyNotifications} onRefreshPushDiagnostics={handleRefreshPushDiagnostics} sending={loading} notificationSetupInFlight={notificationSetupInFlight} currentUserHasPushToken={Boolean(currentUser?.hasExpoPushToken)} t={t} /> : null}
               {moreSelection === "members" && leader ? <MembersScreen styles={styles} players={filteredMembers} memberSearchText={memberSearchText} memberSortMode={memberSortMode} memberRankFilter={memberRankFilter} onChangeMemberSearchText={setMemberSearchText} onChangeMemberSortMode={setMemberSortMode} onChangeMemberRankFilter={setMemberRankFilter} currentUser={currentUser} currentUserIsLeader={leader} onChangeField={saveMember} onRemovePlayer={(playerId) => run(async () => { await removeMember(session.backendUrl, session.token, playerId); await refresh(); })} RankSelector={RankSelector} rankOptions={RANK_OPTIONS} t={t} /> : null}
-              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const departingPlayerId = currentUser?.id; const result = await leaveAlliance(session.backendUrl, session.token); if (departingPlayerId) { await clearCalendarNotificationsForMember(departingPlayerId).catch(() => {}); } setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls={Platform.OS !== "android"} showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onSetDigNotificationsEnabled={handleSetDigNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
-                const enabled = await syncPushNotifications({ requestPermission: true });
+              {moreSelection === "settings" ? <SettingsScreen styles={styles} alliance={alliance} account={account} currentUser={currentUser} currentUserIsLeader={leader} joinRequests={joinRequests} newMemberName={newMemberName} newMemberRank={newMemberRank} newMemberPower={newMemberPower} newAllianceCode={newAllianceCode} onChangeNewMemberName={setNewMemberName} onChangeNewMemberRank={setNewMemberRank} onChangeNewMemberPower={setNewMemberPower} onChangeNewAllianceCode={setNewAllianceCode} onAddMember={() => run(async () => { await addMember(session.backendUrl, session.token, { name: newMemberName, rank: newMemberRank, overallPower: Number.parseFloat(newMemberPower) || 0 }); setNewMemberName(""); setNewMemberRank("R1"); setNewMemberPower(""); await refresh(); })} onApproveJoinRequest={(requestId) => run(async () => { await approveJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onRejectJoinRequest={(requestId) => run(async () => { await rejectJoinRequest(session.backendUrl, session.token, requestId); await refresh(); })} onLeaveAlliance={() => run(async () => { const departingPlayerId = currentUser?.id; const result = await leaveAlliance(session.backendUrl, session.token); if (departingPlayerId) { await clearCalendarNotificationsForMember(departingPlayerId).catch(() => {}); } setAccount(result.account); setAlliance(null); setCurrentUser(null); setJoinRequest(null); setJoinRequests([]); setSetupMode("join"); setAlliancePreview(null); setNewAllianceCode(""); setActiveTab("home"); setMoreSelection(""); setPushSyncState(null); setPushRepairMessage(""); })} onRotateAllianceCode={() => run(async () => { await updateAllianceCode(session.backendUrl, session.token, newAllianceCode); await refresh(); })} onSignOut={signOut} t={t} language={language} onChangeLanguage={changeLanguage} showPushNotificationControls showPushNotificationsPrompt={shouldShowPushNotificationsPrompt} notificationSetupInFlight={notificationSetupInFlight} onSetDesertStormVoteNotificationsEnabled={handleSetDesertStormVoteNotificationsEnabled} onSetDigNotificationsEnabled={handleSetDigNotificationsEnabled} onEnablePushNotifications={() => run(async () => {
+                const enabled = await syncPushNotifications({ requestPermission: true, reason: "settings-enable", refreshDiagnostics: true });
                 if (!enabled) {
                   Alert.alert(t("settings.notifications.enablePush.alertTitle"), t("settings.notifications.enablePush.alertDescription"));
                 }
@@ -3434,7 +3550,7 @@ export default function App() {
             <Pressable style={[styles.secondaryButton, styles.half, playerPickerFilter === "subs" && styles.modeButtonActive]} onPress={() => setPlayerPickerFilter("subs")}><Text style={[styles.secondaryButtonText, playerPickerFilter === "subs" && styles.modeButtonTextActive]}>{defaultPlayerPickerFilter === "subs" ? "From Subs" : "Choose From Subs"}</Text></Pressable>
           </View> : null}
           {playerModal ? <Text style={styles.hint}>{playerPickerFilter === "players" ? `Showing members who voted "Play" for ${selectedDesertStormEvent?.title || "this event"}.` : playerPickerFilter === "subs" ? `Showing members who voted "Sub" for ${selectedDesertStormEvent?.title || "this event"}.` : playerPickerFilter === "all" ? t("showingAllAlliance") : playerPickerFilter === "assigned" ? "Showing members already assigned somewhere in the current draft." : playerPickerFilter === "unassigned" ? "Showing members not yet assigned in the current draft." : "Showing members with draft or vote issues to review."}</Text> : null}
-          <TextInput value={searchText} onChangeText={setSearchText} style={[styles.input, styles.playerPickerSearch]} placeholder={t("searchNameOrRank")} />
+          <TextInput value={searchText} onChangeText={setSearchText} style={[styles.input, styles.playerPickerSearch]} placeholder={t("searchNameOrRank")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
           <ScrollView style={[styles.modalListScroll, styles.playerPickerList]} contentContainerStyle={styles.modalListContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}>
             <Pressable style={styles.pick} onPress={() => run(async () => {
               await updateDesertStormEventSlotRequest(session.backendUrl, session.token, playerModal.eventId, { taskForceKey: playerModal.taskForceKey, squadId: playerModal.squadId, slotId: playerModal.slotId, playerName: "" });

@@ -3,6 +3,9 @@ import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
 import { getDesertStormViewState } from "../lib/desertStormHelpers";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 function formatEventDateTime(value) {
   const parsed = value ? new Date(value) : null;
   if (!parsed || Number.isNaN(parsed.getTime())) {
@@ -174,7 +177,7 @@ export function DesertStormScreen({
     <AppCard styles={styles}>
       <SectionHeader eyebrow="Current Week" title="Desert Storm cycle" detail="One weekly event is created automatically. Leaders can still force-open the current week if the sync has not run yet." styles={styles} />
       {activeEvents.length ? <View style={styles.zombieEventList}>{activeEvents.map((event) => <Pressable key={event.id} style={[styles.voteCard, selectedEventId === event.id && styles.cardInfo]} onPress={() => onSelectEvent(event.id)}><View style={styles.cardHeaderRow}><View style={styles.listRowContent}><Text style={styles.cardTitle}>{event.title}</Text><Text style={styles.hint}>Week of {event.weekKey}</Text></View><StatusBadge label={getDesertStormStatusLabel(event.status)} tone={event.vote?.status === "open" ? "warning" : event.status === "published" ? "success" : "info"} styles={styles} /></View><Text style={styles.hint}>Vote closes {formatEventDateTime(event.votingCloseAt)}</Text><Text style={styles.hint}>Match starts {formatEventDateTime(event.matchStartsAt)}</Text></Pressable>)}</View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>No weekly event yet</Text><Text style={styles.hint}>Open the current week to start voting and create the Friday match on the calendar.</Text></AppCard>}
-      {currentUserIsLeader && canCreateEvent ? <><TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Optional weekly event title" /><PrimaryButton label="Open Current Week" onPress={onCreateEvent} styles={styles} /></> : null}
+      {currentUserIsLeader && canCreateEvent ? <><TextInput value={newEventTitle} onChangeText={onChangeNewEventTitle} style={styles.input} placeholder="Optional weekly event title" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} /><PrimaryButton label="Open Current Week" onPress={onCreateEvent} styles={styles} /></> : null}
     </AppCard>
 
     {!currentUserIsLeader ? renderMemberStateContent() : null}

@@ -3,6 +3,9 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "../lib/reminders";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function RemindersScreen({
   reminders,
   language,
@@ -135,8 +138,8 @@ export function RemindersScreen({
 
     <AppCard style={styles.reminderComposerCard} styles={styles}>
       <SectionHeader eyebrow={t("reminders.createEyebrow")} title={t("reminders.newReminder")} detail={t("reminders.newReminderDetail")} styles={styles} />
-      <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder={t("reminders.titlePlaceholder")} />
-      <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.textArea]} placeholder={t("reminders.notesPlaceholder")} multiline />
+      <TextInput value={title} onChangeText={setTitle} style={styles.input} placeholder={t("reminders.titlePlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
+      <TextInput value={notes} onChangeText={setNotes} style={[styles.input, styles.textArea]} placeholder={t("reminders.notesPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} multiline />
       <View style={styles.rankFilterRow}>
         <Pressable style={[styles.rankFilterButton, mode === "elapsed" && styles.rankFilterButtonActive]} onPress={() => setMode("elapsed")}><Text style={[styles.rankFilterButtonText, mode === "elapsed" && styles.rankFilterButtonTextActive]}>{t("reminders.modeElapsed")}</Text></Pressable>
         <Pressable style={[styles.rankFilterButton, mode === "localTime" && styles.rankFilterButtonActive]} onPress={() => setMode("localTime")}><Text style={[styles.rankFilterButtonText, mode === "localTime" && styles.rankFilterButtonTextActive]}>{t("reminders.modeAtLocal")}</Text></Pressable>

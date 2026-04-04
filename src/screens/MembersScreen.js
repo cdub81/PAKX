@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function MembersScreen({
   players,
   memberSearchText,
@@ -131,7 +134,7 @@ export function MembersScreen({
 
     <AppCard style={styles.membersFilterCard} styles={styles}>
       <SectionHeader eyebrow={t("members.filters")} title={t("members.rosterControls")} detail={t("members.rosterControlsDetail")} styles={styles} />
-      <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder={t("searchNameOrRank")} />
+      <TextInput value={memberSearchText} onChangeText={onChangeMemberSearchText} style={styles.input} placeholder={t("searchNameOrRank")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
       <View style={styles.rankFilterRow}>
         <Pressable style={[styles.rankFilterButton, memberSortMode === "rankDesc" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("rankDesc")}><Text style={[styles.rankFilterButtonText, memberSortMode === "rankDesc" && styles.rankFilterButtonTextActive]}>{t("members.sortRank")}</Text></Pressable>
         <Pressable style={[styles.rankFilterButton, memberSortMode === "name" && styles.rankFilterButtonActive]} onPress={() => onChangeMemberSortMode("name")}><Text style={[styles.rankFilterButtonText, memberSortMode === "name" && styles.rankFilterButtonTextActive]}>{t("members.sortName")}</Text></Pressable>
@@ -183,19 +186,19 @@ export function MembersScreen({
                 <Pressable style={[styles.dangerButton, styles.half]} onPress={() => handleRemove(player)}><Text style={styles.dangerButtonText}>{t("members.removeButton")}</Text></Pressable>
               </View> : null}
             </> : <View style={styles.memberSection}>
-              <TextInput value={draft.name} onChangeText={(value) => updateDraft(player.id, "name", value)} style={styles.input} placeholder={t("members.memberName")} />
+              <TextInput value={draft.name} onChangeText={(value) => updateDraft(player.id, "name", value)} style={styles.input} placeholder={t("members.memberName")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
               <RankSelector value={draft.rank || player.rank} onChange={(value) => updateDraft(player.id, "rank", value)} />
               <View style={styles.row}>
-                <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder={t("members.totalPower")} keyboardType="decimal-pad" />
-                <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder={t("members.heroPower")} keyboardType="decimal-pad" />
+                <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder={t("members.totalPower")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
+                <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder={t("members.heroPower")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
               </View>
               <View style={styles.row}>
-                <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 1 })} keyboardType="decimal-pad" />
-                <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 2 })} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 1 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 2 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
               </View>
               <View style={styles.row}>
-                <TextInput value={draft.squad3} onChangeText={(value) => updateDraft(player.id, "squad3", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 3 })} keyboardType="decimal-pad" />
-                <TextInput value={draft.squad4} onChangeText={(value) => updateDraft(player.id, "squad4", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 4 })} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad3} onChangeText={(value) => updateDraft(player.id, "squad3", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 3 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
+                <TextInput value={draft.squad4} onChangeText={(value) => updateDraft(player.id, "squad4", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 4 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
               </View>
               <View style={styles.memberCardActionsRow}>
                 <PrimaryButton label={t("members.saveChanges")} onPress={() => handleSave(player)} style={styles.half} styles={styles} />

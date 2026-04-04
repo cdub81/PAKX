@@ -2,6 +2,9 @@ import React from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { AppCard, ListRow, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
 
+const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
+const INPUT_SELECTION_COLOR = "#66d08a";
+
 export function SettingsScreen({
   alliance,
   account,
@@ -104,17 +107,17 @@ export function SettingsScreen({
 
       <AppCard style={styles.settingsSectionCard} styles={styles}>
         <SectionHeader eyebrow={st("settings.alliance.eyebrow")} title={st("settings.alliance.rotateCode")} detail={st("settings.alliance.description")} styles={styles} />
-        <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} />
+        <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
         <PrimaryButton label={st("settings.alliance.updateCode")} onPress={onRotateAllianceCode} styles={styles} />
       </AppCard>
 
       <AppCard style={styles.settingsSectionCard} styles={styles}>
         <SectionHeader eyebrow={st("settings.roster.eyebrow")} title={st("settings.roster.title")} detail={st("settings.roster.description")} styles={styles} />
-        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={st("settings.roster.namePlaceholder")} />
+        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={st("settings.roster.namePlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
         <Text style={styles.hint}>{st("settings.roster.powerHint")}</Text>
         <View style={styles.row}>
           <RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} />
-          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={st("settings.roster.powerPlaceholder")} keyboardType="decimal-pad" />
+          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={st("settings.roster.powerPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
         </View>
         <PrimaryButton label={st("settings.roster.addMember")} onPress={onAddMember} styles={styles} />
       </AppCard>
