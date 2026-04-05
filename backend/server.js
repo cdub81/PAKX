@@ -1,6 +1,6 @@
 const http = require("node:http");
 const { URL } = require("node:url");
-const { createStore } = require("./lib/store");
+const { createStore, mergeAllianceStates, splitStateByAlliance, UserError } = require("./lib/store");
 const supabaseState = require("./lib/supabaseState");
 
 const PORT = Number(process.env.PORT) || 4000;
@@ -14,12 +14,31 @@ async function initializeStore() {
 
   let initialState = null;
   if (supabaseState.isConfigured()) {
-    initialState = await supabaseState.loadState();
+    const rows = await supabaseState.loadAllStates();
+    const legacyRow = rows.find((r) => r.id === "primary");
+    const allianceRows = rows.filter((r) => r.id !== "primary");
+
+    if (allianceRows.length > 0) {
+      // Normal multi-alliance load
+      initialState = mergeAllianceStates(allianceRows);
+      console.log(`[store] Loaded ${allianceRows.length} alliance row(s) from Supabase.`);
+    } else if (legacyRow && legacyRow.state) {
+      // One-time migration: old single-blob format → per-alliance rows
+      console.log("[store] Migrating legacy single-blob state to per-alliance rows...");
+      initialState = legacyRow.state;
+      const splits = splitStateByAlliance(initialState);
+      await Promise.all(splits.map(({ allianceId, state: allianceState }) =>
+        supabaseState.persistAllianceState(allianceId, allianceState)
+      ));
+      console.log(`[store] Migration complete — wrote ${splits.length} alliance row(s).`);
+    }
   }
 
   store = createStore({
     initialState,
-    onPersist: supabaseState.isConfigured() ? (state) => supabaseState.persistState(state) : null
+    onPersist: supabaseState.isConfigured()
+      ? (allianceId, allianceState) => supabaseState.persistAllianceState(allianceId, allianceState)
+      : null
   });
 
   if (supabaseState.isConfigured() && !initialState) {
@@ -817,7 +836,12 @@ async function handleRequest(request, response) {
 
     sendError(response, 404, "Route not found.");
   } catch (error) {
-    sendError(response, 400, error.message || "Request failed.");
+    if (error instanceof UserError) {
+      sendError(response, 400, error.message);
+    } else {
+      console.error("[server] Unhandled error:", error);
+      sendError(response, 500, "An unexpected error occurred.");
+    }
   }
 }
 

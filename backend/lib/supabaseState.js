@@ -52,6 +52,13 @@ async function loadState(env = process.env) {
   return null;
 }
 
+async function loadAllStates(env = process.env) {
+  const config = getConfig(env);
+  const rows = await request(config, `/rest/v1/${encodeURIComponent(config.table)}?select=id,state`);
+  if (!Array.isArray(rows)) return [];
+  return rows.map((row) => ({ id: row.id, state: row.state }));
+}
+
 async function persistState(state, env = process.env) {
   const config = getConfig(env);
   await request(config, `/rest/v1/${encodeURIComponent(config.table)}`, {
@@ -63,6 +70,23 @@ async function persistState(state, env = process.env) {
       {
         id: config.rowId,
         state,
+        updated_at: new Date().toISOString()
+      }
+    ])
+  });
+}
+
+async function persistAllianceState(allianceId, allianceState, env = process.env) {
+  const config = getConfig(env);
+  await request(config, `/rest/v1/${encodeURIComponent(config.table)}`, {
+    method: "POST",
+    headers: {
+      Prefer: "resolution=merge-duplicates"
+    },
+    body: JSON.stringify([
+      {
+        id: String(allianceId),
+        state: allianceState,
         updated_at: new Date().toISOString()
       }
     ])
@@ -85,5 +109,7 @@ module.exports = {
   getSchemaSql,
   isConfigured,
   loadState,
-  persistState
+  loadAllStates,
+  persistState,
+  persistAllianceState
 };
