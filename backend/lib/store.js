@@ -2,6 +2,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const seed = require("../data/seed");
+
+class UserError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "UserError";
+  }
+}
 const { getDesertStormCycleForDate, getServerShiftedDateParts, hasTimestampPassed } = require("./desertStorm");
 const { buildAvailabilityMap, runZombieSiegePlanner } = require("./zombieSiege");
 
@@ -636,6 +643,59 @@ function normalizeState(loaded) {
   };
 }
 
+function splitStateByAlliance(state) {
+  return (state.alliances || []).map((alliance) => {
+    const allianceAccounts = (state.accounts || []).filter((a) => a.allianceId === alliance.id);
+    const allianceAccountIds = new Set(allianceAccounts.map((a) => a.id));
+    const allianceJoinRequests = (state.joinRequests || []).filter((jr) => jr.allianceId === alliance.id);
+    const pendingAccountIds = new Set(allianceJoinRequests.map((jr) => jr.accountId));
+    const pendingAccounts = (state.accounts || []).filter((a) => pendingAccountIds.has(a.id) && !allianceAccountIds.has(a.id));
+    const allRelatedAccountIds = new Set([...allianceAccountIds, ...pendingAccounts.map((a) => a.id)]);
+    const allianceSessions = (state.sessions || []).filter((s) => allRelatedAccountIds.has(s.accountId));
+    return {
+      allianceId: alliance.id,
+      state: {
+        alliance,
+        accounts: [...allianceAccounts, ...pendingAccounts],
+        sessions: allianceSessions,
+        joinRequests: allianceJoinRequests
+      }
+    };
+  });
+}
+
+function mergeAllianceStates(rows) {
+  const alliances = [];
+  const accounts = [];
+  const sessions = [];
+  const joinRequests = [];
+  const seenAccountIds = new Set();
+  const seenSessionTokens = new Set();
+  const seenJoinRequestIds = new Set();
+  for (const { state } of rows) {
+    if (state.alliance) alliances.push(state.alliance);
+    for (const account of (state.accounts || [])) {
+      if (!seenAccountIds.has(account.id)) {
+        accounts.push(account);
+        seenAccountIds.add(account.id);
+      }
+    }
+    for (const session of (state.sessions || [])) {
+      if (!seenSessionTokens.has(session.token)) {
+        sessions.push(session);
+        seenSessionTokens.add(session.token);
+      }
+    }
+    for (const jr of (state.joinRequests || [])) {
+      if (!seenJoinRequestIds.has(jr.id)) {
+        joinRequests.push(jr);
+        seenJoinRequestIds.add(jr.id);
+      }
+    }
+  }
+  return normalizeState({ alliances, accounts, sessions, joinRequests });
+}
+
 function saveStore(store) {
   ensureDir();
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
@@ -648,9 +708,9 @@ function createStore(config = {}) {
   function commit() {
     saveStore(state);
     if (typeof config.onPersist === "function") {
-      const snapshot = clone(state);
+      const splits = splitStateByAlliance(clone(state));
       persistQueue = persistQueue
-        .then(() => config.onPersist(snapshot))
+        .then(() => Promise.all(splits.map(({ allianceId, state: allianceState }) => config.onPersist(allianceId, allianceState))))
         .catch((error) => {
           console.error("Failed to persist remote state:", error);
         });
@@ -874,11 +934,11 @@ function createStore(config = {}) {
   function listRemindersForMember(allianceId, memberId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
     return getMemberReminders(member).map(publicReminder);
   }
@@ -1195,7 +1255,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function listZombieSiegeEventsForAlliance(allianceId, viewerPlayerId = "") {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const viewer = alliance.players.find((player) => player.id === viewerPlayerId);
     const viewerIsLeader = Boolean(viewer && (viewer.rank === "R4" || viewer.rank === "R5"));
@@ -1211,7 +1271,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function listDesertStormEventsForAlliance(allianceId, viewerPlayerId = "") {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     ensureWeeklyDesertStormEvent(alliance);
     const viewer = alliance.players.find((player) => player.id === viewerPlayerId);
@@ -1357,9 +1417,15 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return session;
   }
 
+  const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
   function getSessionContext(token) {
     const session = findSession(token);
     if (!session) {
+      return null;
+    }
+
+    if (session.createdAt && Date.now() - new Date(session.createdAt).getTime() > TOKEN_MAX_AGE_MS) {
       return null;
     }
 
@@ -1382,10 +1448,10 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function createAccountAndSession(payload) {
     if (!payload.username || !payload.password) {
-      throw new Error("username and password are required.");
+      throw new UserError("username and password are required.");
     }
     if (findAccountByUsername(payload.username)) {
-      throw new Error("Username already exists.");
+      throw new UserError("Username already exists.");
     }
 
     const account = createAccount(payload);
@@ -1404,7 +1470,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function signInAccount({ username, password }) {
     const account = findAccountByUsername(username);
     if (!account || account.password !== password) {
-      throw new Error("Invalid username or password.");
+      throw new UserError("Invalid username or password.");
     }
 
     const session = createSession(account.id);
@@ -1424,7 +1490,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function getAlliancePreviewByCode(code) {
     const alliance = findAllianceByCode(code);
     if (!alliance) {
-      throw new Error("Alliance code not found.");
+      throw new UserError("Alliance code not found.");
     }
     return {
       id: alliance.id,
@@ -1437,7 +1503,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function listVotesForAlliance(allianceId, viewerPlayerId = "") {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     return alliance.votes.map((vote) => publicVote(vote, alliance.players, viewerPlayerId));
   }
@@ -1445,18 +1511,18 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function requestJoinAllianceForAccount(accountId, allianceCode) {
     const account = state.accounts.find((entry) => entry.id === accountId);
     if (!account) {
-      throw new Error("Account not found.");
+      throw new UserError("Account not found.");
     }
     if (account.allianceId) {
-      throw new Error("Account is already linked to an alliance.");
+      throw new UserError("Account is already linked to an alliance.");
     }
     if (findPendingJoinRequestForAccount(account.id)) {
-      throw new Error("This account already has a pending join request.");
+      throw new UserError("This account already has a pending join request.");
     }
 
     const alliance = findAllianceByCode(allianceCode);
     if (!alliance) {
-      throw new Error("Alliance code not found.");
+      throw new UserError("Alliance code not found.");
     }
     const joinRequest = {
       id: crypto.randomUUID(),
@@ -1486,15 +1552,15 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function approveJoinRequest(allianceId, requestId) {
     const joinRequest = state.joinRequests.find((entry) => entry.id === requestId && entry.allianceId === allianceId);
     if (!joinRequest || joinRequest.status !== "pending") {
-      throw new Error("Join request not found.");
+      throw new UserError("Join request not found.");
     }
     const account = state.accounts.find((entry) => entry.id === joinRequest.accountId);
     const alliance = findAllianceById(allianceId);
     if (!account || !alliance) {
-      throw new Error("Join request is invalid.");
+      throw new UserError("Join request is invalid.");
     }
     if (account.allianceId) {
-      throw new Error("Account is already linked to an alliance.");
+      throw new UserError("Account is already linked to an alliance.");
     }
 
     let player = alliance.players.find((entry) => entry.name.trim().toLowerCase() === account.displayName.trim().toLowerCase());
@@ -1519,7 +1585,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function rejectJoinRequest(allianceId, requestId) {
     const joinRequest = state.joinRequests.find((entry) => entry.id === requestId && entry.allianceId === allianceId);
     if (!joinRequest || joinRequest.status !== "pending") {
-      throw new Error("Join request not found.");
+      throw new UserError("Join request not found.");
     }
     joinRequest.status = "rejected";
     commit();
@@ -1529,24 +1595,24 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function leaveAllianceForAccount(accountId) {
     const account = state.accounts.find((entry) => entry.id === accountId);
     if (!account) {
-      throw new Error("Account not found.");
+      throw new UserError("Account not found.");
     }
     if (!account.allianceId || !account.playerId) {
-      throw new Error("Account is not linked to an alliance.");
+      throw new UserError("Account is not linked to an alliance.");
     }
 
     const alliance = findAllianceById(account.allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
 
     const player = alliance.players.find((entry) => entry.id === account.playerId);
     if (!player) {
-      throw new Error("Player not found.");
+      throw new UserError("Player not found.");
     }
 
     if (player.rank === "R5" || player.rank === "R4") {
-      throw new Error("Leaders cannot leave the alliance from this action.");
+      throw new UserError("Leaders cannot leave the alliance from this action.");
     }
 
     alliance.players = alliance.players.filter((entry) => entry.id !== player.id);
@@ -1583,13 +1649,13 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createAllianceForAccount(accountId, { name, code }) {
     const account = state.accounts.find((entry) => entry.id === accountId);
     if (!account) {
-      throw new Error("Account not found.");
+      throw new UserError("Account not found.");
     }
     if (account.allianceId) {
-      throw new Error("Account is already linked to an alliance.");
+      throw new UserError("Account is already linked to an alliance.");
     }
     if (findAllianceByCode(code)) {
-      throw new Error("Alliance code already exists.");
+      throw new UserError("Alliance code already exists.");
     }
 
     const leader = createPlayer(account.displayName, "R5", 0);
@@ -1618,12 +1684,12 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateAllianceCode(allianceId, code) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const normalized = String(code).trim().toUpperCase();
     const conflict = state.alliances.find((entry) => entry.id !== allianceId && entry.code === normalized);
     if (conflict) {
-      throw new Error("Alliance code already exists.");
+      throw new UserError("Alliance code already exists.");
     }
     alliance.code = normalized;
     commit();
@@ -1633,7 +1699,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function addMember(allianceId, { name, rank, overallPower, heroPower }) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = createPlayer(name, rank, overallPower);
     member.heroPower = Number(heroPower) || 0;
@@ -1645,11 +1711,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateMember(allianceId, memberId, updates) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
 
     if (typeof updates.name === "string" && updates.name.trim()) {
@@ -1686,11 +1752,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createReminder(allianceId, memberId, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
     const reminder = normalizeReminder({
       ...payload,
@@ -1700,10 +1766,10 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       updatedAt: new Date().toISOString()
     });
     if (!reminder.scheduledForUtc || Number.isNaN(new Date(reminder.scheduledForUtc).getTime())) {
-      throw new Error("scheduledForUtc is required.");
+      throw new UserError("scheduledForUtc is required.");
     }
     if (new Date(reminder.scheduledForUtc).getTime() <= Date.now()) {
-      throw new Error("scheduledForUtc must be in the future.");
+      throw new UserError("scheduledForUtc must be in the future.");
     }
     member.reminders = normalizeReminders([...(member.reminders || []), reminder], member.id);
     commit();
@@ -1713,16 +1779,16 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateReminder(allianceId, memberId, reminderId, updates = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
     member.reminders = normalizeReminders(member.reminders, member.id);
     const reminder = (member.reminders || []).find((entry) => entry.id === reminderId);
     if (!reminder) {
-      throw new Error("Reminder not found.");
+      throw new UserError("Reminder not found.");
     }
     if (updates.title !== undefined) {
       reminder.title = String(updates.title || "").trim() || reminder.title;
@@ -1739,10 +1805,10 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (updates.scheduledForUtc !== undefined) {
       const scheduledForUtc = String(updates.scheduledForUtc || "");
       if (!scheduledForUtc || Number.isNaN(new Date(scheduledForUtc).getTime())) {
-        throw new Error("scheduledForUtc must be a valid ISO timestamp.");
+        throw new UserError("scheduledForUtc must be a valid ISO timestamp.");
       }
       if (new Date(scheduledForUtc).getTime() <= Date.now()) {
-        throw new Error("scheduledForUtc must be in the future.");
+        throw new UserError("scheduledForUtc must be in the future.");
       }
       reminder.scheduledForUtc = scheduledForUtc;
     }
@@ -1754,16 +1820,16 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function deleteReminder(allianceId, memberId, reminderId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
     member.reminders = normalizeReminders(member.reminders, member.id);
     const index = (member.reminders || []).findIndex((entry) => entry.id === reminderId);
     if (index === -1) {
-      throw new Error("Reminder not found.");
+      throw new UserError("Reminder not found.");
     }
     const [deleted] = member.reminders.splice(index, 1);
     commit();
@@ -1773,11 +1839,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function removeMember(allianceId, memberId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((player) => player.id === memberId);
     if (!member) {
-      throw new Error("Member not found.");
+      throw new UserError("Member not found.");
     }
 
     alliance.players = alliance.players.filter((player) => player.id !== memberId);
@@ -1816,22 +1882,22 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateTaskForceSlot(allianceId, taskForceKey, squadId, slotId, playerName) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     if (alliance.desertStormSetupLocked) {
-      throw new Error("Create new teams before editing the Desert Storm setup again.");
+      throw new UserError("Create new teams before editing the Desert Storm setup again.");
     }
     const taskForce = alliance.taskForces[taskForceKey];
     if (!taskForce) {
-      throw new Error("Task force not found.");
+      throw new UserError("Task force not found.");
     }
     const squad = taskForce.squads.find((entry) => entry.id === squadId);
     if (!squad) {
-      throw new Error("Squad not found.");
+      throw new UserError("Squad not found.");
     }
     const slot = squad.slots.find((entry) => entry.id === slotId);
     if (!slot) {
-      throw new Error("Slot not found.");
+      throw new UserError("Slot not found.");
     }
     slot.playerName = playerName || "";
     commit();
@@ -1841,7 +1907,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function resetTaskForcesForNewTeams(allianceId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     Object.values(alliance.taskForces || {}).forEach((taskForce) => {
       (taskForce.squads || []).forEach((squad) => {
@@ -1858,11 +1924,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function addFeedbackEntry(allianceId, player, message) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const normalizedMessage = String(message || "").trim();
     if (!normalizedMessage) {
-      throw new Error("message is required.");
+      throw new UserError("message is required.");
     }
     alliance.feedbackEntries = Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries : [];
     const entry = normalizeFeedbackEntry({
@@ -1878,16 +1944,16 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function addFeedbackComment(allianceId, feedbackEntryId, player, message) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const normalizedMessage = String(message || "").trim();
     if (!normalizedMessage) {
-      throw new Error("message is required.");
+      throw new UserError("message is required.");
     }
     alliance.feedbackEntries = Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries : [];
     const entry = alliance.feedbackEntries.find((candidate) => candidate.id === feedbackEntryId);
     if (!entry) {
-      throw new Error("Feedback entry not found.");
+      throw new UserError("Feedback entry not found.");
     }
     entry.comments = Array.isArray(entry.comments) ? entry.comments : [];
     const comment = normalizeFeedbackComment({
@@ -1903,7 +1969,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createCalendarEntry(allianceId, player, payload) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const title = String(payload?.title || "").trim();
     const startsAt = String(payload?.startsAt || "").trim();
@@ -1912,10 +1978,10 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     const entryType = String(payload?.entryType || "manual").trim();
     const recurrence = normalizeCalendarRecurrence(payload?.recurrence);
     if (!title) {
-      throw new Error("title is required.");
+      throw new UserError("title is required.");
     }
     if (!startsAt && !startDate) {
-      throw new Error("startsAt or startDate is required.");
+      throw new UserError("startsAt or startDate is required.");
     }
     alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
     const entry = normalizeCalendarEntry({
@@ -1951,12 +2017,12 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateCalendarEntry(allianceId, entryId, player, payload) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
     const index = alliance.calendarEntries.findIndex((entry) => entry.id === entryId);
     if (index === -1) {
-      throw new Error("Calendar entry not found.");
+      throw new UserError("Calendar entry not found.");
     }
     const currentEntry = alliance.calendarEntries[index];
     const title = String(payload?.title || "").trim();
@@ -1966,10 +2032,10 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     const entryType = String(payload?.entryType || currentEntry.entryType || "manual").trim();
     const recurrence = normalizeCalendarRecurrence(payload?.recurrence);
     if (!title) {
-      throw new Error("title is required.");
+      throw new UserError("title is required.");
     }
     if (!startsAt && !startDate) {
-      throw new Error("startsAt or startDate is required.");
+      throw new UserError("startsAt or startDate is required.");
     }
     const updatedEntry = normalizeCalendarEntry({
       ...currentEntry,
@@ -2006,11 +2072,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function deleteCalendarEntry(allianceId, entryId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const index = (alliance.calendarEntries || []).findIndex((entry) => entry.id === entryId);
     if (index === -1) {
-      throw new Error("Calendar entry not found.");
+      throw new UserError("Calendar entry not found.");
     }
     const [deletedEntry] = alliance.calendarEntries.splice(index, 1);
     commit();
@@ -2020,14 +2086,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createZombieSiegeEvent(allianceId, player, payload) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const title = String(payload?.title || "").trim();
     const startAt = String(payload?.startAt || "").trim();
     const endAt = String(payload?.endAt || "").trim();
     const wave20Threshold = Number(payload?.wave20Threshold);
     if (!title || !startAt || !endAt || !Number.isFinite(wave20Threshold)) {
-      throw new Error("title, startAt, endAt, and wave20Threshold are required.");
+      throw new UserError("title, startAt, endAt, and wave20Threshold are required.");
     }
     alliance.zombieSiegeEvents = Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents : [];
     const event = normalizeZombieSiegeEvent({
@@ -2048,17 +2114,17 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function submitZombieSiegeAvailability(allianceId, eventId, player, status) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     if (!["online", "offline"].includes(status)) {
-      throw new Error("status must be online or offline.");
+      throw new UserError("status must be online or offline.");
     }
     if (event.status === "archived") {
-      throw new Error("This event has ended.");
+      throw new UserError("This event has ended.");
     }
     const existing = (event.availabilityResponses || []).find((entry) => entry.playerId === player.id);
     if (existing) {
@@ -2079,11 +2145,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function runZombieSiegePlan(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     const plan = runZombieSiegePlanner({
       players: alliance.players.map((entry) => publicPlayer(entry, alliance.desertStormLayouts, alliance.desertStormEvents)),
@@ -2102,14 +2168,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function publishZombieSiegePlan(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     if (!event.draftPlan) {
-      throw new Error("No draft plan is available to publish.");
+      throw new UserError("No draft plan is available to publish.");
     }
     event.publishedPlan = clone(event.draftPlan);
     event.publishedAt = new Date().toISOString();
@@ -2122,11 +2188,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function discardZombieSiegeDraft(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     event.draftPlan = null;
     event.draftPlanUpdatedAt = null;
@@ -2137,11 +2203,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function endZombieSiegeEvent(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     event.status = "archived";
     event.endedAt = new Date().toISOString();
@@ -2152,14 +2218,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateZombieSiegeWaveOneReview(allianceId, eventId, player, reviews) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const event = findZombieSiegeEvent(alliance, eventId);
     if (!event) {
-      throw new Error("Zombie Siege event not found.");
+      throw new UserError("Zombie Siege event not found.");
     }
     if (!Array.isArray(reviews)) {
-      throw new Error("reviews must be an array.");
+      throw new UserError("reviews must be an array.");
     }
     const allowed = new Set(["unknown", "had_wall", "no_wall"]);
     event.waveOneReview = reviews
@@ -2177,7 +2243,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createDesertStormEvent(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     ensureWeeklyDesertStormEvent(alliance);
     const cycle = getDesertStormCycleForDate(new Date());
@@ -2225,11 +2291,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function registerExpoPushToken(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const member = alliance.players.find((entry) => entry.id === player.id);
     if (!member) {
-      throw new Error("Player not found.");
+      throw new UserError("Player not found.");
     }
     const now = new Date().toISOString();
     const normalizedPayload = typeof payload === "object" && payload !== null
@@ -2262,7 +2328,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
           lastError: "A valid Expo push token is required."
         });
         commit();
-        throw new Error("A valid Expo push token is required.");
+        throw new UserError("A valid Expo push token is required.");
       }
       tokenFetchStatus = "success";
       member.expoPushTokens = normalizeExpoPushTokens([...(member.expoPushTokens || []), normalizedToken]);
@@ -2294,11 +2360,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function sendAllianceBroadcastPush(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const normalizedMessage = String(payload?.message || "").trim();
     if (!normalizedMessage) {
-      throw new Error("message is required.");
+      throw new UserError("message is required.");
     }
     const audience = payload?.audience === "selected" ? "selected" : "all";
     const preset = payload?.preset === "dig" ? "dig" : "";
@@ -2306,11 +2372,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       ? [...new Set(payload.memberIds.map((value) => String(value || "").trim()).filter(Boolean))]
       : [];
     if (audience === "selected" && !normalizedMemberIds.length) {
-      throw new Error("Select at least one member.");
+      throw new UserError("Select at least one member.");
     }
     const validMemberIds = normalizedMemberIds.filter((memberId) => alliance.players.some((member) => member.id === memberId));
     if (audience === "selected" && !validMemberIds.length) {
-      throw new Error("Selected members were not found in the alliance.");
+      throw new UserError("Selected members were not found in the alliance.");
     }
     const { messages, stats } = buildAllianceBroadcastMessages(
       alliance,
@@ -2356,7 +2422,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function listAlliancePushBroadcastLogs(allianceId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     return (alliance.pushBroadcastLogs || [])
       .map((entry) => normalizePushBroadcastLog(entry))
@@ -2366,7 +2432,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function getAlliancePushReachability(allianceId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const players = Array.isArray(alliance.players) ? alliance.players : [];
     const members = [];
@@ -2427,15 +2493,15 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function setDesertStormVoteState(allianceId, eventId, player, status) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed") {
-      throw new Error("This Desert Storm event can no longer be updated.");
+      throw new UserError("This Desert Storm event can no longer be updated.");
     }
     const now = new Date().toISOString();
     if (hasTimestampPassed(event.votingCloseAt) && status === "open") {
-      throw new Error("Desert Storm voting is closed for this week.");
+      throw new UserError("Desert Storm voting is closed for this week.");
     }
     const wasOpen = event.vote.status === "open";
     if (status === "open") {
@@ -2456,15 +2522,15 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function submitDesertStormVote(allianceId, eventId, player, optionId) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed" || event.vote.status !== "open" || hasTimestampPassed(event.votingCloseAt)) {
-      throw new Error("Desert Storm voting is closed.");
+      throw new UserError("Desert Storm voting is closed.");
     }
     const option = (event.vote.options || []).find((entry) => entry.id === optionId);
     if (!option) {
-      throw new Error("Vote option not found.");
+      throw new UserError("Vote option not found.");
     }
     const existing = (event.vote.responses || []).find((entry) => entry.playerId === player.id);
     const previousOptionId = existing?.optionId || "";
@@ -2493,11 +2559,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function getTaskForceSlot(taskForces, taskForceKey, squadId, slotId) {
     const taskForce = taskForces?.[taskForceKey];
-    if (!taskForce) throw new Error("Task force not found.");
+    if (!taskForce) throw new UserError("Task force not found.");
     const squad = (taskForce.squads || []).find((entry) => entry.id === squadId);
-    if (!squad) throw new Error("Squad not found.");
+    if (!squad) throw new UserError("Squad not found.");
     const slot = (squad.slots || []).find((entry) => entry.id === slotId);
-    if (!slot) throw new Error("Slot not found.");
+    if (!slot) throw new UserError("Slot not found.");
     return { taskForce, squad, slot };
   }
 
@@ -2515,11 +2581,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function updateDesertStormEventSlot(allianceId, eventId, player, payload) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed") {
-      throw new Error("This Desert Storm event can no longer be edited.");
+      throw new UserError("This Desert Storm event can no longer be edited.");
     }
     const target = getTaskForceSlot(event.draftTaskForces, payload.taskForceKey, payload.squadId, payload.slotId);
     const normalizedPlayerName = String(payload.playerName || "");
@@ -2540,21 +2606,21 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function moveDesertStormEventPlayer(allianceId, eventId, player, payload) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed") {
-      throw new Error("This Desert Storm event can no longer be edited.");
+      throw new UserError("This Desert Storm event can no longer be edited.");
     }
     if (payload.sourceTaskForceKey === payload.taskForceKey && payload.sourceSquadId === payload.squadId && payload.sourceSlotId === payload.slotId) {
-      throw new Error("Source and target slot must be different.");
+      throw new UserError("Source and target slot must be different.");
     }
     const source = getTaskForceSlot(event.draftTaskForces, payload.sourceTaskForceKey, payload.sourceSquadId, payload.sourceSlotId);
     const target = getTaskForceSlot(event.draftTaskForces, payload.taskForceKey, payload.squadId, payload.slotId);
     const sourcePlayerName = source.slot.playerName || "";
     const targetPlayerName = target.slot.playerName || "";
     if (!sourcePlayerName) {
-      throw new Error("Source slot is empty.");
+      throw new UserError("Source slot is empty.");
     }
     source.slot.playerName = targetPlayerName;
     target.slot.playerName = sourcePlayerName;
@@ -2567,11 +2633,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function publishDesertStormEvent(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed") {
-      throw new Error("Completed Desert Storm events cannot be published again.");
+      throw new UserError("Completed Desert Storm events cannot be published again.");
     }
     const isRepublish = Boolean(event.publishedTaskForces);
     event.publishedTaskForces = clone(event.draftTaskForces);
@@ -2588,14 +2654,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function beginDesertStormEditing(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status === "completed") {
-      throw new Error("Completed Desert Storm events cannot be edited.");
+      throw new UserError("Completed Desert Storm events cannot be edited.");
     }
     if (!event.publishedTaskForces) {
-      throw new Error("Publish teams before editing them.");
+      throw new UserError("Publish teams before editing them.");
     }
     if (!event.hasUnpublishedChanges) {
       event.draftTaskForces = clone(event.publishedTaskForces);
@@ -2607,9 +2673,9 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function saveDesertStormEventResults(allianceId, eventId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     const normalizeOutcome = (value) => value === "win" || value === "loss" ? value : "pending";
     event.result.taskForceA.outcome = normalizeOutcome(payload?.taskForceA?.outcome);
     event.result.taskForceA.notes = String(payload?.taskForceA?.notes || "");
@@ -2626,11 +2692,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function archiveDesertStormEvent(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     const event = findDesertStormEvent(alliance, eventId);
-    if (!event) throw new Error("Desert Storm event not found.");
+    if (!event) throw new UserError("Desert Storm event not found.");
     if (event.status !== "completed") {
-      throw new Error("Only completed Desert Storm events can be archived.");
+      throw new UserError("Only completed Desert Storm events can be archived.");
     }
     event.archivedAt = new Date().toISOString();
     event.updatedAt = event.archivedAt;
@@ -2641,13 +2707,13 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function hardDeleteDesertStormEvent(allianceId, eventId, player) {
     const alliance = findAllianceById(allianceId);
-    if (!alliance) throw new Error("Alliance not found.");
+    if (!alliance) throw new UserError("Alliance not found.");
     alliance.desertStormEvents = Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents : [];
     const index = alliance.desertStormEvents.findIndex((entry) => entry.id === eventId);
-    if (index === -1) throw new Error("Desert Storm event not found.");
+    if (index === -1) throw new UserError("Desert Storm event not found.");
     const event = alliance.desertStormEvents[index];
     if (event.status !== "completed") {
-      throw new Error("Only completed Desert Storm events can be permanently deleted.");
+      throw new UserError("Only completed Desert Storm events can be permanently deleted.");
     }
     alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
     alliance.calendarEntries = alliance.calendarEntries.filter((entry) => entry.id !== event.calendarEventId && entry.linkedEventId !== event.id);
@@ -2663,7 +2729,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function lockInDesertStormLayout(allianceId, player, payload = {}) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const now = new Date().toISOString();
     const dateLabel = now.slice(0, 10);
@@ -2687,14 +2753,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function updateDesertStormLayoutResult(allianceId, layoutId, result, notes = undefined) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const layout = (alliance.desertStormLayouts || []).find((entry) => entry.id === layoutId);
     if (!layout) {
-      throw new Error("Desert Storm layout not found.");
+      throw new UserError("Desert Storm layout not found.");
     }
     if (!["pending", "win", "loss"].includes(result)) {
-      throw new Error("result must be pending, win, or loss.");
+      throw new UserError("result must be pending, win, or loss.");
     }
     layout.result = result;
     if (notes !== undefined) {
@@ -2707,17 +2773,17 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function createVote(allianceId, player, { title, options }) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const normalizedTitle = String(title || "").trim();
     const normalizedOptions = Array.isArray(options)
       ? options.map((option) => String(option || "").trim()).filter(Boolean)
       : [];
     if (!normalizedTitle) {
-      throw new Error("title is required.");
+      throw new UserError("title is required.");
     }
     if (normalizedOptions.length < 2) {
-      throw new Error("At least two vote options are required.");
+      throw new UserError("At least two vote options are required.");
     }
 
     const vote = normalizeVote({
@@ -2736,22 +2802,22 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function submitVote(allianceId, voteId, playerId, optionId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const player = alliance.players.find((entry) => entry.id === playerId);
     if (!player) {
-      throw new Error("Player not found.");
+      throw new UserError("Player not found.");
     }
     const vote = alliance.votes.find((entry) => entry.id === voteId);
     if (!vote) {
-      throw new Error("Vote not found.");
+      throw new UserError("Vote not found.");
     }
     if (vote.status !== "open") {
-      throw new Error("Vote is closed.");
+      throw new UserError("Vote is closed.");
     }
     const option = vote.options.find((entry) => entry.id === optionId);
     if (!option) {
-      throw new Error("Vote option not found.");
+      throw new UserError("Vote option not found.");
     }
 
     const existing = vote.responses.find((entry) => entry.playerId === playerId);
@@ -2773,14 +2839,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function closeVote(allianceId, voteId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const vote = alliance.votes.find((entry) => entry.id === voteId);
     if (!vote) {
-      throw new Error("Vote not found.");
+      throw new UserError("Vote not found.");
     }
     if (vote.status === "archived") {
-      throw new Error("Archived votes cannot be closed.");
+      throw new UserError("Archived votes cannot be closed.");
     }
     if (vote.status !== "closed") {
       vote.status = "closed";
@@ -2793,11 +2859,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function archiveVote(allianceId, voteId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const vote = alliance.votes.find((entry) => entry.id === voteId);
     if (!vote) {
-      throw new Error("Vote not found.");
+      throw new UserError("Vote not found.");
     }
     vote.status = "archived";
     vote.archivedAt = new Date().toISOString();
@@ -2808,14 +2874,14 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function reopenVote(allianceId, voteId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const vote = alliance.votes.find((entry) => entry.id === voteId);
     if (!vote) {
-      throw new Error("Vote not found.");
+      throw new UserError("Vote not found.");
     }
     if (vote.status !== "closed") {
-      throw new Error("Only closed votes can be reopened.");
+      throw new UserError("Only closed votes can be reopened.");
     }
     vote.status = "open";
     vote.closedAt = null;
@@ -2826,11 +2892,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
   function deleteVote(allianceId, voteId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
-      throw new Error("Alliance not found.");
+      throw new UserError("Alliance not found.");
     }
     const voteIndex = alliance.votes.findIndex((entry) => entry.id === voteId);
     if (voteIndex === -1) {
-      throw new Error("Vote not found.");
+      throw new UserError("Vote not found.");
     }
     const [deletedVote] = alliance.votes.splice(voteIndex, 1);
     commit();
@@ -2910,5 +2976,8 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 }
 
 module.exports = {
-  createStore
+  createStore,
+  mergeAllianceStates,
+  splitStateByAlliance,
+  UserError
 };
