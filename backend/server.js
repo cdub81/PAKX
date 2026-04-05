@@ -237,6 +237,28 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/alliance/documents") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const body = await readJson(request);
+      sendJson(response, 201, {
+        document: store.addAllianceDocument(context.alliance.id, context.player, body)
+      });
+      return;
+    }
+
+    if (request.method === "DELETE" && pathname.startsWith("/api/alliance/documents/")) {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const documentId = decodeURIComponent(pathname.slice("/api/alliance/documents/".length));
+      sendJson(response, 200, store.deleteAllianceDocument(context.alliance.id, documentId));
+      return;
+    }
+
     if (request.method === "POST" && pathname === "/api/account/join-request") {
       const context = requireAuth(request, response);
       if (!context) {

@@ -296,6 +296,23 @@ function normalizePushBroadcastLog(value) {
   };
 }
 
+function normalizeDocumentKind(value) {
+  return value === "photo" ? "photo" : "document";
+}
+
+function normalizeAllianceDocument(value) {
+  return {
+    id: value?.id || crypto.randomUUID(),
+    title: String(value?.title || "").trim() || "Document",
+    description: String(value?.description || "").trim(),
+    url: String(value?.url || "").trim(),
+    kind: normalizeDocumentKind(value?.kind),
+    createdAt: value?.createdAt || new Date().toISOString(),
+    createdByPlayerId: String(value?.createdByPlayerId || "").trim(),
+    createdByName: String(value?.createdByName || "").trim()
+  };
+}
+
 function normalizeCalendarRecurrence(value) {
   const recurrence = value && typeof value === "object" ? value : {};
   const repeat = ["none", "daily", "every_other_day", "weekly", "custom_weekdays"].includes(recurrence.repeat) ? recurrence.repeat : "none";
@@ -592,6 +609,7 @@ function normalizeAlliance(alliance) {
     desertStormLayouts: Array.isArray(alliance.desertStormLayouts) ? alliance.desertStormLayouts.map(normalizeDesertStormLayout) : [],
     desertStormEvents: Array.isArray(alliance.desertStormEvents) ? alliance.desertStormEvents.map(normalizeDesertStormEvent) : [],
     feedbackEntries: Array.isArray(alliance.feedbackEntries) ? alliance.feedbackEntries.map(normalizeFeedbackEntry) : [],
+    documents: Array.isArray(alliance.documents) ? alliance.documents.map(normalizeAllianceDocument).filter((entry) => entry.url) : [],
     calendarEntries: Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries.map(normalizeCalendarEntry) : [],
     zombieSiegeEvents: Array.isArray(alliance.zombieSiegeEvents) ? alliance.zombieSiegeEvents.map(normalizeZombieSiegeEvent) : [],
     pushBroadcastLogs: Array.isArray(alliance.pushBroadcastLogs) ? alliance.pushBroadcastLogs.map(normalizePushBroadcastLog) : []
@@ -868,6 +886,16 @@ function createStore(config = {}) {
           createdByPlayerId: comment.createdByPlayerId,
           createdByName: comment.createdByName
         }))
+      })),
+      documents: (alliance.documents || []).map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        description: entry.description,
+        url: entry.url,
+        kind: normalizeDocumentKind(entry.kind),
+        createdAt: entry.createdAt,
+        createdByPlayerId: entry.createdByPlayerId,
+        createdByName: entry.createdByName
       })),
       calendarEntries: (alliance.calendarEntries || [])
         .filter((entry) => viewerIsLeader || !entry.leaderOnly)
@@ -1941,6 +1969,50 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return clone(entry);
   }
 
+  function addAllianceDocument(allianceId, player, payload) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    const title = String(payload?.title || "").trim();
+    const url = String(payload?.url || "").trim();
+    const description = String(payload?.description || "").trim();
+    const kind = normalizeDocumentKind(payload?.kind);
+    if (!title) {
+      throw new UserError("Document title is required.");
+    }
+    if (!url || !/^https?:\/\//i.test(url)) {
+      throw new UserError("Document URL must start with http:// or https://.");
+    }
+    alliance.documents = Array.isArray(alliance.documents) ? alliance.documents : [];
+    const entry = normalizeAllianceDocument({
+      title,
+      description,
+      url,
+      kind,
+      createdByPlayerId: player.id,
+      createdByName: player.name
+    });
+    alliance.documents.unshift(entry);
+    commit();
+    return clone(entry);
+  }
+
+  function deleteAllianceDocument(allianceId, documentId) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    alliance.documents = Array.isArray(alliance.documents) ? alliance.documents : [];
+    const index = alliance.documents.findIndex((entry) => entry.id === documentId);
+    if (index === -1) {
+      throw new UserError("Document not found.");
+    }
+    const [deletedEntry] = alliance.documents.splice(index, 1);
+    commit();
+    return { ok: true, deletedDocumentId: deletedEntry.id };
+  }
+
   function addFeedbackComment(allianceId, feedbackEntryId, player, message) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
@@ -2952,6 +3024,8 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     hardDeleteDesertStormEvent,
       addFeedbackEntry,
       addFeedbackComment,
+      addAllianceDocument,
+      deleteAllianceDocument,
       createCalendarEntry,
       updateCalendarEntry,
       deleteCalendarEntry,

@@ -161,6 +161,26 @@ export function removeMember(baseUrl, token, memberId) {
   });
 }
 
+export function addAllianceDocument(baseUrl, token, payload) {
+  return request(baseUrl, "/api/alliance/documents", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteAllianceDocument(baseUrl, token, documentId) {
+  return request(baseUrl, `/api/alliance/documents/${encodeURIComponent(documentId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function updateTaskForceSlot(baseUrl, token, payload) {
   return request(baseUrl, "/api/task-forces/slot", {
     method: "PATCH",
