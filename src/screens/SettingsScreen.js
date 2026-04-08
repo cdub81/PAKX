@@ -13,6 +13,7 @@ export function SettingsScreen({
   onLeaveAlliance,
   onSignOut,
   onChangePassword,
+  onChangeUsername,
   t,
   language,
   onChangeLanguage,
@@ -38,6 +39,9 @@ export function SettingsScreen({
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
+  const [changeUsernameOpen, setChangeUsernameOpen] = useState(false);
+  const [newUsernameInput, setNewUsernameInput] = useState("");
+  const [usernameMessage, setUsernameMessage] = useState("");
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [sessionOpen, setSessionOpen] = useState(false);
 
@@ -108,6 +112,38 @@ export function SettingsScreen({
         </View>
       </Pressable>
       {languageOpen ? <LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={(key, values) => key === "language" ? st("settings.language.title", values) : t(key, values)} /> : null}
+    </AppCard>
+
+    {/* Change Username */}
+    <AppCard style={styles.settingsSectionCard} styles={styles}>
+      <Pressable onPress={() => { setChangeUsernameOpen((v) => !v); setNewUsernameInput(account?.username || ""); setUsernameMessage(""); }}>
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.flexOne}>
+            <SectionHeader eyebrow="Account" title="Change Username" detail="Tap to expand and update your login username." styles={styles} />
+          </View>
+          <StatusBadge label={changeUsernameOpen ? "Open" : "Collapsed"} tone={changeUsernameOpen ? "success" : "neutral"} styles={styles} />
+        </View>
+      </Pressable>
+      {changeUsernameOpen ? <>
+        <TextInput value={newUsernameInput} onChangeText={setNewUsernameInput} style={styles.input} placeholder="New username" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="none" autoCorrect={false} />
+        <Text style={styles.hint}>3–30 characters. Letters, numbers, underscores, hyphens, and periods only.</Text>
+        {usernameMessage ? <Text style={styles.error}>{usernameMessage}</Text> : null}
+        <PrimaryButton label="Update Username" styles={styles} onPress={() => {
+          setUsernameMessage("");
+          const trimmed = newUsernameInput.trim();
+          if (!trimmed) { setUsernameMessage("Username cannot be empty."); return; }
+          if (trimmed.length < 3) { setUsernameMessage("Must be at least 3 characters."); return; }
+          if (trimmed.length > 30) { setUsernameMessage("Must be 30 characters or fewer."); return; }
+          if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) { setUsernameMessage("Only letters, numbers, _ . - allowed."); return; }
+          onChangeUsername(trimmed, (err, updatedUsername) => {
+            if (err) { setUsernameMessage(err); } else {
+              setNewUsernameInput("");
+              setChangeUsernameOpen(false);
+              Alert.alert("Username Updated", `Your username has been changed to "${updatedUsername}".`);
+            }
+          });
+        }} />
+      </> : null}
     </AppCard>
 
     {/* Change Password */}

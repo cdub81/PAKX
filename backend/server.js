@@ -171,6 +171,15 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/auth/change-username") {
+      const context = requireAuth(request, response);
+      if (!context) return;
+      const body = await readJson(request);
+      const result = store.changeOwnUsername(context.account.id, body.newUsername);
+      sendJson(response, 200, result);
+      return;
+    }
+
     const resetPasswordMatch = pathname.match(/^\/api\/members\/([^/]+)\/reset-password$/);
     if (resetPasswordMatch && request.method === "POST") {
       const context = requireLeader(request, response);

@@ -1594,6 +1594,34 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return { ok: true };
   }
 
+  function changeOwnUsername(accountId, newUsername) {
+    const account = state.accounts.find((a) => a.id === accountId);
+    if (!account) {
+      throw new UserError("Account not found.");
+    }
+    const trimmed = String(newUsername || "").trim();
+    if (!trimmed) {
+      throw new UserError("Username cannot be empty.");
+    }
+    if (trimmed.length < 3) {
+      throw new UserError("Username must be at least 3 characters.");
+    }
+    if (trimmed.length > 30) {
+      throw new UserError("Username must be 30 characters or fewer.");
+    }
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) {
+      throw new UserError("Username can only contain letters, numbers, underscores, hyphens, and periods.");
+    }
+    const taken = state.accounts.find((a) => a.id !== accountId && String(a.username || "").toLowerCase() === trimmed.toLowerCase());
+    if (taken) {
+      throw new UserError("That username is already taken.");
+    }
+    account.username = trimmed;
+    account.displayName = trimmed;
+    commit();
+    return { ok: true, username: trimmed };
+  }
+
   function createPasswordResetRequest(username) {
     const account = state.accounts.find((a) => String(a.username || "").toLowerCase() === String(username || "").trim().toLowerCase());
     if (!account) {
@@ -3129,6 +3157,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     signInAccount,
     resetMemberPassword,
     changeOwnPassword,
+    changeOwnUsername,
     createPasswordResetRequest,
     listPasswordResetRequestsForAlliance,
     dismissPasswordResetRequest,

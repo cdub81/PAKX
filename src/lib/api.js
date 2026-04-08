@@ -62,6 +62,14 @@ export function changePassword(baseUrl, token, payload) {
   });
 }
 
+export function changeUsername(baseUrl, token, newUsername) {
+  return request(baseUrl, "/api/auth/change-username", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ newUsername })
+  });
+}
+
 export function resetMemberPassword(baseUrl, token, playerId) {
   return request(baseUrl, `/api/members/${encodeURIComponent(playerId)}/reset-password`, {
     method: "POST",
