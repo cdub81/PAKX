@@ -54,6 +54,43 @@ export function signIn(baseUrl, payload) {
   });
 }
 
+export function changePassword(baseUrl, token, payload) {
+  return request(baseUrl, "/api/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function resetMemberPassword(baseUrl, token, playerId) {
+  return request(baseUrl, `/api/members/${encodeURIComponent(playerId)}/reset-password`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export function forgotPassword(baseUrl, username) {
+  return request(baseUrl, "/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username })
+  });
+}
+
+export function getPasswordResetRequests(baseUrl, token) {
+  return request(baseUrl, "/api/password-reset-requests", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export function dismissPasswordResetRequest(baseUrl, token, requestId) {
+  return request(baseUrl, `/api/password-reset-requests/${encodeURIComponent(requestId)}/dismiss`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
 export function joinAlliance(baseUrl, token, allianceCode) {
   return request(baseUrl, "/api/account/join-request", {
     method: "POST",

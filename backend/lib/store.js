@@ -9,6 +9,29 @@ class UserError extends Error {
     this.name = "UserError";
   }
 }
+
+const HASH_SALT_BYTES = 16;
+const HASH_KEY_BYTES = 64;
+const HASHED_PASSWORD_REGEX = /^[a-f0-9]{32}:[a-f0-9]{128}$/;
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(HASH_SALT_BYTES).toString("hex");
+  const hash = crypto.scryptSync(String(password), salt, HASH_KEY_BYTES).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function isHashedPassword(stored) {
+  return HASHED_PASSWORD_REGEX.test(String(stored || ""));
+}
+
+function verifyPassword(input, stored) {
+  if (!isHashedPassword(stored)) {
+    return stored === input;
+  }
+  const [salt, hash] = stored.split(":");
+  const inputHash = crypto.scryptSync(String(input), salt, HASH_KEY_BYTES).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(inputHash, "hex"), Buffer.from(hash, "hex"));
+}
 const { getDesertStormCycleForDate, getServerShiftedDateParts, hasTimestampPassed } = require("./desertStorm");
 const { buildAvailabilityMap, runZombieSiegePlanner } = require("./zombieSiege");
 
@@ -577,7 +600,7 @@ function createAccount({ username, password, displayName }) {
   return {
     id: crypto.randomUUID(),
     username: normalizedUsername,
-    password,
+    password: hashPassword(password),
     displayName: (displayName && displayName.trim()) || normalizedUsername,
     allianceId: null,
     playerId: null
@@ -628,7 +651,7 @@ function createInitialStore() {
           {
             id: crypto.randomUUID(),
             username: "Cdub81",
-            password: "password",
+            password: hashPassword("password"),
             displayName: "Cdub81",
             allianceId: pakxAlliance.id,
             playerId: cdubPlayer.id
@@ -657,7 +680,8 @@ function normalizeState(loaded) {
     alliances: (loaded.alliances || []).map(normalizeAlliance),
     accounts: loaded.accounts || [],
     sessions: loaded.sessions || [],
-    joinRequests: loaded.joinRequests || []
+    joinRequests: loaded.joinRequests || [],
+    passwordResetRequests: loaded.passwordResetRequests || []
   };
 }
 
@@ -670,13 +694,15 @@ function splitStateByAlliance(state) {
     const pendingAccounts = (state.accounts || []).filter((a) => pendingAccountIds.has(a.id) && !allianceAccountIds.has(a.id));
     const allRelatedAccountIds = new Set([...allianceAccountIds, ...pendingAccounts.map((a) => a.id)]);
     const allianceSessions = (state.sessions || []).filter((s) => allRelatedAccountIds.has(s.accountId));
+    const alliancePasswordResetRequests = (state.passwordResetRequests || []).filter((r) => r.allianceId === alliance.id);
     return {
       allianceId: alliance.id,
       state: {
         alliance,
         accounts: [...allianceAccounts, ...pendingAccounts],
         sessions: allianceSessions,
-        joinRequests: allianceJoinRequests
+        joinRequests: allianceJoinRequests,
+        passwordResetRequests: alliancePasswordResetRequests
       }
     };
   });
@@ -687,9 +713,11 @@ function mergeAllianceStates(rows) {
   const accounts = [];
   const sessions = [];
   const joinRequests = [];
+  const passwordResetRequests = [];
   const seenAccountIds = new Set();
   const seenSessionTokens = new Set();
   const seenJoinRequestIds = new Set();
+  const seenPasswordResetIds = new Set();
   for (const { state } of rows) {
     if (state.alliance) alliances.push(state.alliance);
     for (const account of (state.accounts || [])) {
@@ -710,8 +738,14 @@ function mergeAllianceStates(rows) {
         seenJoinRequestIds.add(jr.id);
       }
     }
+    for (const pr of (state.passwordResetRequests || [])) {
+      if (!seenPasswordResetIds.has(pr.id)) {
+        passwordResetRequests.push(pr);
+        seenPasswordResetIds.add(pr.id);
+      }
+    }
   }
-  return normalizeState({ alliances, accounts, sessions, joinRequests });
+  return normalizeState({ alliances, accounts, sessions, joinRequests, passwordResetRequests });
 }
 
 function saveStore(store) {
@@ -1497,8 +1531,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
 
   function signInAccount({ username, password }) {
     const account = findAccountByUsername(username);
-    if (!account || account.password !== password) {
+    if (!account || !verifyPassword(password, account.password)) {
       throw new UserError("Invalid username or password.");
+    }
+    if (!isHashedPassword(account.password)) {
+      account.password = hashPassword(password);
     }
 
     const session = createSession(account.id);
@@ -1513,6 +1550,110 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       alliance: publicAlliance(alliance),
       player: player ? publicPlayer(player) : null
     };
+  }
+
+  function resetMemberPassword(allianceId, targetPlayerId, requestingPlayer) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    const targetPlayer = alliance.players.find((p) => p.id === targetPlayerId);
+    if (!targetPlayer) {
+      throw new UserError("Member not found.");
+    }
+    const targetAccount = state.accounts.find((a) => a.allianceId === allianceId && a.playerId === targetPlayerId);
+    if (!targetAccount) {
+      throw new UserError("No account found for this member.");
+    }
+    const tempPassword = crypto.randomBytes(6).toString("hex");
+    targetAccount.password = hashPassword(tempPassword);
+    // Auto-dismiss any pending password reset request for this player
+    (state.passwordResetRequests || []).forEach((r) => {
+      if (r.allianceId === allianceId && r.playerId === targetPlayerId && r.status === "pending") {
+        r.status = "resolved";
+      }
+    });
+    commit();
+    return { tempPassword, playerName: targetPlayer.name };
+  }
+
+  function changeOwnPassword(accountId, currentPassword, newPassword) {
+    const account = state.accounts.find((a) => a.id === accountId);
+    if (!account) {
+      throw new UserError("Account not found.");
+    }
+    if (!verifyPassword(currentPassword, account.password)) {
+      throw new UserError("Current password is incorrect.");
+    }
+    const trimmed = String(newPassword || "").trim();
+    if (trimmed.length < 6) {
+      throw new UserError("New password must be at least 6 characters.");
+    }
+    account.password = hashPassword(trimmed);
+    commit();
+    return { ok: true };
+  }
+
+  function createPasswordResetRequest(username) {
+    const account = state.accounts.find((a) => String(a.username || "").toLowerCase() === String(username || "").trim().toLowerCase());
+    if (!account) {
+      // Return success even when not found to avoid username enumeration
+      return { ok: true };
+    }
+    if (!account.allianceId) {
+      // User not in an alliance — nothing to do
+      return { ok: true };
+    }
+    const alliance = findAllianceById(account.allianceId);
+    if (!alliance) {
+      return { ok: true };
+    }
+    const player = alliance.players.find((p) => p.id === account.playerId);
+    const playerName = player ? player.name : account.username;
+    // Dedup: remove any existing pending request for this account
+    state.passwordResetRequests = (state.passwordResetRequests || []).filter((r) => !(r.accountId === account.id && r.status === "pending"));
+    const request = {
+      id: crypto.randomUUID(),
+      accountId: account.id,
+      playerId: account.playerId || null,
+      allianceId: account.allianceId,
+      playerName,
+      requestedAt: new Date().toISOString(),
+      status: "pending"
+    };
+    state.passwordResetRequests.push(request);
+    commit();
+    return { ok: true };
+  }
+
+  function listPasswordResetRequestsForAlliance(allianceId, requestingPlayer) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    const leaderRanks = ["Leader", "Co-Leader"];
+    if (!leaderRanks.includes(requestingPlayer.rank)) {
+      throw new UserError("Only leaders can view password reset requests.");
+    }
+    return (state.passwordResetRequests || []).filter((r) => r.allianceId === allianceId && r.status === "pending");
+  }
+
+  function dismissPasswordResetRequest(allianceId, requestId, requestingPlayer) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    const leaderRanks = ["Leader", "Co-Leader"];
+    if (!leaderRanks.includes(requestingPlayer.rank)) {
+      throw new UserError("Only leaders can dismiss password reset requests.");
+    }
+    const request = (state.passwordResetRequests || []).find((r) => r.id === requestId && r.allianceId === allianceId);
+    if (!request) {
+      throw new UserError("Request not found.");
+    }
+    request.status = "dismissed";
+    commit();
+    return { ok: true };
   }
 
   function getAlliancePreviewByCode(code) {
@@ -2989,6 +3130,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     getSessionContext,
     createAccountAndSession,
     signInAccount,
+    resetMemberPassword,
+    changeOwnPassword,
+    createPasswordResetRequest,
+    listPasswordResetRequestsForAlliance,
+    dismissPasswordResetRequest,
     getAlliancePreviewByCode,
     listVotesForAlliance,
     requestJoinAllianceForAccount,

@@ -162,6 +162,48 @@ async function handleRequest(request, response) {
       return;
     }
 
+    if (request.method === "POST" && pathname === "/api/auth/change-password") {
+      const context = requireAuth(request, response);
+      if (!context) return;
+      const body = await readJson(request);
+      const result = store.changeOwnPassword(context.account.id, body.currentPassword, body.newPassword);
+      sendJson(response, 200, result);
+      return;
+    }
+
+    const resetPasswordMatch = pathname.match(/^\/api\/members\/([^/]+)\/reset-password$/);
+    if (resetPasswordMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) return;
+      const result = store.resetMemberPassword(context.alliance.id, resetPasswordMatch[1], context.player);
+      sendJson(response, 200, result);
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/auth/forgot-password") {
+      const body = await readJson(request);
+      const result = store.createPasswordResetRequest(body.username);
+      sendJson(response, 200, result);
+      return;
+    }
+
+    if (request.method === "GET" && pathname === "/api/password-reset-requests") {
+      const context = requireLeader(request, response);
+      if (!context) return;
+      const requests = store.listPasswordResetRequestsForAlliance(context.alliance.id, context.player);
+      sendJson(response, 200, { requests });
+      return;
+    }
+
+    const dismissResetMatch = pathname.match(/^\/api\/password-reset-requests\/([^/]+)\/dismiss$/);
+    if (dismissResetMatch && request.method === "POST") {
+      const context = requireLeader(request, response);
+      if (!context) return;
+      const result = store.dismissPasswordResetRequest(context.alliance.id, dismissResetMatch[1], context.player);
+      sendJson(response, 200, result);
+      return;
+    }
+
     if (request.method === "GET" && pathname === "/api/public-alliance") {
       const code = url.searchParams.get("code");
       if (!code) {
