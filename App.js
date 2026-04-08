@@ -10,6 +10,7 @@ import { AppBackHeader as SharedAppBackHeader, AppCard as SharedAppCard, BottomS
 import { CalendarDatePickerModal as SharedCalendarDatePickerModal, CalendarTimePickerModal as SharedCalendarTimePickerModal, ReminderDurationPickerModal as SharedReminderDurationPickerModal } from "./src/components/Pickers";
 import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankSelector } from "./src/components/Selectors";
 import { FeedbackScreen } from "./src/screens/FeedbackScreen";
+import { CalculatorsScreen } from "./src/screens/CalculatorsScreen";
 import { CalendarScreen } from "./src/screens/CalendarScreen";
 import { DesertStormScreen } from "./src/screens/DesertStormScreen";
 import { DocumentsScreen } from "./src/screens/DocumentsScreen";
@@ -214,6 +215,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [eventsSelection, setEventsSelection] = useState("");
   const [moreSelection, setMoreSelection] = useState("");
+  const [calculatorSelection, setCalculatorSelection] = useState("");
   const [alliancePreview, setAlliancePreview] = useState(null);
   const [playerModal, setPlayerModal] = useState(null);
   const [playerPickerFilter, setPlayerPickerFilter] = useState("players");
@@ -302,6 +304,9 @@ export default function App() {
   function openMoreDestination(destination) {
     setActiveTab("more");
     setMoreSelection(destination);
+    if (destination !== "calculators") {
+      setCalculatorSelection("");
+    }
   }
 
   function handleTabPress(nextTab) {
@@ -311,6 +316,7 @@ export default function App() {
     }
     if (nextTab !== "more") {
       setMoreSelection("");
+      setCalculatorSelection("");
     }
   }
 
@@ -331,14 +337,26 @@ export default function App() {
             ? "Members"
             : moreSelection === "settings"
               ? t("settings.title")
+              : moreSelection === "calculators"
+                ? calculatorSelection === "hqRequirements"
+                  ? t("calculators.cards.hqRequirements.title")
+                  : calculatorSelection === "buildingResources"
+                    ? t("calculators.cards.buildingResources.title")
+                  : t("calculators.title")
               : moreSelection === "documents"
                 ? t("documents.title")
               : "Feedback",
-        onBack: () => setMoreSelection("")
+        onBack: () => {
+          if (moreSelection === "calculators" && calculatorSelection) {
+            setCalculatorSelection("");
+            return;
+          }
+          setMoreSelection("");
+        }
       };
     }
     return { visible: false, title: "", onBack: null };
-  }, [activeTab, eventsSelection, moreSelection, t]);
+  }, [activeTab, calculatorSelection, eventsSelection, moreSelection, t]);
   const options = useMemo(() => createPlayerOptions(players), [players]);
   const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
   const archivedDesertStormEvents = useMemo(() => getDesertStormHistoryEvents(desertStormEvents), [desertStormEvents]);
@@ -1559,7 +1577,10 @@ export default function App() {
               {eventsSelection === "zombieSiege" ? <ZombieSiegeScreen styles={styles} events={zombieSiegeEvents} selectedEvent={selectedZombieSiegeEvent} selectedEventId={selectedZombieSiegeEventId} onSelectEvent={setSelectedZombieSiegeEventId} currentUser={currentUser} currentUserIsLeader={leader} newTitle={newZombieSiegeTitle} newStartAt={newZombieSiegeStartAt} newEndAt={newZombieSiegeEndAt} newVoteClosesAt={newZombieSiegeVoteClosesAt} newThreshold={newZombieSiegeThreshold} onChangeNewTitle={setNewZombieSiegeTitle} onChangeNewStartAt={setNewZombieSiegeStartAt} onChangeNewEndAt={setNewZombieSiegeEndAt} onChangeNewVoteClosesAt={setNewZombieSiegeVoteClosesAt} onChangeNewThreshold={setNewZombieSiegeThreshold} onCreateEvent={() => run(async () => { const created = await createZombieSiegeEventRequest(session.backendUrl, session.token, { title: newZombieSiegeTitle, startAt: toIsoDateTime(newZombieSiegeStartAt), endAt: toIsoDateTime(newZombieSiegeEndAt), voteClosesAt: "", wave20Threshold: Number.parseFloat(newZombieSiegeThreshold) || 0 }); setSelectedZombieSiegeEventId(created.id); setNewZombieSiegeTitle(""); setNewZombieSiegeStartAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeEndAt(formatLocalDateTimeInput(new Date(Date.now() + 60 * 60 * 1000))); setNewZombieSiegeVoteClosesAt(formatLocalDateTimeInput(new Date())); setNewZombieSiegeThreshold(""); await refresh(); })} onSubmitAvailability={(eventId, status) => run(async () => { await submitZombieSiegeAvailabilityRequest(session.backendUrl, session.token, eventId, status); await refresh(); })} onRunPlan={(eventId) => run(async () => { await runZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onPublishPlan={(eventId) => run(async () => { await publishZombieSiegePlanRequest(session.backendUrl, session.token, eventId); await refresh(); })} onDiscardDraft={(eventId) => run(async () => { await discardZombieSiegeDraftRequest(session.backendUrl, session.token, eventId); await refresh(); })} onSaveWaveOneReview={(eventId, reviews) => run(async () => { await updateZombieSiegeWaveOneReviewRequest(session.backendUrl, session.token, eventId, reviews); await refresh(); })} onEndEvent={(eventId) => run(async () => { await endZombieSiegeEventRequest(session.backendUrl, session.token, eventId); await refresh(); })} /> : null}
             </EventsHubScreen> : null}
             {activeTab === "reminders" ? <RemindersScreen styles={styles} reminders={reminders} language={language} onCreateReminder={handleCreateReminder} onCancelReminder={handleCancelReminder} onDeleteReminder={handleDeleteReminder} helpers={{ formatReminderDuration, formatReminderCountdown }} ReminderDurationPickerModal={ReminderDurationPickerModal} CalendarDatePickerModal={CalendarDatePickerModal} CalendarTimePickerModal={CalendarTimePickerModal} t={t} /> : null}
-            {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} currentUserCanViewMembers={canOpenMembers} joinRequests={joinRequests} t={t} onSelectDocuments={() => setMoreSelection("documents")} onSelectLeaderControls={() => setMoreSelection("leaderControls")} onSelectMembers={() => setMoreSelection("members")} onSelectSettings={() => setMoreSelection("settings")} onSelectFeedback={() => setMoreSelection("feedback")} onBack={() => setMoreSelection("")}>
+            {activeTab === "more" ? <MoreScreen styles={styles} selection={moreSelection} currentUserIsLeader={leader} currentUserCanViewMembers={canOpenMembers} joinRequests={joinRequests} t={t} onSelectCalculators={() => openMoreDestination("calculators")} onSelectDocuments={() => openMoreDestination("documents")} onSelectLeaderControls={() => openMoreDestination("leaderControls")} onSelectMembers={() => openMoreDestination("members")} onSelectSettings={() => openMoreDestination("settings")} onSelectFeedback={() => openMoreDestination("feedback")} onBack={() => {
+              setMoreSelection("");
+              setCalculatorSelection("");
+            }}>
               {moreSelection === "leaderControls" && leader ? <LeaderControlsScreen styles={styles} alliance={alliance} history={leaderBroadcastHistory} reachability={leaderBroadcastReachability} currentUserPushDebug={currentUserPushDebug} pushRepairMessage={pushRepairMessage} audience={leaderBroadcastAudience} onChangeAudience={(value) => {
                 setLeaderBroadcastAudience(value);
                 if (value === "all") {
@@ -1573,6 +1594,7 @@ export default function App() {
                   Alert.alert(t("settings.notifications.enablePush.alertTitle"), t("settings.notifications.enablePush.alertDescription"));
                 }
               })} LanguageSelector={LanguageSelector} RankSelector={RankSelector} hasTranslationKey={(key) => Object.prototype.hasOwnProperty.call(TRANSLATIONS[language] || {}, key)} /> : null}
+              {moreSelection === "calculators" ? <CalculatorsScreen styles={styles} t={t} selectedCalculator={calculatorSelection} onSelectCalculator={setCalculatorSelection} /> : null}
               {moreSelection === "documents" ? <DocumentsScreen styles={styles} documents={documents} currentUserIsLeader={leader} newDocumentTitle={newDocumentTitle} newDocumentDescription={newDocumentDescription} newDocumentUrl={newDocumentUrl} newDocumentKind={newDocumentKind} onChangeNewDocumentTitle={setNewDocumentTitle} onChangeNewDocumentDescription={setNewDocumentDescription} onChangeNewDocumentUrl={setNewDocumentUrl} onChangeNewDocumentKind={setNewDocumentKind} onAddDocument={() => run(async () => { await addAllianceDocumentRequest(session.backendUrl, session.token, { title: newDocumentTitle, description: newDocumentDescription, url: newDocumentUrl, kind: newDocumentKind }); setNewDocumentTitle(""); setNewDocumentDescription(""); setNewDocumentUrl(""); setNewDocumentKind("document"); await refresh(); })} onDeleteDocument={(documentId) => run(async () => { await deleteAllianceDocumentRequest(session.backendUrl, session.token, documentId); await refresh(); })} t={t} /> : null}
               {moreSelection === "feedback" ? <FeedbackScreen styles={styles} feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} appVersion={APP_VERSION} appBuild={APP_BUILD} t={t} /> : null}
             </MoreScreen> : null}

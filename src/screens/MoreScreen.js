@@ -9,6 +9,7 @@ export function MoreScreen({
   currentUserCanViewMembers,
   joinRequests,
   t,
+  onSelectCalculators,
   onSelectDocuments,
   onSelectLeaderControls,
   onSelectMembers,
@@ -20,7 +21,7 @@ export function MoreScreen({
   if (selection) {
     return <View style={styles.section}>
       <AppCard style={styles.settingsSectionCard} styles={styles}>
-        <SectionHeader eyebrow={t("more.selected.eyebrow")} title={selection === "leaderControls" ? t("more.leaderControls.title") : selection === "members" ? t("more.members.title") : selection === "settings" ? t("settings.title") : selection === "documents" ? t("documents.title") : t("more.feedback.title")} detail={t("more.selected.description")} styles={styles} />
+        <SectionHeader eyebrow={t("more.selected.eyebrow")} title={selection === "leaderControls" ? t("more.leaderControls.title") : selection === "members" ? t("more.members.title") : selection === "settings" ? t("settings.title") : selection === "documents" ? t("documents.title") : selection === "calculators" ? t("calculators.title") : t("more.feedback.title")} detail={t("more.selected.description")} styles={styles} />
       </AppCard>
       {children}
     </View>;
@@ -37,6 +38,10 @@ export function MoreScreen({
 
     <AppCard style={styles.settingsSectionCard} onPress={onSelectFeedback} styles={styles}>
       <ListRow title={t("more.feedback.title")} detail={t("more.feedback.description")} right={<StatusBadge label={t("more.badgeOpen")} tone="info" styles={styles} />} styles={styles} />
+    </AppCard>
+
+    <AppCard style={styles.settingsSectionCard} onPress={onSelectCalculators} styles={styles}>
+      <ListRow title={t("calculators.title")} detail={t("more.calculators.description")} right={<StatusBadge label={t("more.badgeOpen")} tone="info" styles={styles} />} styles={styles} />
     </AppCard>
 
     <AppCard style={styles.settingsSectionCard} onPress={onSelectDocuments} styles={styles}>
