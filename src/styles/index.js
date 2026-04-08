@@ -1,5 +1,11 @@
-import { Platform, StyleSheet } from "react-native";
+import { Dimensions, Platform, StyleSheet } from "react-native";
 import { DESIGN_TOKENS } from "../theme/designSystem";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+// Screen paddingHorizontal (16) + card padding (16) on each side = 64px total
+// 6 gaps of 6px between 7 columns = 36px
+const CALENDAR_GRID_GAP = 6;
+const CALENDAR_CELL_WIDTH = Math.floor((SCREEN_WIDTH - 64 - CALENDAR_GRID_GAP * 6) / 7);
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: DESIGN_TOKENS.colors.bg },
@@ -230,7 +236,7 @@ const styles = StyleSheet.create({
   calendarGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   calendarStripShell: { padding: 12 },
   calendarStrip: { flexDirection: "row", gap: 8 },
-  calendarDayCell: { width: "13.3%", minHeight: 88, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, paddingHorizontal: 6, paddingVertical: 8, alignItems: "center", justifyContent: "space-between" },
+  calendarDayCell: { width: CALENDAR_CELL_WIDTH, minHeight: 88, backgroundColor: DESIGN_TOKENS.colors.surfaceSoft, borderRadius: 16, borderWidth: 1, borderColor: DESIGN_TOKENS.colors.border, paddingHorizontal: 6, paddingVertical: 8, alignItems: "center", justifyContent: "space-between" },
   calendarDayCellCompact: { flex: 1, width: undefined, minHeight: 82 },
   calendarDayCellMuted: { opacity: 0.45 },
   calendarDayCellToday: { borderColor: DESIGN_TOKENS.colors.green, borderWidth: 2 },
