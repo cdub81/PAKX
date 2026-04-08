@@ -158,6 +158,6 @@ export function SettingsScreen({
       <SectionHeader eyebrow={st("settings.danger.eyebrow")} title={st("settings.danger.title")} detail={st("settings.danger.description")} styles={styles} />
       <Text style={styles.hint}>{st("settings.danger.leaveAnyTime")}</Text>
       <Pressable style={styles.dangerButton} onPress={() => Alert.alert(st("settings.danger.leaveTitle"), st("settings.danger.leaveConfirm"), [{ text: st("common.cancel"), style: "cancel" }, { text: st("settings.danger.leaveButton"), style: "destructive", onPress: onLeaveAlliance }])}><Text style={styles.dangerButtonText}>{st("settings.danger.leaveButton")}</Text></Pressable>
-    </AppCard>}
+    </AppCard> : null}
   </View>;
 }
