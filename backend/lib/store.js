@@ -1608,16 +1608,21 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (!alliance) {
       return { ok: true };
     }
-    const player = alliance.players.find((p) => p.id === account.playerId);
-    const playerName = player ? player.name : account.username;
+    // Try to find player by stored playerId, then fall back to searching by displayName/username
+    let player = account.playerId ? alliance.players.find((p) => p.id === account.playerId) : null;
+    if (!player) {
+      player = alliance.players.find((p) => String(p.name || "").toLowerCase() === String(account.displayName || account.username || "").toLowerCase());
+    }
+    const playerName = player ? player.name : (account.displayName || account.username);
     // Dedup: remove any existing pending request for this account
     state.passwordResetRequests = (state.passwordResetRequests || []).filter((r) => !(r.accountId === account.id && r.status === "pending"));
     const request = {
       id: crypto.randomUUID(),
       accountId: account.id,
-      playerId: account.playerId || null,
+      playerId: player ? player.id : (account.playerId || null),
       allianceId: account.allianceId,
       playerName,
+      username: account.username,
       requestedAt: new Date().toISOString(),
       status: "pending"
     };

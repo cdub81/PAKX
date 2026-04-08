@@ -131,10 +131,13 @@ export function SettingsScreen({
           if (newPassword.length < 6) { setPasswordMessage("New password must be at least 6 characters."); return; }
           if (newPassword !== confirmPassword) { setPasswordMessage("Passwords do not match."); return; }
           onChangePassword({ currentPassword, newPassword }, (err) => {
-            if (err) { setPasswordMessage(err); } else {
-              setPasswordMessage("Password updated successfully.");
+            if (err) {
+              setPasswordMessage(err);
+            } else {
               setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+              setPasswordMessage("");
               setChangePasswordOpen(false);
+              Alert.alert("Password Updated", "Your password has been changed successfully.");
             }
           });
         }} />
