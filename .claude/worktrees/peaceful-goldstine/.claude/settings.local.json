@@ -9,7 +9,16 @@
       "Bash(grep -rn \">[A-Z][a-zA-Z ]</\\\\\\\\\\(Text\\\\|Pressable\\\\|View\\\\\\)>\" \"/c/Users/Colby/OneDrive - accuracy1st/Documents/LWAdmin/src/screens\")",
       "Bash(find \"/c/Users/Colby/OneDrive - accuracy1st/Documents/LWAdmin/src\" -name \"*.js\" -exec grep -h 't\\(\"\"\"\"[^\"\"\"\"]*\"\"\"\"\\)' {})",
       "Bash(find \"/c/Users/Colby/OneDrive - accuracy1st/Documents/LWAdmin/src/screens\" -name \"*.js\" -exec grep -h \"styles\\\\.[a-zA-Z_][a-zA-Z0-9_]*\" {})",
-      "Bash(grep -E \"\\\\.js$\")"
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(python3 -:*)",
+      "Bash(pip install:*)",
+      "Read(//c/Users/Colby/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/64a1653b-b45e-4e34-9630-0f5411ec2ee8/7838c144-502a-471f-9057-264bf71520ad/skills/xlsx/**)",
+      "Bash(python3 build_costs.py)",
+      "Bash(python3 scripts/recalc.py \"C:/Users/Colby/OneDrive - accuracy1st/Documents/LW Resource Calculators/building_resources_calculator.xlsx\" 60)",
+      "Bash(node -e \":*)",
+      "Bash(node --check backend/lib/store.js)",
+      "Bash(node --check backend/server.js)",
+      "Bash(node -e \"const fs = require\\(''fs''\\); const code = fs.readFileSync\\(''src/lib/api.js'', ''utf8''\\); require\\(''vm''\\).runInNewContext\\(code, { fetch: \\(\\) => {}, module: {} }\\)\")"
     ]
   }
 }
