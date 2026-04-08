@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { CALENDAR_GRID_GAP, CALENDAR_GRID_OUTER_PADDING } from "../styles/index";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
 
 const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
@@ -64,6 +65,9 @@ export function CalendarScreen(props) {
     CalendarTimePickerModal,
     CalendarDatePickerModal
   } = props;
+
+  const { width: windowWidth } = useWindowDimensions();
+  const calendarCellWidth = Math.floor((windowWidth - CALENDAR_GRID_OUTER_PADDING - CALENDAR_GRID_GAP * 6) / 7);
 
   const {
     startOfLocalDay,
@@ -154,7 +158,7 @@ export function CalendarScreen(props) {
     const isSelected = fallbackSelectedDateKey === key;
     const isToday = isSameLocalDay(date, today);
     const eventCount = (orderedEntriesByDate[key] || []).length;
-    return <Pressable key={key} style={[styles.calendarDayCell, compact && styles.calendarDayCellCompact, !inCurrentMonth && styles.calendarDayCellMuted, isToday && styles.calendarDayCellToday, isSelected && styles.calendarDayCellSelected]} onPress={() => setSelectedDateKey(key)}><Text style={[styles.calendarDayWeekLabel, compact && styles.calendarDayWeekLabelCompact, isSelected && styles.calendarDayTextSelected]}>{date.toLocaleDateString(language || undefined, { weekday: "short" })}</Text><Text style={[styles.calendarDayNumber, compact && styles.calendarDayNumberCompact, !inCurrentMonth && styles.calendarDayTextMuted, isSelected && styles.calendarDayTextSelected]}>{date.getDate()}</Text>{eventCount ? <View style={[styles.calendarEventBadge, isSelected && styles.calendarEventBadgeSelected]}><Text style={[styles.calendarEventBadgeText, isSelected && styles.calendarEventBadgeTextSelected]}>{eventCount}</Text></View> : <View style={styles.calendarEventSpacer} />}</Pressable>;
+    return <Pressable key={key} style={[styles.calendarDayCell, !compact && { width: calendarCellWidth }, compact && styles.calendarDayCellCompact, !inCurrentMonth && styles.calendarDayCellMuted, isToday && styles.calendarDayCellToday, isSelected && styles.calendarDayCellSelected]} onPress={() => setSelectedDateKey(key)}><Text style={[styles.calendarDayWeekLabel, compact && styles.calendarDayWeekLabelCompact, isSelected && styles.calendarDayTextSelected]}>{date.toLocaleDateString(language || undefined, { weekday: "short" })}</Text><Text style={[styles.calendarDayNumber, compact && styles.calendarDayNumberCompact, !inCurrentMonth && styles.calendarDayTextMuted, isSelected && styles.calendarDayTextSelected]}>{date.getDate()}</Text>{eventCount ? <View style={[styles.calendarEventBadge, isSelected && styles.calendarEventBadgeSelected]}><Text style={[styles.calendarEventBadgeText, isSelected && styles.calendarEventBadgeTextSelected]}>{eventCount}</Text></View> : <View style={styles.calendarEventSpacer} />}</Pressable>;
   }
 
   function getRepeatLabel(entry) {
