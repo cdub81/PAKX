@@ -1626,26 +1626,18 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return { ok: true };
   }
 
-  function listPasswordResetRequestsForAlliance(allianceId, requestingPlayer) {
+  function listPasswordResetRequestsForAlliance(allianceId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
       throw new UserError("Alliance not found.");
-    }
-    const leaderRanks = ["Leader", "Co-Leader"];
-    if (!leaderRanks.includes(requestingPlayer.rank)) {
-      throw new UserError("Only leaders can view password reset requests.");
     }
     return (state.passwordResetRequests || []).filter((r) => r.allianceId === allianceId && r.status === "pending");
   }
 
-  function dismissPasswordResetRequest(allianceId, requestId, requestingPlayer) {
+  function dismissPasswordResetRequest(allianceId, requestId) {
     const alliance = findAllianceById(allianceId);
     if (!alliance) {
       throw new UserError("Alliance not found.");
-    }
-    const leaderRanks = ["Leader", "Co-Leader"];
-    if (!leaderRanks.includes(requestingPlayer.rank)) {
-      throw new UserError("Only leaders can dismiss password reset requests.");
     }
     const request = (state.passwordResetRequests || []).find((r) => r.id === requestId && r.allianceId === allianceId);
     if (!request) {

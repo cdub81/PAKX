@@ -190,7 +190,7 @@ async function handleRequest(request, response) {
     if (request.method === "GET" && pathname === "/api/password-reset-requests") {
       const context = requireLeader(request, response);
       if (!context) return;
-      const requests = store.listPasswordResetRequestsForAlliance(context.alliance.id, context.player);
+      const requests = store.listPasswordResetRequestsForAlliance(context.alliance.id);
       sendJson(response, 200, { requests });
       return;
     }
@@ -199,7 +199,7 @@ async function handleRequest(request, response) {
     if (dismissResetMatch && request.method === "POST") {
       const context = requireLeader(request, response);
       if (!context) return;
-      const result = store.dismissPasswordResetRequest(context.alliance.id, dismissResetMatch[1], context.player);
+      const result = store.dismissPasswordResetRequest(context.alliance.id, dismissResetMatch[1]);
       sendJson(response, 200, result);
       return;
     }
