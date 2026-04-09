@@ -219,11 +219,12 @@ export function LeaderControlsScreen({
           {reachabilityMembers.filter((member) => member.status !== "push_ready").map((member) => <AppCard key={`reachability-${member.id}`} style={styles.settingsNestedCard} styles={styles}>
             <ListRow
               title={member.name}
-              detail={`${member.rank} - ${getReachabilityStatusLabel(member.status)}`}
-              right={<StatusBadge label={getReachabilityStatusLabel(member.status)} tone={member.status === "opted_out" ? "warning" : "danger"} styles={styles} />}
+              detail={member.rank}
+              right={<StatusBadge label={member.status === "opted_out" ? "Opted Out" : "No Token"} tone={member.status === "opted_out" ? "warning" : "danger"} styles={styles} />}
               styles={styles}
             />
-            <Text style={styles.hint}>{member.lastError || getReachabilityStatusLabel(member.status)}</Text>
+            <Text style={styles.hint}>{getReachabilityStatusLabel(member.status)}</Text>
+            {member.lastError ? <Text style={styles.hint}>{member.lastError}</Text> : null}
             <Text style={styles.hint}>{formatLastSynced(member.lastSyncedAt)}</Text>
           </AppCard>)}
         </View> : <Text style={styles.hint}>{t("leaderControls.reachability.noIssues")}</Text>}
