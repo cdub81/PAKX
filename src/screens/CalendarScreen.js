@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
-import { CALENDAR_GRID_GAP, CALENDAR_GRID_OUTER_PADDING } from "../styles/index";
+import { Pressable, Text, TextInput, View } from "react-native";
+import { CALENDAR_GRID_GAP } from "../styles/index";
 import { AppCard, ListRow, PrimaryButton, SectionHeader, SecondaryButton, StatusBadge } from "../components/ui/primitives";
 
 const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
@@ -66,8 +66,8 @@ export function CalendarScreen(props) {
     CalendarDatePickerModal
   } = props;
 
-  const { width: windowWidth } = useWindowDimensions();
-  const calendarCellWidth = Math.floor((windowWidth - CALENDAR_GRID_OUTER_PADDING - CALENDAR_GRID_GAP * 6) / 7);
+  const [gridWidth, setGridWidth] = useState(0);
+  const calendarCellWidth = gridWidth > 0 ? Math.floor((gridWidth - CALENDAR_GRID_GAP * 6) / 7) : 40;
 
   const {
     startOfLocalDay,
@@ -183,7 +183,7 @@ export function CalendarScreen(props) {
       </View>
     </AppCard>
 
-    {calendarView === "month" ? <AppCard style={styles.calendarMonthShell} styles={styles}><View style={styles.calendarMonthHeader}><Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(-1)}><Text style={styles.calendarMonthArrowText}>{"<"}</Text></Pressable><Text style={styles.calendarMonthTitle}>{monthLabel}</Text><Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(1)}><Text style={styles.calendarMonthArrowText}>{">"}</Text></Pressable></View><View style={styles.calendarWeekdayRow}>{CALENDAR_WEEKDAY_OPTIONS.map((option) => <Text key={option.code} style={styles.calendarWeekday}>{getCalendarWeekdayLabel(option.code, language)}</Text>)}</View><View style={styles.calendarGrid}>{monthDays.map((day) => renderDayButton(day))}</View></AppCard> : null}
+    {calendarView === "month" ? <AppCard style={styles.calendarMonthShell} styles={styles}><View style={styles.calendarMonthHeader}><Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(-1)}><Text style={styles.calendarMonthArrowText}>{"<"}</Text></Pressable><Text style={styles.calendarMonthTitle}>{monthLabel}</Text><Pressable style={styles.calendarMonthArrow} onPress={() => shiftMonth(1)}><Text style={styles.calendarMonthArrowText}>{">"}</Text></Pressable></View><View style={styles.calendarWeekdayRow}>{CALENDAR_WEEKDAY_OPTIONS.map((option) => <Text key={option.code} style={styles.calendarWeekday}>{getCalendarWeekdayLabel(option.code, language)}</Text>)}</View><View style={styles.calendarGrid} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>{monthDays.map((day) => renderDayButton(day))}</View></AppCard> : null}
     {calendarView === "week" ? <AppCard style={styles.calendarStripShell} styles={styles}><View style={styles.calendarStrip}>{weekDays.map((day) => renderDayButton(day, true))}</View></AppCard> : null}
     {calendarView === "today" ? <AppCard style={styles.calendarStripShell} styles={styles}><View style={styles.calendarStrip}>{renderDayButton(today, true)}</View></AppCard> : null}
 
