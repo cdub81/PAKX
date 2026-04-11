@@ -59,6 +59,7 @@ export function DesertStormScreen({
   const { getDesertStormStatusLabel, getDesertStormVoteOptionLabel } = helpers;
   const [resultDraft, setResultDraft] = useState({ taskForceA: "pending", taskForceB: "pending" });
   const [preferredSquad, setPreferredSquad] = useState("no_preference");
+  const [memberStatusOpen, setMemberStatusOpen] = useState(false);
 
   useEffect(() => {
     setResultDraft({
@@ -216,10 +217,13 @@ export function DesertStormScreen({
         <View style={styles.zombieEventList}>{(selectedEvent.vote?.options || []).map((option) => <Pressable key={option.id} style={[styles.voteOption, selectedOptionId === option.id && styles.voteOptionSelected]} onPress={() => selectedEvent.vote?.status === "open" ? onSubmitVote(selectedEvent.id, option.id, preferredSquad) : null}><View style={styles.voteOptionHeader}><Text style={styles.cardTitle}>{option.label || getDesertStormVoteOptionLabel(option.id)}</Text><Text style={styles.voteCount}>{option.votes || 0}</Text></View><Text style={styles.hint}>{((selectedEvent.vote?.responses || []).filter((entry) => entry.optionId === option.id).map((entry) => entry.playerName).join(", ")) || "No responses yet"}</Text></Pressable>)}</View>
         {(selectedOptionId === "play" || selectedOptionId === "sub") && selectedEvent.vote?.status === "open" ? <View style={styles.section}><Text style={styles.hint}>Your preferred squad role</Text><View style={styles.rankFilterRow}>{SQUAD_PREF_OPTIONS.map((opt) => <Pressable key={opt.id} style={[styles.rankFilterButton, preferredSquad === opt.id && styles.rankFilterButtonActive]} onPress={() => { setPreferredSquad(opt.id); onSubmitVote(selectedEvent.id, selectedOptionId, opt.id); }}><Text style={[styles.rankFilterButtonText, preferredSquad === opt.id && styles.rankFilterButtonTextActive]}>{opt.label}</Text></Pressable>)}</View></View> : null}
         <AppCard style={styles.settingsNestedCard} styles={styles}>
-          <SectionHeader eyebrow="Leader View" title="Member-by-member status" detail="Draft assignments can happen while voting is still open. Use this list to spot unanswered members and substitutes quickly." styles={styles} />
-          <View style={styles.settingsStack}>
+          <Pressable style={styles.cardHeaderRow} onPress={() => setMemberStatusOpen((v) => !v)}>
+            <View style={styles.listRowContent}><Text style={styles.cardTitle}>Member-by-member status</Text><Text style={styles.hint}>Tap to {memberStatusOpen ? "collapse" : "expand"}</Text></View>
+            <StatusBadge label={memberStatusOpen ? "Open" : "Collapsed"} tone={memberStatusOpen ? "info" : "neutral"} styles={styles} />
+          </Pressable>
+          {memberStatusOpen ? <View style={styles.settingsStack}>
             {(buildMemberStatusList(selectedEvent, players) || []).map((entry) => <ListRow key={entry.id} title={entry.name} detail={entry.detail} right={<StatusBadge label={entry.badge} tone={entry.tone} styles={styles} />} styles={styles} />)}
-          </View>
+          </View> : null}
         </AppCard>
         <View style={styles.row}>
           <PrimaryButton label="Open Vote" onPress={() => onOpenVote(selectedEvent.id)} style={styles.third} tone="blue" styles={styles} />
