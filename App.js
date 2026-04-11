@@ -1694,7 +1694,7 @@ export default function App() {
             {tabs.map((tab) => <Pressable key={tab} style={[styles.bottomTabButton, activeTab === tab && styles.bottomTabButtonActive]} onPress={() => handleTabPress(tab)}>
               <View style={[styles.bottomTabIndicator, activeTab === tab && styles.bottomTabIndicatorActive]} />
               <Ionicons name={getTabIconName(tab, activeTab === tab)} size={20} color={activeTab === tab ? DESIGN_TOKENS.colors.green : DESIGN_TOKENS.colors.textMuted} />
-              <Text style={[styles.bottomTabLabel, activeTab === tab && styles.bottomTabLabelActive]}>{tabLabel(tab, leader, joinRequests, t)}</Text>
+              <Text style={[styles.bottomTabLabel, activeTab === tab && styles.bottomTabLabelActive]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{tabLabel(tab, leader, joinRequests, t)}</Text>
             </Pressable>)}
           </View>
         </View>
