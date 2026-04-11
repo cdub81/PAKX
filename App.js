@@ -252,6 +252,7 @@ export default function App() {
   const [pushRepairMessage, setPushRepairMessage] = useState("");
   const [reminders, setReminders] = useState([]);
   const [calendarView, setCalendarView] = useState("today");
+  const [calendarSubView, setCalendarSubView] = useState("");
   const [newCalendarTitle, setNewCalendarTitle] = useState("");
   const [newCalendarDescription, setNewCalendarDescription] = useState("");
   const [newCalendarDate, setNewCalendarDate] = useState(formatLocalDateKey(new Date()));
@@ -324,6 +325,9 @@ export default function App() {
 
   function handleTabPress(nextTab) {
     setActiveTab(nextTab);
+    if (nextTab !== "calendar") {
+      setCalendarSubView("");
+    }
     if (nextTab !== "events") {
       setEventsSelection("");
     }
@@ -334,6 +338,13 @@ export default function App() {
   }
 
   const backNavigation = useMemo(() => {
+    if (activeTab === "calendar" && calendarSubView) {
+      return {
+        visible: true,
+        title: editingCalendarEntryId ? "Edit Entry" : "Add Entry",
+        onBack: () => { setCalendarSubView(""); resetCalendarForm(); }
+      };
+    }
     if (activeTab === "events" && eventsSelection) {
       return {
         visible: true,
@@ -567,6 +578,7 @@ export default function App() {
   }
 
   function resetCalendarForm() {
+    setCalendarSubView("");
     setEditingCalendarEntryId("");
     setNewCalendarTitle("");
     setNewCalendarDescription("");
@@ -616,6 +628,7 @@ export default function App() {
     setCalendarDatePickerTarget("");
     setCalendarFormError("");
     setActiveTab("calendar");
+    setCalendarSubView("addEntry");
   }
 
   async function persistSession(nextSession) {
@@ -1575,7 +1588,7 @@ export default function App() {
             })} onDismissPushNotificationsPrompt={() => run(async () => {
               await dismissPushNotificationsPrompt();
             })} t={t} /> : null}
-            {activeTab === "calendar" ? <CalendarScreen styles={styles} entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
+            {activeTab === "calendar" ? <CalendarScreen styles={styles} entries={calendarEntries} desertStormEvents={desertStormEvents} zombieSiegeEvents={zombieSiegeEvents} currentUserIsLeader={leader} calendarSubView={calendarSubView} onOpenCalendarForm={() => setCalendarSubView("addEntry")} calendarView={calendarView} editingCalendarEntryId={editingCalendarEntryId} language={language} newCalendarTimeInputMode={newCalendarTimeInputMode} calendarTimePickerTarget={calendarTimePickerTarget} calendarDatePickerTarget={calendarDatePickerTarget} calendarFormError={calendarFormError} onChangeCalendarView={setCalendarView} newCalendarTitle={newCalendarTitle} newCalendarDescription={newCalendarDescription} newCalendarDate={newCalendarDate} newCalendarEndDate={newCalendarEndDate} newCalendarStartTime={newCalendarStartTime} newCalendarEndTime={newCalendarEndTime} newCalendarAllDay={newCalendarAllDay} newCalendarEntryType={newCalendarEntryType} newCalendarRepeat={newCalendarRepeat} newCalendarRepeatEndDate={newCalendarRepeatEndDate} newCalendarRepeatWeekdays={newCalendarRepeatWeekdays} newCalendarLinkedType={newCalendarLinkedType} newCalendarLinkedEventId={newCalendarLinkedEventId} newCalendarEventTimeZone={newCalendarEventTimeZone} newCalendarLeaderNotes={newCalendarLeaderNotes} newCalendarLeaderOnly={newCalendarLeaderOnly} onChangeNewCalendarTitle={setNewCalendarTitle} onChangeNewCalendarDescription={setNewCalendarDescription} onChangeNewCalendarDate={setNewCalendarDate} onChangeNewCalendarEndDate={setNewCalendarEndDate} onChangeNewCalendarStartTime={setNewCalendarStartTime} onChangeNewCalendarEndTime={setNewCalendarEndTime} onChangeNewCalendarTimeInputMode={setNewCalendarTimeInputMode} onChangeCalendarTimePickerTarget={setCalendarTimePickerTarget} onChangeCalendarDatePickerTarget={setCalendarDatePickerTarget} onChangeNewCalendarEventTimeZone={setNewCalendarEventTimeZone} onToggleNewCalendarAllDay={() => setNewCalendarAllDay((value) => !value)} onChangeNewCalendarEntryType={(value) => {
               setNewCalendarEntryType(value);
               if (value === "linked_desert_storm") {
                 const seed = buildDesertStormCalendarLinkSeed(activeDesertStormEvent || getLinkableCalendarEvents(desertStormEvents)[0]);
