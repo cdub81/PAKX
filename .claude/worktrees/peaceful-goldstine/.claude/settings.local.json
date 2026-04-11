@@ -18,7 +18,9 @@
       "Bash(node -e \":*)",
       "Bash(node --check backend/lib/store.js)",
       "Bash(node --check backend/server.js)",
-      "Bash(node -e \"const fs = require\\(''fs''\\); const code = fs.readFileSync\\(''src/lib/api.js'', ''utf8''\\); require\\(''vm''\\).runInNewContext\\(code, { fetch: \\(\\) => {}, module: {} }\\)\")"
+      "Bash(node -e \"const fs = require\\(''fs''\\); const code = fs.readFileSync\\(''src/lib/api.js'', ''utf8''\\); require\\(''vm''\\).runInNewContext\\(code, { fetch: \\(\\) => {}, module: {} }\\)\")",
+      "WebSearch",
+      "Bash(find 'C:\\\\Users\\\\Colby\\\\OneDrive - accuracy1st\\\\Documents\\\\LWAdmin' -iname *desert* -o -iname *storm*)"
     ]
   }
 }
