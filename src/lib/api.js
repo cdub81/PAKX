@@ -18,7 +18,16 @@ export function normalizeBaseUrl(value) {
 async function request(baseUrl, path, options = {}) {
   const url = `${normalizeBaseUrl(baseUrl)}${path}`;
   const response = await fetch(url, options);
-  const body = await response.json();
+  const text = await response.text();
+
+  let body;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    const error = new Error(`Server returned an unexpected response (${response.status}).`);
+    error.status = response.status;
+    throw error;
+  }
 
   if (!response.ok) {
     const error = new Error(body.error || "Request failed.");
