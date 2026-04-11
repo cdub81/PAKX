@@ -7,7 +7,7 @@ import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { AppBackHeader as SharedAppBackHeader, AppCard as SharedAppCard, BottomSheetModal as SharedBottomSheetModal, ListRow as SharedListRow, PrimaryButton as SharedPrimaryButton, ScreenContainer as SharedScreenContainer, SectionHeader as SharedSectionHeader, SecondaryButton as SharedSecondaryButton, StatusBadge as SharedStatusBadge } from "./src/components/ui/primitives";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { CalendarDatePickerModal as SharedCalendarDatePickerModal, CalendarTimePickerModal as SharedCalendarTimePickerModal, ReminderDurationPickerModal as SharedReminderDurationPickerModal } from "./src/components/Pickers";
 import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankSelector } from "./src/components/Selectors";
 import { FeedbackScreen } from "./src/screens/FeedbackScreen";
@@ -28,7 +28,7 @@ import { addAllianceDocument as addAllianceDocumentRequest, addFeedback as addFe
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 import { getNotificationPermissionStatus, getPushDebugStateForCurrentUser, syncPushTokenForCurrentUser } from "./src/lib/pushRegistration";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
-import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
+import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, isValidDateKey, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
 import { buildCalendarNotificationCandidates, CALENDAR_NOTIFICATION_CHANNEL_ID, getCalendarNotificationStorageKey } from "./src/lib/calendarNotifications";
 import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormHistoryEvents, getDesertStormStatusLabel, getDesertStormViewState, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
 import { formatReminderCountdown, formatReminderDuration } from "./src/lib/uiFormatters";
@@ -209,8 +209,7 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
   </ScreenContainer>;
 }
 
-export default function App() {
-  const insets = useSafeAreaInsets();
+function AppInner() {
   const [backendUrlInput, setBackendUrlInput] = useState(DEFAULT_BACKEND_URL);
   const [language, setLanguage] = useState("en");
   const [authMode, setAuthMode] = useState("");
@@ -1690,7 +1689,7 @@ export default function App() {
             </MoreScreen> : null}
             </ScrollView>
           </View>
-          <View style={[styles.bottomTabBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === "ios" ? 10 : 8) }]}>
+          <View style={styles.bottomTabBar}>
             {tabs.map((tab) => <Pressable key={tab} style={[styles.bottomTabButton, activeTab === tab && styles.bottomTabButtonActive]} onPress={() => handleTabPress(tab)}>
               <View style={[styles.bottomTabIndicator, activeTab === tab && styles.bottomTabIndicatorActive]} />
               <Ionicons name={getTabIconName(tab, activeTab === tab)} size={20} color={activeTab === tab ? DESIGN_TOKENS.colors.green : DESIGN_TOKENS.colors.textMuted} />
@@ -1748,5 +1747,13 @@ export default function App() {
         </KeyboardAvoidingView>
       </BottomSheetModal>
     </ScreenContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppInner />
+    </SafeAreaProvider>
   );
 }

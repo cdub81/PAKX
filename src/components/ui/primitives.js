@@ -1,17 +1,15 @@
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StatusBar, Text, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function ScreenContainer({ children, styles }) {
-  return <SafeAreaProvider>
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="light-content" />
-      <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
-        {children}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  </SafeAreaProvider>;
+  return <SafeAreaView style={styles.safeArea}>
+    <StatusBar barStyle="light-content" />
+    <KeyboardAvoidingView style={styles.keyboardShell} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+      {children}
+    </KeyboardAvoidingView>
+  </SafeAreaView>;
 }
 
 export function SectionHeader({ eyebrow, title, detail, styles }) {
