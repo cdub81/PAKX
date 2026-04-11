@@ -7,6 +7,7 @@ import * as Notifications from "expo-notifications";
 import { StatusBar as ExpoStatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { AppBackHeader as SharedAppBackHeader, AppCard as SharedAppCard, BottomSheetModal as SharedBottomSheetModal, ListRow as SharedListRow, PrimaryButton as SharedPrimaryButton, ScreenContainer as SharedScreenContainer, SectionHeader as SharedSectionHeader, SecondaryButton as SharedSecondaryButton, StatusBadge as SharedStatusBadge } from "./src/components/ui/primitives";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarDatePickerModal as SharedCalendarDatePickerModal, CalendarTimePickerModal as SharedCalendarTimePickerModal, ReminderDurationPickerModal as SharedReminderDurationPickerModal } from "./src/components/Pickers";
 import { LanguageSelector as SharedLanguageSelector, RankSelector as SharedRankSelector } from "./src/components/Selectors";
 import { FeedbackScreen } from "./src/screens/FeedbackScreen";
@@ -209,6 +210,7 @@ function AllianceSetupScreen({ account, setupMode, setSetupMode, allianceCodeInp
 }
 
 export default function App() {
+  const insets = useSafeAreaInsets();
   const [backendUrlInput, setBackendUrlInput] = useState(DEFAULT_BACKEND_URL);
   const [language, setLanguage] = useState("en");
   const [authMode, setAuthMode] = useState("");
@@ -1683,7 +1685,7 @@ export default function App() {
             </MoreScreen> : null}
             </ScrollView>
           </View>
-          <View style={styles.bottomTabBar}>
+          <View style={[styles.bottomTabBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === "ios" ? 10 : 8) }]}>
             {tabs.map((tab) => <Pressable key={tab} style={[styles.bottomTabButton, activeTab === tab && styles.bottomTabButtonActive]} onPress={() => handleTabPress(tab)}>
               <View style={[styles.bottomTabIndicator, activeTab === tab && styles.bottomTabIndicatorActive]} />
               <Ionicons name={getTabIconName(tab, activeTab === tab)} size={20} color={activeTab === tab ? DESIGN_TOKENS.colors.green : DESIGN_TOKENS.colors.textMuted} />
