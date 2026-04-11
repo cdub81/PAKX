@@ -724,7 +724,12 @@ export default function App() {
       return;
     }
     if (!error?.status) {
-      setIsOffline(true);
+      const isNetworkError = error instanceof TypeError || String(error?.message || "").toLowerCase().includes("network") || String(error?.message || "").toLowerCase().includes("failed to fetch");
+      if (isNetworkError) {
+        setIsOffline(true);
+      } else {
+        setErrorMessage(error?.message || "Something went wrong. Please try again.");
+      }
       return;
     }
     setErrorMessage(error.message || "Request failed.");
