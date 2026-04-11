@@ -143,6 +143,40 @@ function normalizeDigNotificationsEnabled(value) {
   return value !== false;
 }
 
+function normalizeCalendarNotificationsEnabled(value) {
+  return value !== false;
+}
+
+const CALENDAR_TRANSLATABLE_LANGUAGES = ["en", "ko", "es", "pt"];
+
+function normalizeCalendarSourceLanguage(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return CALENDAR_TRANSLATABLE_LANGUAGES.includes(normalized) ? normalized : "en";
+}
+
+function normalizeCalendarTranslationStatus(value) {
+  return ["idle", "pending", "ready", "failed", "disabled"].includes(value) ? value : "idle";
+}
+
+function normalizeCalendarTranslations(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([language]) => CALENDAR_TRANSLATABLE_LANGUAGES.includes(language))
+      .map(([language, entry]) => [
+        language,
+        {
+          title: String(entry?.title || "").trim(),
+          description: String(entry?.description || "").trim(),
+          translatedAt: String(entry?.translatedAt || "").trim()
+        }
+      ])
+      .filter(([, entry]) => entry.title || entry.description)
+  );
+}
+
 function normalizePushPermissionStatus(value) {
   return ["granted", "denied", "undetermined", "error", "unknown"].includes(value) ? value : "unknown";
 }
@@ -420,6 +454,11 @@ function normalizeCalendarEntry(value) {
     id: value.id || crypto.randomUUID(),
     title: String(value.title || "").trim(),
     description: String(value.description || "").trim(),
+    sourceLanguage: normalizeCalendarSourceLanguage(value.sourceLanguage),
+    translations: normalizeCalendarTranslations(value.translations),
+    translationStatus: normalizeCalendarTranslationStatus(value.translationStatus),
+    translationUpdatedAt: String(value.translationUpdatedAt || "").trim(),
+    translationError: String(value.translationError || "").trim(),
     startsAt: value.startsAt || new Date().toISOString(),
     endAt: value.endAt || null,
     entryType,
@@ -566,6 +605,7 @@ function createPlayer(name, rank, overallPower) {
     desertStormStats: normalizeDesertStormStats(),
     desertStormVoteNotificationsEnabled: true,
     digNotificationsEnabled: true,
+    calendarNotificationsEnabled: true,
     expoPushTokens: [],
     pushDebug: normalizePushDebug(),
     reminders: []
@@ -628,6 +668,7 @@ function normalizeAlliance(alliance) {
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
       digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
+      calendarNotificationsEnabled: normalizeCalendarNotificationsEnabled(player.calendarNotificationsEnabled),
       expoPushTokens: normalizeExpoPushTokens(player.expoPushTokens),
       pushDebug: normalizePushDebug(player.pushDebug),
       reminders: normalizeReminders(player.reminders, player.id || "")
@@ -790,6 +831,7 @@ function createStore(config = {}) {
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
       digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
+      calendarNotificationsEnabled: normalizeCalendarNotificationsEnabled(player.calendarNotificationsEnabled),
       hasExpoPushToken: normalizeExpoPushTokens(player.expoPushTokens).length > 0,
       pushDebug: normalizePushDebug(player.pushDebug),
       desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
@@ -801,6 +843,11 @@ function createStore(config = {}) {
       id: entry.id,
       title: entry.title,
       description: entry.description,
+      sourceLanguage: normalizeCalendarSourceLanguage(entry.sourceLanguage),
+      translations: normalizeCalendarTranslations(entry.translations),
+      translationStatus: normalizeCalendarTranslationStatus(entry.translationStatus),
+      translationUpdatedAt: String(entry.translationUpdatedAt || "").trim(),
+      translationError: String(entry.translationError || "").trim(),
       startsAt: entry.startsAt,
       endAt: entry.endAt,
       entryType: entry.entryType || "manual",
@@ -1389,6 +1436,33 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     return messages;
   }
 
+  function buildCalendarReminderMessages(alliance, entry) {
+    const uniqueTokens = new Set();
+    const messages = [];
+    alliance.players.forEach((member) => {
+      if (!normalizeCalendarNotificationsEnabled(member.calendarNotificationsEnabled)) {
+        return;
+      }
+      normalizeExpoPushTokens(member.expoPushTokens).forEach((expoPushToken) => {
+        if (uniqueTokens.has(expoPushToken)) {
+          return;
+        }
+        uniqueTokens.add(expoPushToken);
+        messages.push({
+          to: expoPushToken,
+          sound: "default",
+          title: "Calendar Reminder",
+          body: entry.title,
+          data: {
+            type: "calendarReminder",
+            entryId: entry.id
+          }
+        });
+      });
+    });
+    return messages;
+  }
+
   function buildAllianceBroadcastMessages(alliance, message, triggeringPlayerId = "", allowedMemberIds = null, options = {}) {
     const normalizedMessage = String(message || "").trim();
     if (!normalizedMessage) {
@@ -1941,6 +2015,9 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     if (updates.digNotificationsEnabled !== undefined) {
       member.digNotificationsEnabled = normalizeDigNotificationsEnabled(updates.digNotificationsEnabled);
     }
+    if (updates.calendarNotificationsEnabled !== undefined) {
+      member.calendarNotificationsEnabled = normalizeCalendarNotificationsEnabled(updates.calendarNotificationsEnabled);
+    }
 
     const linkedAccount = state.accounts.find((account) => account.playerId === member.id);
     if (linkedAccount && typeof updates.name === "string" && updates.name.trim()) {
@@ -2233,6 +2310,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     const entry = normalizeCalendarEntry({
       title,
       description: payload.description || "",
+      sourceLanguage: payload.sourceLanguage,
+      translations: payload.translations,
+      translationStatus: payload.translationStatus,
+      translationUpdatedAt: payload.translationUpdatedAt,
+      translationError: payload.translationError,
       startsAt: startsAt || startDate,
       endAt: payload.endAt || null,
       entryType,
@@ -2257,6 +2339,9 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     });
     alliance.calendarEntries.unshift(entry);
     commit();
+    if (payload.sendPushReminder) {
+      queueExpoPushMessages(buildCalendarReminderMessages(alliance, entry));
+    }
     return clone(entry);
   }
 
@@ -2287,6 +2372,11 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       ...currentEntry,
       title,
       description: payload.description || "",
+      sourceLanguage: payload.sourceLanguage || currentEntry.sourceLanguage || "en",
+      translations: payload.translations !== undefined ? payload.translations : currentEntry.translations,
+      translationStatus: payload.translationStatus !== undefined ? payload.translationStatus : currentEntry.translationStatus,
+      translationUpdatedAt: payload.translationUpdatedAt !== undefined ? payload.translationUpdatedAt : currentEntry.translationUpdatedAt,
+      translationError: payload.translationError !== undefined ? payload.translationError : currentEntry.translationError,
       startsAt: startsAt || startDate,
       endAt: payload.endAt || null,
       entryType,
@@ -2312,7 +2402,38 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     });
     alliance.calendarEntries[index] = updatedEntry;
     commit();
+    if (payload.sendPushReminder) {
+      queueExpoPushMessages(buildCalendarReminderMessages(alliance, updatedEntry));
+    }
     return clone(updatedEntry);
+  }
+
+  function updateCalendarEntryTranslations(allianceId, entryId, updates = {}) {
+    const alliance = findAllianceById(allianceId);
+    if (!alliance) {
+      throw new UserError("Alliance not found.");
+    }
+    alliance.calendarEntries = Array.isArray(alliance.calendarEntries) ? alliance.calendarEntries : [];
+    const index = alliance.calendarEntries.findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new UserError("Calendar entry not found.");
+    }
+    const currentEntry = alliance.calendarEntries[index];
+    const currentVersion = String(currentEntry.updatedAt || currentEntry.createdAt || "");
+    const expectedVersion = String(updates.expectedVersion || "").trim();
+    if (expectedVersion && currentVersion && expectedVersion !== currentVersion) {
+      return clone(currentEntry);
+    }
+    const nextEntry = normalizeCalendarEntry({
+      ...currentEntry,
+      translations: updates.translations !== undefined ? updates.translations : currentEntry.translations,
+      translationStatus: updates.translationStatus !== undefined ? updates.translationStatus : currentEntry.translationStatus,
+      translationUpdatedAt: updates.translationUpdatedAt !== undefined ? updates.translationUpdatedAt : currentEntry.translationUpdatedAt,
+      translationError: updates.translationError !== undefined ? updates.translationError : currentEntry.translationError
+    });
+    alliance.calendarEntries[index] = nextEntry;
+    commit();
+    return clone(nextEntry);
   }
 
   function deleteCalendarEntry(allianceId, entryId) {
@@ -3335,6 +3456,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       deleteAllianceDocument,
       createCalendarEntry,
       updateCalendarEntry,
+      updateCalendarEntryTranslations,
       deleteCalendarEntry,
       listZombieSiegeEventsForAlliance,
     createZombieSiegeEvent,

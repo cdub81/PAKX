@@ -46,6 +46,7 @@ export function LeaderControlsScreen({
   currentUserHasPushToken,
   t
 }) {
+  const lt = (key, values = {}) => t(key, values);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [repairOpen, setRepairOpen] = useState(false);
   const [reachabilityOpen, setReachabilityOpen] = useState(false);
@@ -67,12 +68,12 @@ export function LeaderControlsScreen({
     // Small delay to allow screen to render before showing alert
     const timer = setTimeout(() => {
       Alert.alert(
-        `Reset password for ${member.name}?`,
-        "They requested a new temporary password. This will generate one you can share with them.",
+        lt("leaderControls.passwordReset.confirmTitle", { name: member.name }),
+        lt("leaderControls.passwordReset.confirmDescription"),
         [
-          { text: "Cancel", style: "cancel", onPress: () => { if (typeof onClearPreSelection === "function") onClearPreSelection(); } },
+          { text: lt("common.cancel"), style: "cancel", onPress: () => { if (typeof onClearPreSelection === "function") onClearPreSelection(); } },
           {
-            text: "Reset Password",
+            text: lt("leaderControls.passwordReset.button"),
             style: "destructive",
             onPress: () => {
               if (typeof onResetMemberPassword === "function") onResetMemberPassword(member.id, member.name);
@@ -124,14 +125,6 @@ export function LeaderControlsScreen({
   };
 
   return <View style={styles.section}>
-    <AppCard style={styles.settingsHeroCard} styles={styles}>
-      <SectionHeader eyebrow={t("leaderControls.hero.eyebrow")} title={t("leaderControls.hero.title")} detail={t("leaderControls.hero.description")} styles={styles} />
-      <View style={styles.row}>
-        <StatusBadge label={t("leaderControls.hero.badgeLeaderOnly")} tone="warning" styles={styles} />
-        <StatusBadge label={currentUserHasPushToken ? t("leaderControls.hero.badgePushReady") : t("leaderControls.hero.badgePushLimited")} tone={currentUserHasPushToken ? "success" : "info"} styles={styles} />
-      </View>
-    </AppCard>
-
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow={t("leaderControls.presets.eyebrow")} title={t("leaderControls.presets.title")} detail={t("leaderControls.presets.description")} styles={styles} />
       <View style={styles.cardHeaderRow}>
@@ -148,8 +141,8 @@ export function LeaderControlsScreen({
             <SectionHeader eyebrow={t("settings.requests.eyebrow")} title={t("settings.requests.title")} detail={t("settings.requests.description")} styles={styles} />
           </View>
           <View style={styles.row}>
-            {joinRequests?.length ? <StatusBadge label={`${joinRequests.length} pending`} tone="warning" styles={styles} /> : null}
-            <StatusBadge label={joinRequestsOpen ? "Open" : "Collapsed"} tone={joinRequestsOpen ? "success" : "neutral"} styles={styles} />
+            {joinRequests?.length ? <StatusBadge label={lt("leaderControls.joinRequests.pendingCount", { count: joinRequests.length })} tone="warning" styles={styles} /> : null}
+            <StatusBadge label={joinRequestsOpen ? lt("common.open") : lt("common.collapsed")} tone={joinRequestsOpen ? "success" : "neutral"} styles={styles} />
           </View>
         </View>
       </Pressable>
@@ -173,7 +166,7 @@ export function LeaderControlsScreen({
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={t("leaderControls.repair.eyebrow")} title={t("leaderControls.repair.title")} detail={t("leaderControls.repair.description")} styles={styles} />
           </View>
-          <StatusBadge label={repairOpen ? "Open" : "Collapsed"} tone={repairOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={repairOpen ? lt("common.open") : lt("common.collapsed")} tone={repairOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {repairOpen ? <>
@@ -201,8 +194,8 @@ export function LeaderControlsScreen({
             <SectionHeader eyebrow={t("leaderControls.reachability.eyebrow")} title={t("leaderControls.reachability.title")} detail={t("leaderControls.reachability.description")} styles={styles} />
           </View>
           <View style={styles.row}>
-            {hasReachabilityIssues ? <StatusBadge label="Issues" tone="warning" styles={styles} /> : <StatusBadge label="All Good" tone="success" styles={styles} />}
-            <StatusBadge label={reachabilityOpen ? "Open" : "Collapsed"} tone={reachabilityOpen ? "success" : "neutral"} styles={styles} />
+            {hasReachabilityIssues ? <StatusBadge label={lt("leaderControls.reachability.issueBadge")} tone="warning" styles={styles} /> : <StatusBadge label={lt("leaderControls.reachability.allGoodBadge")} tone="success" styles={styles} />}
+            <StatusBadge label={reachabilityOpen ? lt("common.open") : lt("common.collapsed")} tone={reachabilityOpen ? "success" : "neutral"} styles={styles} />
           </View>
         </View>
       </Pressable>
@@ -220,7 +213,7 @@ export function LeaderControlsScreen({
             <ListRow
               title={member.name}
               detail={member.rank}
-              right={<StatusBadge label={member.status === "opted_out" ? "Opted Out" : "No Token"} tone={member.status === "opted_out" ? "warning" : "danger"} styles={styles} />}
+              right={<StatusBadge label={member.status === "opted_out" ? lt("leaderControls.reachability.badgeOptedOut") : lt("leaderControls.reachability.badgeNoToken")} tone={member.status === "opted_out" ? "warning" : "danger"} styles={styles} />}
               styles={styles}
             />
             <Text style={styles.hint}>{getReachabilityStatusLabel(member.status)}</Text>
@@ -235,9 +228,9 @@ export function LeaderControlsScreen({
       <Pressable onPress={() => setPasswordResetOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
-            <SectionHeader eyebrow="Leader Controls" title="Member Password Reset" detail="Tap to expand and generate a temporary password for a locked-out member." styles={styles} />
+            <SectionHeader eyebrow={lt("leaderControls.passwordReset.eyebrow")} title={lt("leaderControls.passwordReset.title")} detail={lt("leaderControls.passwordReset.description")} styles={styles} />
           </View>
-          <StatusBadge label={passwordResetOpen ? "Open" : "Collapsed"} tone={passwordResetOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={passwordResetOpen ? lt("common.open") : lt("common.collapsed")} tone={passwordResetOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {passwordResetOpen ? <>
@@ -245,7 +238,7 @@ export function LeaderControlsScreen({
           value={passwordResetSearch}
           onChangeText={setPasswordResetSearch}
           style={styles.input}
-          placeholder="Search members..."
+          placeholder={lt("leaderControls.passwordReset.searchPlaceholder")}
           placeholderTextColor={INPUT_PLACEHOLDER_COLOR}
           selectionColor={INPUT_SELECTION_COLOR}
         />
@@ -263,7 +256,7 @@ export function LeaderControlsScreen({
                     <Text style={styles.cardTitle}>{member.name}</Text>
                     <Text style={styles.hint}>{member.rank}</Text>
                   </View>
-                  <PrimaryButton label="Reset Password" tone="blue" styles={styles} onPress={() => onResetMemberPassword(member.id, member.name)} />
+                  <PrimaryButton label={lt("leaderControls.passwordReset.button")} tone="blue" styles={styles} onPress={() => onResetMemberPassword(member.id, member.name)} />
                 </View>
               </AppCard>
             ))}
@@ -275,19 +268,19 @@ export function LeaderControlsScreen({
       <Pressable onPress={() => setAddMemberOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
-            <SectionHeader eyebrow="Roster Management" title="Add Member" detail="Tap to expand and add a new member to your alliance." styles={styles} />
+            <SectionHeader eyebrow={lt("leaderControls.addMember.eyebrow")} title={lt("leaderControls.addMember.title")} detail={lt("leaderControls.addMember.description")} styles={styles} />
           </View>
-          <StatusBadge label={addMemberOpen ? "Open" : "Collapsed"} tone={addMemberOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={addMemberOpen ? lt("common.open") : lt("common.collapsed")} tone={addMemberOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {addMemberOpen ? <>
-        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder="Member name" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
-        <Text style={styles.hint}>Enter power in millions (e.g. 12,700,000 = 12.7)</Text>
+        <TextInput value={newMemberName} onChangeText={onChangeNewMemberName} style={styles.input} placeholder={lt("leaderControls.addMember.namePlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} />
+        <Text style={styles.hint}>{lt("leaderControls.addMember.powerHint")}</Text>
         <View style={styles.row}>
           <RankSelector value={newMemberRank} onChange={onChangeNewMemberRank} style={styles.half} />
-          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder="Power (M)" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
+          <TextInput value={newMemberPower} onChangeText={onChangeNewMemberPower} style={[styles.input, styles.half]} placeholder={lt("leaderControls.addMember.powerPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
         </View>
-        <PrimaryButton label="Add Member" onPress={onAddMember} tone="blue" styles={styles} />
+        <PrimaryButton label={lt("leaderControls.addMember.button")} onPress={onAddMember} tone="blue" styles={styles} />
       </> : null}
     </AppCard>
 
@@ -295,14 +288,14 @@ export function LeaderControlsScreen({
       <Pressable onPress={() => setRotateCodeOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
-            <SectionHeader eyebrow="Alliance Management" title="Alliance Code" detail="Tap to expand and update your alliance join code." styles={styles} />
+            <SectionHeader eyebrow={lt("leaderControls.allianceCode.eyebrow")} title={lt("leaderControls.allianceCode.title")} detail={lt("leaderControls.allianceCode.description")} styles={styles} />
           </View>
-          <StatusBadge label={rotateCodeOpen ? "Open" : "Collapsed"} tone={rotateCodeOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={rotateCodeOpen ? lt("common.open") : lt("common.collapsed")} tone={rotateCodeOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {rotateCodeOpen ? <>
-        <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} placeholder="New alliance code" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="characters" />
-        <PrimaryButton label="Update Code" onPress={onRotateAllianceCode} tone="blue" styles={styles} />
+        <TextInput value={newAllianceCode} onChangeText={onChangeNewAllianceCode} style={styles.input} placeholder={lt("leaderControls.allianceCode.placeholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="characters" />
+        <PrimaryButton label={lt("leaderControls.allianceCode.button")} onPress={onRotateAllianceCode} tone="blue" styles={styles} />
       </> : null}
     </AppCard>
 
@@ -312,7 +305,7 @@ export function LeaderControlsScreen({
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={t("leaderControls.broadcast.eyebrow")} title={audience === "selected" ? t("leaderControls.broadcast.titleSelected") : t("leaderControls.broadcast.titleAll")} detail={t("leaderControls.broadcast.description")} styles={styles} />
           </View>
-          <StatusBadge label={broadcastOpen ? "Open" : "Collapsed"} tone={broadcastOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={broadcastOpen ? lt("common.open") : lt("common.collapsed")} tone={broadcastOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {broadcastOpen ? <>

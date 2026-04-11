@@ -5,6 +5,10 @@ const supabaseState = require("./lib/supabaseState");
 
 const PORT = Number(process.env.PORT) || 4000;
 const HOST = process.env.HOST || "0.0.0.0";
+const OPENAI_API_KEY = String(process.env.OPENAI_API_KEY || "").trim();
+const OPENAI_TRANSLATION_MODEL = String(process.env.OPENAI_TRANSLATION_MODEL || "gpt-4.1-mini").trim();
+const OPENAI_BASE_URL = String(process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+const CALENDAR_TRANSLATABLE_LANGUAGES = ["en", "ko", "es", "pt"];
 let store = null;
 
 async function initializeStore() {
@@ -126,6 +130,164 @@ function requireLeader(request, response) {
     return null;
   }
   return context;
+}
+
+function isCalendarTranslationEnabled() {
+  return Boolean(OPENAI_API_KEY && typeof fetch === "function");
+}
+
+function normalizeCalendarLanguage(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return CALENDAR_TRANSLATABLE_LANGUAGES.includes(normalized) ? normalized : "en";
+}
+
+function getCalendarTranslationTargets(entry, sourceLanguage) {
+  const normalizedSourceLanguage = normalizeCalendarLanguage(sourceLanguage || entry?.sourceLanguage);
+  const existingTranslations = entry?.translations && typeof entry.translations === "object" ? entry.translations : {};
+  return CALENDAR_TRANSLATABLE_LANGUAGES.filter((language) => {
+    if (language === normalizedSourceLanguage) {
+      return false;
+    }
+    const translatedEntry = existingTranslations[language];
+    return !String(translatedEntry?.title || "").trim() || !String(translatedEntry?.description || "").trim();
+  });
+}
+
+async function translateCalendarText({ title, description, sourceLanguage, targetLanguage }) {
+  const sourceText = String(title || "").trim();
+  const sourceDescription = String(description || "").trim();
+  const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: OPENAI_TRANSLATION_MODEL,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: "You translate game calendar entries. Return valid JSON with exactly two string fields: title and description. Preserve proper nouns like PAKX, Desert Storm, Zombie Siege, MG, Task Force A. Keep formatting simple and do not add commentary."
+        },
+        {
+          role: "user",
+          content: `Translate the following calendar entry from ${sourceLanguage} to ${targetLanguage}.\n\nTitle:\n${sourceText}\n\nDescription:\n${sourceDescription}`
+        }
+      ]
+    })
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error?.message || `Translation request failed with status ${response.status}.`);
+  }
+  const content = body?.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("Translation provider returned no content.");
+  }
+  let parsed = null;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error("Translation provider returned invalid JSON.");
+  }
+  return {
+    title: String(parsed?.title || "").trim(),
+    description: String(parsed?.description || "").trim()
+  };
+}
+
+async function translateCalendarEntryInBackground(allianceId, entry, sourceLanguage) {
+  if (!isCalendarTranslationEnabled()) {
+    return;
+  }
+  const normalizedSourceLanguage = normalizeCalendarLanguage(sourceLanguage || entry?.sourceLanguage);
+  const currentVersion = String(entry?.updatedAt || entry?.createdAt || "").trim();
+  const targets = getCalendarTranslationTargets(entry, normalizedSourceLanguage);
+  if (!targets.length) {
+    store.updateCalendarEntryTranslations(allianceId, entry.id, {
+      expectedVersion: currentVersion,
+      translationStatus: "ready",
+      translationUpdatedAt: new Date().toISOString(),
+      translationError: "",
+      translations: entry.translations || {}
+    });
+    return;
+  }
+
+  console.log("[calendar-translate] starting background translation", {
+    entryId: entry.id,
+    sourceLanguage: normalizedSourceLanguage,
+    targetLanguages: targets
+  });
+
+  try {
+    const translatedPairs = await Promise.all(targets.map(async (language) => {
+      const translated = await translateCalendarText({
+        title: entry.title,
+        description: entry.description,
+        sourceLanguage: normalizedSourceLanguage,
+        targetLanguage: language
+      });
+      return [language, {
+        title: translated.title,
+        description: translated.description,
+        translatedAt: new Date().toISOString()
+      }];
+    }));
+
+    store.updateCalendarEntryTranslations(allianceId, entry.id, {
+      expectedVersion: currentVersion,
+      translations: Object.fromEntries(translatedPairs),
+      translationStatus: "ready",
+      translationUpdatedAt: new Date().toISOString(),
+      translationError: ""
+    });
+    console.log("[calendar-translate] translation finished", { entryId: entry.id, translatedLanguages: targets });
+  } catch (error) {
+    console.error("[calendar-translate] translation failed", { entryId: entry.id, error: error?.message || String(error) });
+    store.updateCalendarEntryTranslations(allianceId, entry.id, {
+      expectedVersion: currentVersion,
+      translationStatus: "failed",
+      translationUpdatedAt: new Date().toISOString(),
+      translationError: error?.message || "Translation failed."
+    });
+  }
+}
+
+async function backfillCalendarTranslations(allianceId, entries = []) {
+  if (!isCalendarTranslationEnabled()) {
+    throw new UserError("Calendar translation provider is not configured.");
+  }
+  const candidateEntries = Array.isArray(entries)
+    ? entries.filter((entry) => String(entry?.title || "").trim() || String(entry?.description || "").trim())
+    : [];
+  let translatedCount = 0;
+  let skippedCount = 0;
+
+  for (const entry of candidateEntries) {
+    const targets = getCalendarTranslationTargets(entry, entry?.sourceLanguage);
+    if (!targets.length) {
+      skippedCount += 1;
+      continue;
+    }
+    await translateCalendarEntryInBackground(allianceId, entry, entry?.sourceLanguage);
+    translatedCount += 1;
+  }
+
+  console.log("[calendar-translate] backfill complete", {
+    allianceId,
+    totalEntries: candidateEntries.length,
+    translatedCount,
+    skippedCount
+  });
+
+  return {
+    totalEntries: candidateEntries.length,
+    translatedCount,
+    skippedCount
+  };
 }
 
 async function handleRequest(request, response) {
@@ -499,7 +661,30 @@ async function handleRequest(request, response) {
         return;
       }
       const body = await readJson(request);
-      sendJson(response, 201, store.createCalendarEntry(context.alliance.id, context.player, body));
+      const translationEnabled = isCalendarTranslationEnabled();
+      const payload = {
+        ...body,
+        sourceLanguage: normalizeCalendarLanguage(body.sourceLanguage),
+        translations: {},
+        translationStatus: translationEnabled ? "pending" : "disabled",
+        translationUpdatedAt: "",
+        translationError: ""
+      };
+      const createdEntry = store.createCalendarEntry(context.alliance.id, context.player, payload);
+      sendJson(response, 201, createdEntry);
+      if (translationEnabled) {
+        void translateCalendarEntryInBackground(context.alliance.id, createdEntry, payload.sourceLanguage);
+      }
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/calendar/backfill-translations") {
+      const context = requireLeader(request, response);
+      if (!context) {
+        return;
+      }
+      const result = await backfillCalendarTranslations(context.alliance.id, context.alliance.calendarEntries || []);
+      sendJson(response, 200, result);
       return;
     }
 
@@ -607,6 +792,9 @@ async function handleRequest(request, response) {
       }
       if (body.digNotificationsEnabled !== undefined) {
         updates.digNotificationsEnabled = body.digNotificationsEnabled;
+      }
+      if (body.calendarNotificationsEnabled !== undefined) {
+        updates.calendarNotificationsEnabled = body.calendarNotificationsEnabled;
       }
       sendJson(response, 200, store.updateMember(context.alliance.id, memberId, updates));
       return;
@@ -880,7 +1068,20 @@ async function handleRequest(request, response) {
         return;
       }
       const body = await readJson(request);
-      sendJson(response, 200, store.updateCalendarEntry(context.alliance.id, calendarEntryMatch[1], context.player, body));
+      const translationEnabled = isCalendarTranslationEnabled();
+      const payload = {
+        ...body,
+        sourceLanguage: normalizeCalendarLanguage(body.sourceLanguage),
+        translations: {},
+        translationStatus: translationEnabled ? "pending" : "disabled",
+        translationUpdatedAt: "",
+        translationError: ""
+      };
+      const updatedEntry = store.updateCalendarEntry(context.alliance.id, calendarEntryMatch[1], context.player, payload);
+      sendJson(response, 200, updatedEntry);
+      if (translationEnabled) {
+        void translateCalendarEntryInBackground(context.alliance.id, updatedEntry, payload.sourceLanguage);
+      }
       return;
     }
     if (calendarEntryMatch && request.method === "DELETE") {

@@ -22,6 +22,7 @@ export function SettingsScreen({
   notificationSetupInFlight,
   onSetDesertStormVoteNotificationsEnabled,
   onSetDigNotificationsEnabled,
+  onSetCalendarNotificationsEnabled,
   onEnablePushNotifications,
   LanguageSelector,
   hasTranslationKey,
@@ -35,6 +36,7 @@ export function SettingsScreen({
   };
   const notificationsEnabled = currentUser?.desertStormVoteNotificationsEnabled !== false;
   const digNotificationsEnabled = currentUser?.digNotificationsEnabled !== false;
+  const calendarNotificationsEnabled = currentUser?.calendarNotificationsEnabled !== false;
 
   const [accountOpen, setAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -51,21 +53,13 @@ export function SettingsScreen({
   const [passwordMessage, setPasswordMessage] = useState("");
 
   return <View style={styles.section}>
-    <AppCard style={styles.settingsHeroCard} styles={styles}>
-      <SectionHeader eyebrow={st("settings.hero.eyebrow")} title={st("settings.title")} detail={st("settings.hero.description")} styles={styles} />
-      <View style={styles.row}>
-        <StatusBadge label={currentUserIsLeader ? st("settings.hero.statusLeader") : st("settings.hero.statusMember")} tone={currentUserIsLeader ? "info" : "neutral"} styles={styles} />
-      </View>
-    </AppCard>
-
-    {/* Account Info */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => setAccountOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={st("settings.account.eyebrow")} title={st("settings.account.title")} detail={st("settings.account.description")} styles={styles} />
           </View>
-          <StatusBadge label={accountOpen ? "Open" : "Collapsed"} tone={accountOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={accountOpen ? st("common.open") : st("common.collapsed")} tone={accountOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {accountOpen ? <>
@@ -76,14 +70,13 @@ export function SettingsScreen({
       </> : null}
     </AppCard>
 
-    {/* Notifications */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => setNotificationsOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={st("settings.notifications.eyebrow")} title={st("settings.notifications.title")} detail={st("settings.notifications.description")} styles={styles} />
           </View>
-          <StatusBadge label={notificationsOpen ? "Open" : "Collapsed"} tone={notificationsOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={notificationsOpen ? st("common.open") : st("common.collapsed")} tone={notificationsOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {notificationsOpen ? <>
@@ -93,6 +86,9 @@ export function SettingsScreen({
         <Pressable onPress={() => onSetDigNotificationsEnabled(!digNotificationsEnabled)}>
           <ListRow title={st("settings.notifications.dig.title")} detail={digNotificationsEnabled ? st("settings.notifications.dig.enabled") : st("settings.notifications.dig.disabled")} right={<StatusBadge label={digNotificationsEnabled ? st("settings.notifications.badgeEnabled") : st("settings.notifications.badgeDisabled")} tone={digNotificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
         </Pressable>
+        <Pressable onPress={() => onSetCalendarNotificationsEnabled(!calendarNotificationsEnabled)}>
+          <ListRow title={st("settings.notifications.calendar.title")} detail={calendarNotificationsEnabled ? st("settings.notifications.calendar.enabled") : st("settings.notifications.calendar.disabled")} right={<StatusBadge label={calendarNotificationsEnabled ? st("settings.notifications.badgeEnabled") : st("settings.notifications.badgeDisabled")} tone={calendarNotificationsEnabled ? "success" : "neutral"} styles={styles} />} styles={styles} />
+        </Pressable>
         {showPushNotificationControls && showPushNotificationsPrompt ? <AppCard style={styles.settingsNestedCard} styles={styles}>
           <Text style={styles.cardTitle}>{st("settings.notifications.enablePush.title")}</Text>
           <Text style={styles.hint}>{st("settings.notifications.enablePush.description")}</Text>
@@ -101,93 +97,93 @@ export function SettingsScreen({
       </> : null}
     </AppCard>
 
-    {/* Language */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => setLanguageOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={st("settings.preferences.eyebrow")} title={st("settings.language.title")} detail={st("settings.language.description")} styles={styles} />
           </View>
-          <StatusBadge label={languageOpen ? "Open" : "Collapsed"} tone={languageOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={languageOpen ? st("common.open") : st("common.collapsed")} tone={languageOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {languageOpen ? <LanguageSelector language={language} onChangeLanguage={onChangeLanguage} t={(key, values) => key === "language" ? st("settings.language.title", values) : t(key, values)} /> : null}
     </AppCard>
 
-    {/* Change Username */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => { setChangeUsernameOpen((v) => !v); setNewUsernameInput(account?.username || ""); setUsernameMessage(""); }}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
-            <SectionHeader eyebrow="Account" title="Change Username" detail="Tap to expand and update your login username." styles={styles} />
+            <SectionHeader eyebrow={st("settings.username.eyebrow")} title={st("settings.username.title")} detail={st("settings.username.description")} styles={styles} />
           </View>
-          <StatusBadge label={changeUsernameOpen ? "Open" : "Collapsed"} tone={changeUsernameOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={changeUsernameOpen ? st("common.open") : st("common.collapsed")} tone={changeUsernameOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {changeUsernameOpen ? <>
-        <TextInput value={newUsernameInput} onChangeText={setNewUsernameInput} style={styles.input} placeholder="New username" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="none" autoCorrect={false} />
-        <Text style={styles.hint}>3–30 characters. Letters, numbers, underscores, hyphens, and periods only.</Text>
+        <TextInput value={newUsernameInput} onChangeText={setNewUsernameInput} style={styles.input} placeholder={st("settings.username.placeholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} autoCapitalize="none" autoCorrect={false} />
+        <Text style={styles.hint}>{st("settings.username.hint")}</Text>
         {usernameMessage ? <Text style={styles.error}>{usernameMessage}</Text> : null}
-        <PrimaryButton label="Update Username" styles={styles} onPress={() => {
+        <PrimaryButton label={st("settings.username.button")} styles={styles} onPress={() => {
           setUsernameMessage("");
           const trimmed = newUsernameInput.trim();
-          if (!trimmed) { setUsernameMessage("Username cannot be empty."); return; }
-          if (trimmed.length < 3) { setUsernameMessage("Must be at least 3 characters."); return; }
-          if (trimmed.length > 30) { setUsernameMessage("Must be 30 characters or fewer."); return; }
-          if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) { setUsernameMessage("Only letters, numbers, _ . - allowed."); return; }
+          if (!trimmed) { setUsernameMessage(st("settings.username.errorEmpty")); return; }
+          if (trimmed.length < 3) { setUsernameMessage(st("settings.username.errorMin")); return; }
+          if (trimmed.length > 30) { setUsernameMessage(st("settings.username.errorMax")); return; }
+          if (!/^[a-zA-Z0-9_.-]+$/.test(trimmed)) { setUsernameMessage(st("settings.username.errorFormat")); return; }
           onChangeUsername(trimmed, (err, updatedUsername) => {
-            if (err) { setUsernameMessage(err); } else {
+            if (err) {
+              setUsernameMessage(err);
+            } else {
               setNewUsernameInput("");
               setChangeUsernameOpen(false);
-              Alert.alert("Username Updated", `Your username has been changed to "${updatedUsername}".`);
+              Alert.alert(st("settings.username.successTitle"), st("settings.username.successMessage", { username: updatedUsername }));
             }
           });
         }} />
       </> : null}
     </AppCard>
 
-    {/* Change Password */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => setChangePasswordOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
-            <SectionHeader eyebrow="Account" title="Change Password" detail="Tap to expand and update your password." styles={styles} />
+            <SectionHeader eyebrow={st("settings.password.eyebrow")} title={st("settings.password.title")} detail={st("settings.password.description")} styles={styles} />
           </View>
-          <StatusBadge label={changePasswordOpen ? "Open" : "Collapsed"} tone={changePasswordOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={changePasswordOpen ? st("common.open") : st("common.collapsed")} tone={changePasswordOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {changePasswordOpen ? <>
-        <TextInput value={currentPassword} onChangeText={setCurrentPassword} style={styles.input} placeholder="Current password" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
-        <TextInput value={newPassword} onChangeText={setNewPassword} style={styles.input} placeholder="New password (min 6 characters)" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
-        <TextInput value={confirmPassword} onChangeText={setConfirmPassword} style={styles.input} placeholder="Confirm new password" placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
+        <TextInput value={currentPassword} onChangeText={setCurrentPassword} style={styles.input} placeholder={st("settings.password.currentPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
+        <TextInput value={newPassword} onChangeText={setNewPassword} style={styles.input} placeholder={st("settings.password.newPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
+        <TextInput value={confirmPassword} onChangeText={setConfirmPassword} style={styles.input} placeholder={st("settings.password.confirmPlaceholder")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} secureTextEntry autoCapitalize="none" />
         {passwordMessage ? <Text style={newPassword && confirmPassword && newPassword === confirmPassword && currentPassword ? styles.hint : styles.error}>{passwordMessage}</Text> : null}
-        <PrimaryButton label="Update Password" styles={styles} onPress={() => {
+        <PrimaryButton label={st("settings.password.button")} styles={styles} onPress={() => {
           setPasswordMessage("");
-          if (!currentPassword) { setPasswordMessage("Enter your current password."); return; }
-          if (newPassword.length < 6) { setPasswordMessage("New password must be at least 6 characters."); return; }
-          if (newPassword !== confirmPassword) { setPasswordMessage("Passwords do not match."); return; }
+          if (!currentPassword) { setPasswordMessage(st("settings.password.errorCurrent")); return; }
+          if (newPassword.length < 6) { setPasswordMessage(st("settings.password.errorMin")); return; }
+          if (newPassword !== confirmPassword) { setPasswordMessage(st("settings.password.errorMismatch")); return; }
           onChangePassword({ currentPassword, newPassword }, (err) => {
             if (err) {
               setPasswordMessage(err);
             } else {
-              setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
               setPasswordMessage("");
               setChangePasswordOpen(false);
-              Alert.alert("Password Updated", "Your password has been changed successfully.");
+              Alert.alert(st("settings.password.successTitle"), st("settings.password.successMessage"));
             }
           });
         }} />
       </> : null}
     </AppCard>
 
-    {/* Sign Out */}
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <Pressable onPress={() => setSessionOpen((v) => !v)}>
         <View style={styles.cardHeaderRow}>
           <View style={styles.flexOne}>
             <SectionHeader eyebrow={st("settings.appControls.eyebrow")} title={st("settings.session.title")} detail={st("settings.session.description")} styles={styles} />
           </View>
-          <StatusBadge label={sessionOpen ? "Open" : "Collapsed"} tone={sessionOpen ? "success" : "neutral"} styles={styles} />
+          <StatusBadge label={sessionOpen ? st("common.open") : st("common.collapsed")} tone={sessionOpen ? "success" : "neutral"} styles={styles} />
         </View>
       </Pressable>
       {sessionOpen ? <SecondaryButton label={st("settings.session.signOut")} onPress={onSignOut} styles={styles} /> : null}

@@ -26,11 +26,6 @@ export function CalculatorsScreen({ styles, t, selectedCalculator, onSelectCalcu
   }
 
   return <View style={styles.section}>
-    <AppCard style={styles.settingsHeroCard} styles={styles}>
-      <SectionHeader eyebrow={t("calculators.hero.eyebrow")} title={t("calculators.title")} detail={t("calculators.hero.description")} styles={styles} />
-      <StatusBadge label={t("calculators.badge")} tone="warning" styles={styles} />
-    </AppCard>
-
     <AppCard style={styles.settingsSectionCard} styles={styles}>
       <SectionHeader eyebrow={t("calculators.library.eyebrow")} title={t("calculators.library.title")} detail={t("calculators.library.description")} styles={styles} />
       <View style={styles.settingsStack}>

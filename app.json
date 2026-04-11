@@ -37,7 +37,8 @@
       }
     },
     "android": {
-      "package": "com.cdub81.pakxallianceapp"
+      "package": "com.cdub81.pakxallianceapp",
+      "googleServicesFile": "./google-services.json"
     },
     "extra": {
       "eas": {

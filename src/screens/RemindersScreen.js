@@ -39,7 +39,6 @@ export function RemindersScreen({
   }, []);
 
   const activeReminders = useMemo(() => (reminders || []).filter((reminder) => reminder.status === "active").sort((a, b) => String(a.scheduledForUtc).localeCompare(String(b.scheduledForUtc))), [reminders]);
-  const inactiveReminders = useMemo(() => (reminders || []).filter((reminder) => reminder.status !== "active").sort((a, b) => String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt))), [reminders]);
   const preview = useMemo(() => {
     try {
       return buildReminderSchedule({
@@ -131,9 +130,9 @@ export function RemindersScreen({
   }
 
   return <View style={styles.section}>
-    <AppCard style={styles.remindersHeroCard} styles={styles}>
-      <SectionHeader eyebrow={t("tabReminders")} title={t("reminders.title")} detail={t("reminders.description")} styles={styles} />
-      <StatusBadge label={t("reminders.activeCount", { count: activeReminders.length })} tone={activeReminders.length ? "warning" : "neutral"} styles={styles} />
+    <AppCard style={styles.reminderSectionCard} styles={styles}>
+      <SectionHeader eyebrow={t("reminders.activeEyebrow")} title={t("reminders.activeTitle")} detail={t("reminders.activeDetail")} styles={styles} />
+      {activeReminders.length ? <View style={styles.remindersList}>{activeReminders.map((reminder) => renderReminderCard(reminder, false))}</View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{t("reminders.noActiveTitle")}</Text><Text style={styles.hint}>{t("reminders.noActiveDetail")}</Text></AppCard>}
     </AppCard>
 
     <AppCard style={styles.reminderComposerCard} styles={styles}>
@@ -161,16 +160,6 @@ export function RemindersScreen({
       </AppCard>
       {formError ? <Text style={styles.error}>{formError}</Text> : null}
       <PrimaryButton label={t("reminders.createButton")} onPress={handleSubmit} styles={styles} />
-    </AppCard>
-
-    <AppCard style={styles.reminderSectionCard} styles={styles}>
-      <SectionHeader eyebrow={t("reminders.activeEyebrow")} title={t("reminders.activeTitle")} detail={t("reminders.activeDetail")} styles={styles} />
-      {activeReminders.length ? <View style={styles.remindersList}>{activeReminders.map((reminder) => renderReminderCard(reminder, false))}</View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{t("reminders.noActiveTitle")}</Text><Text style={styles.hint}>{t("reminders.noActiveDetail")}</Text></AppCard>}
-    </AppCard>
-
-    <AppCard style={styles.reminderSectionCard} styles={styles}>
-      <SectionHeader eyebrow={t("reminders.inactiveEyebrow")} title={t("reminders.inactiveTitle")} detail={t("reminders.inactiveDetail")} styles={styles} />
-      {inactiveReminders.length ? <View style={styles.remindersList}>{inactiveReminders.map((reminder) => renderReminderCard(reminder, true))}</View> : <AppCard style={styles.calendarEmptyCard} styles={styles}><Text style={styles.statusTitle}>{t("reminders.nothingArchivedTitle")}</Text><Text style={styles.hint}>{t("reminders.nothingArchivedDetail")}</Text></AppCard>}
     </AppCard>
 
     <ReminderDurationPickerModal visible={durationPickerVisible} title={t("reminders.selectDuration")} valueSeconds={durationSeconds} onChange={setDurationSeconds} onClose={() => setDurationPickerVisible(false)} t={t} />

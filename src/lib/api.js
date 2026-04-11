@@ -499,6 +499,15 @@ export function deleteCalendarEntry(baseUrl, token, entryId) {
   });
 }
 
+export function backfillCalendarTranslations(baseUrl, token) {
+  return request(baseUrl, "/api/calendar/backfill-translations", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function getReminders(baseUrl, token) {
   return request(baseUrl, "/api/reminders", {
     headers: {
