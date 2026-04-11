@@ -380,7 +380,7 @@ export default function App() {
       };
     }
     return { visible: false, title: "", onBack: null };
-  }, [activeTab, calculatorSelection, eventsSelection, moreSelection, t]);
+  }, [activeTab, calendarSubView, editingCalendarEntryId, calculatorSelection, eventsSelection, moreSelection, t]);
   const options = useMemo(() => createPlayerOptions(players), [players]);
   const activeDesertStormEvent = useMemo(() => findCurrentDesertStormEvent(desertStormEvents), [desertStormEvents]);
   const desertStormPendingResults = useMemo(() => (desertStormEvents || []).find((event) => event.status !== "completed" && !event.archivedAt && event.matchStartsAt && new Date(event.matchStartsAt).getTime() < Date.now()) || null, [desertStormEvents]);
