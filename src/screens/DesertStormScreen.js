@@ -73,7 +73,7 @@ export function DesertStormScreen({
   }, [selectedEvent?.id, selectedEvent?.vote?.selectedPreferredSquad]);
 
   const activeEvents = useMemo(
-    () => (events || []).filter((event) => event.status !== "completed" && !event.archivedAt),
+    () => (events || []).filter((event) => event.status !== "completed" && !event.archivedAt && (!event.matchStartsAt || new Date(event.matchStartsAt).getTime() > Date.now())),
     [events]
   );
   const historyItems = archivedEvents || [];
@@ -82,7 +82,7 @@ export function DesertStormScreen({
         { id: "vote", label: "Vote" },
         { id: "taskForceA", label: "Task Force A" },
         { id: "taskForceB", label: "Task Force B" },
-        { id: "history", label: "History" }
+        { id: "history", label: "Results" }
       ]
     : [
         { id: "vote", label: "Vote" },
