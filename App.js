@@ -1048,7 +1048,7 @@ export default function App() {
     }
     await Notifications.setNotificationChannelAsync(REMINDER_NOTIFICATION_CHANNEL_ID, {
       name: "Reminders",
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: DESIGN_TOKENS.colors.green
     });
@@ -1060,7 +1060,7 @@ export default function App() {
     }
     await Notifications.setNotificationChannelAsync(CALENDAR_NOTIFICATION_CHANNEL_ID, {
       name: "Calendar Events",
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: DESIGN_TOKENS.colors.blue
     });

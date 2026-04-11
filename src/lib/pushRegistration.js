@@ -35,7 +35,7 @@ async function ensurePushNotificationChannel() {
   }
   await Notifications.setNotificationChannelAsync(PUSH_NOTIFICATION_CHANNEL_ID, {
     name: "Push Alerts",
-    importance: Notifications.AndroidImportance.DEFAULT
+    importance: Notifications.AndroidImportance.HIGH
   });
 }
 
