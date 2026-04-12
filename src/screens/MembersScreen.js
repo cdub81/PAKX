@@ -5,6 +5,10 @@ import { AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatusBadge } f
 const INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
 const INPUT_SELECTION_COLOR = "#66d08a";
 
+function StatValue({ children, styles }) {
+  return <Text style={styles.memberStatValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{children}</Text>;
+}
+
 export function MembersScreen({
   players,
   memberSearchText,
@@ -114,15 +118,15 @@ export function MembersScreen({
       <View style={styles.memberStatGrid}>
         <View style={styles.memberStatCard}>
           <Text style={styles.memberStatLabel}>{t("members.visible")}</Text>
-          <Text style={styles.memberStatValue}>{rosterSummary.totalMembers}</Text>
+          <StatValue styles={styles}>{rosterSummary.totalMembers}</StatValue>
         </View>
         <View style={styles.memberStatCard}>
           <Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text>
-          <Text style={styles.memberStatValue}>{rosterSummary.totalPower.toFixed(2)}M</Text>
+          <StatValue styles={styles}>{rosterSummary.totalPower.toFixed(2)}M</StatValue>
         </View>
         <View style={styles.memberStatCard}>
           <Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text>
-          <Text style={styles.memberStatValue}>{rosterSummary.totalHeroPower.toFixed(2)}M</Text>
+          <StatValue styles={styles}>{rosterSummary.totalHeroPower.toFixed(2)}M</StatValue>
         </View>
       </View>
       <View style={styles.rankFilterRow}>
@@ -156,7 +160,7 @@ export function MembersScreen({
           <Pressable onPress={() => toggleExpanded(player.id)} style={styles.memberCardSummary}>
             <View style={styles.memberSummaryText}>
               <Text style={styles.memberName}>{player.name}</Text>
-              <Text style={styles.memberSubline}>{player.rank} • HQ {player.hqLevel ?? 1} • {t("members.totalPowerShort", { value: Number(player.overallPower || 0).toFixed(2) })} • {t("members.heroPowerShort", { value: Number(player.heroPower || 0).toFixed(2) })}</Text>
+              <Text style={styles.memberSubline}>HQ {player.hqLevel ?? 1} • {player.rank} • {t("members.totalPowerShort", { value: Number(player.overallPower || 0).toFixed(2) })} • {t("members.heroPowerShort", { value: Number(player.heroPower || 0).toFixed(2) })}</Text>
             </View>
             <View style={styles.memberSummaryRight}>
               <StatusBadge label={t("members.dsCount", { count: desertStormStats.playedCount || 0 })} tone="warning" styles={styles} />
@@ -167,22 +171,22 @@ export function MembersScreen({
           {isExpanded ? <View style={styles.memberSection}>
             {!isEditing ? <>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.hqLevel")}</Text><Text style={styles.memberStatValue}>Lvl {player.hqLevel ?? 1}</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.squadTotal")}</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.hqLevel")}</Text><StatValue styles={styles}>Lvl {player.hqLevel ?? 1}</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text><StatValue styles={styles}>{Number(player.overallPower || 0).toFixed(2)}M</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text><StatValue styles={styles}>{Number(player.heroPower || 0).toFixed(2)}M</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.squadTotal")}</Text><StatValue styles={styles}>{Number(player.totalSquadPower || 0).toFixed(2)}M</StatValue></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 1 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad1 || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 2 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad2 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 1 })}</Text><StatValue styles={styles}>{Number(player.squadPowers?.squad1 || 0).toFixed(2)}M</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 2 })}</Text><StatValue styles={styles}>{Number(player.squadPowers?.squad2 || 0).toFixed(2)}M</StatValue></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 3 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad3 || 0).toFixed(2)}M</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 4 })}</Text><Text style={styles.memberStatValue}>{Number(player.squadPowers?.squad4 || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 3 })}</Text><StatValue styles={styles}>{Number(player.squadPowers?.squad3 || 0).toFixed(2)}M</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadPlaceholder", { number: 4 })}</Text><StatValue styles={styles}>{Number(player.squadPowers?.squad4 || 0).toFixed(2)}M</StatValue></View>
               </View>
               <View style={styles.memberStatGrid}>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsPlayed")}</Text><Text style={styles.memberStatValue}>{desertStormStats.playedCount || 0}</Text></View>
-                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsMissed")}</Text><Text style={styles.memberStatValue}>{desertStormStats.missedCount || 0}</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsPlayed")}</Text><StatValue styles={styles}>{desertStormStats.playedCount || 0}</StatValue></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.dsMissed")}</Text><StatValue styles={styles}>{desertStormStats.missedCount || 0}</StatValue></View>
               </View>
               {currentUserIsLeader ? <View style={styles.memberCardActionsRow}>
                 <SecondaryButton label={t("members.editMember")} onPress={() => toggleEditing(player.id, true)} style={styles.half} styles={styles} />

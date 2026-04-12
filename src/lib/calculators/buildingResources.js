@@ -35,12 +35,17 @@ const BUILDING_COSTS = {
     30: { gold: "460000000", iron: "1400000000",  food: "1400000000",  oil: "0" },
     31: { gold: "510000000", iron: "1600000000",  food: "1600000000",  oil: "1440000" },
     32: { gold: "560000000", iron: "1700000000",  food: "1700000000",  oil: "2300000" },
-    33: { gold: "620000000", iron: "1900000000",  food: "1900000000",  oil: "3900000" },
+    33: { gold: "620000000", iron: "1900000000",  food: "1900000000",  oil: "3920000" },
     34: { gold: "650000000", iron: "2000000000",  food: "2000000000",  oil: "7050000" },
     35: { gold: "680000000", iron: "2100000000",  food: "2100000000",  oil: "14100000" }
   },
   // Source: unverified — data may be approximate
   "Tech Center": {
+    2:  { gold: "0",         iron: "230",         food: "230",         oil: "0" },
+    3:  { gold: "0",         iron: "1000",        food: "1000",        oil: "0" },
+    4:  { gold: "0",         iron: "2500",        food: "2500",        oil: "0" },
+    5:  { gold: "0",         iron: "20000",       food: "20000",       oil: "0" },
+    6:  { gold: "0",         iron: "91000",       food: "91000",       oil: "0" },
     7:  { gold: "0",         iron: "210000",      food: "210000",      oil: "0" },
     8:  { gold: "0",         iron: "340000",      food: "340000",      oil: "0" },
     9:  { gold: "170000",    iron: "540000",      food: "540000",      oil: "0" },
@@ -68,7 +73,8 @@ const BUILDING_COSTS = {
     31: { gold: "440000000", iron: "1400000000",  food: "1400000000",  oil: "810000" },
     32: { gold: "490000000", iron: "1500000000",  food: "1500000000",  oil: "1300000" },
     33: { gold: "540000000", iron: "1700000000",  food: "1700000000",  oil: "2200000" },
-    34: { gold: "570000000", iron: "1800000000",  food: "1800000000",  oil: "3970000" }
+    34: { gold: "570000000", iron: "1800000000",  food: "1800000000",  oil: "3970000" },
+    35: { gold: "590000000", iron: "1900000000",  food: "1900000000",  oil: "7930000" }
   },
   // Source: simplegameguide.com/last-war-barracks-upgrade-requirements/ (levels 2–30); levels 31–34 unverified
   Barracks: {
@@ -89,41 +95,95 @@ const BUILDING_COSTS = {
     16: { gold: "2200000",   iron: "5700000",     food: "5700000",     oil: "0" },
     17: { gold: "3100000",   iron: "7800000",     food: "7800000",     oil: "0" },
     18: { gold: "5200000",   iron: "13300000",    food: "13300000",    oil: "0" },
-    19: { gold: "6100000",   iron: "15800000",    food: "15800000",    oil: "0" },
-    20: { gold: "11800000",  iron: "29700000",    food: "29700000",    oil: "0" },
-    21: { gold: "16100000",  iron: "39900000",    food: "39900000",    oil: "0" },
-    22: { gold: "20900000",  iron: "51300000",    food: "51300000",    oil: "0" },
-    23: { gold: "25200000",  iron: "63500000",    food: "63500000",    oil: "0" },
-    24: { gold: "32300000",  iron: "80700000",    food: "80700000",    oil: "0" },
-    25: { gold: "54200000",  iron: "130900000",   food: "130900000",   oil: "0" },
-    26: { gold: "75300000",  iron: "186000000",   food: "186000000",   oil: "0" },
-    27: { gold: "102300000", iron: "241800000",   food: "241800000",   oil: "0" },
-    28: { gold: "138000000", iron: "340400000",   food: "340400000",   oil: "0" },
-    29: { gold: "193200000", iron: "478400000",   food: "478400000",   oil: "0" },
-    30: { gold: "266800000", iron: "662400000",   food: "662400000",   oil: "0" },
-    31: { gold: "250000000", iron: "1200000000",  food: "400000000",   oil: "562500" },
-    32: { gold: "280000000", iron: "1300000000",  food: "440000000",   oil: "900000" },
-    33: { gold: "310000000", iron: "1400000000",  food: "480000000",   oil: "1530000" },
-    34: { gold: "320000000", iron: "1000000000",  food: "400000000",   oil: "1760000" }
+    19: { gold: "6600000",   iron: "17000000",    food: "17000000",    oil: "0" },
+    20: { gold: "12000000",  iron: "30000000",    food: "30000000",    oil: "0" },
+    21: { gold: "17000000",  iron: "42000000",    food: "42000000",    oil: "0" },
+    22: { gold: "22000000",  iron: "54000000",    food: "54000000",    oil: "0" },
+    23: { gold: "27000000",  iron: "68000000",    food: "68000000",    oil: "0" },
+    24: { gold: "34000000",  iron: "85000000",    food: "85000000",    oil: "0" },
+    25: { gold: "58000000",  iron: "140000000",   food: "140000000",   oil: "0" },
+    26: { gold: "81000000",  iron: "200000000",   food: "200000000",   oil: "0" },
+    27: { gold: "110000000", iron: "260000000",   food: "260000000",   oil: "0" },
+    28: { gold: "150000000", iron: "370000000",   food: "370000000",   oil: "0" },
+    29: { gold: "210000000", iron: "520000000",   food: "520000000",   oil: "0" },
+    30: { gold: "290000000", iron: "720000000",   food: "720000000",   oil: "0" },
+    31: { gold: "320000000", iron: "790000000",   food: "790000000",   oil: "360000" },
+    32: { gold: "350000000", iron: "870000000",   food: "870000000",   oil: "576000" },
+    33: { gold: "380000000", iron: "960000000",   food: "960000000",   oil: "979200" },
+    34: { gold: "400000000", iron: "1000000000",  food: "1000000000",  oil: "1760000" },
+    35: { gold: "420000000", iron: "1100000000",  food: "1100000000",  oil: "3530000" }
   },
   // Source: unverified — data may be approximate
   "Drill Ground": {
     1:  { gold: "0",         iron: "20",          food: "60",          oil: "0" },
-    3:  { gold: "0",         iron: "840",         food: "840",         oil: "0" },
-    5:  { gold: "0",         iron: "10000",       food: "10000",       oil: "0" },
-    13: { gold: "560000",    iron: "2600000",     food: "870000",      oil: "0" },
-    21: { gold: "13000000",  iron: "63000000",    food: "21000000",    oil: "0" },
-    29: { gold: "170000000", iron: "770000000",   food: "260000000",   oil: "0" },
-    32: { gold: "280000000", iron: "1300000000",  food: "440000000",   oil: "900000" },
-    34: { gold: "340000000", iron: "1000000000",  food: "270000000",   oil: "1320000" }
+    2:  { gold: "0",         iron: "15",          food: "45",          oil: "0" },
+    3:  { gold: "0",         iron: "340",         food: "1000",        oil: "0" },
+    4:  { gold: "0",         iron: "840",         food: "2500",        oil: "0" },
+    5:  { gold: "0",         iron: "6800",        food: "20000",       oil: "0" },
+    6:  { gold: "0",         iron: "20000",       food: "61000",       oil: "0" },
+    7:  { gold: "0",         iron: "41000",       food: "120000",      oil: "0" },
+    8:  { gold: "0",         iron: "65000",       food: "190000",      oil: "0" },
+    9:  { gold: "83000",     iron: "100000",      food: "310000",      oil: "0" },
+    10: { gold: "100000",    iron: "120000",      food: "370000",      oil: "0" },
+    11: { gold: "250000",    iron: "310000",      food: "930000",      oil: "0" },
+    12: { gold: "420000",    iron: "530000",      food: "1600000",     oil: "0" },
+    13: { gold: "470000",    iron: "580000",      food: "1700000",     oil: "0" },
+    14: { gold: "650000",    iron: "810000",      food: "2400000",     oil: "0" },
+    15: { gold: "910000",    iron: "1100000",     food: "3400000",     oil: "0" },
+    16: { gold: "1600000",   iron: "2000000",     food: "6100000",     oil: "0" },
+    17: { gold: "2100000",   iron: "2600000",     food: "7900000",     oil: "0" },
+    18: { gold: "3700000",   iron: "4600000",     food: "14000000",    oil: "0" },
+    19: { gold: "4400000",   iron: "5500000",     food: "17000000",    oil: "0" },
+    20: { gold: "8000000",   iron: "10000000",    food: "30000000",    oil: "0" },
+    21: { gold: "11000000",  iron: "14000000",    food: "42000000",    oil: "0" },
+    22: { gold: "15000000",  iron: "18000000",    food: "54000000",    oil: "0" },
+    23: { gold: "18000000",  iron: "23000000",    food: "68000000",    oil: "0" },
+    24: { gold: "23000000",  iron: "28000000",    food: "85000000",    oil: "0" },
+    25: { gold: "39000000",  iron: "48000000",    food: "140000000",   oil: "0" },
+    26: { gold: "54000000",  iron: "67000000",    food: "200000000",   oil: "0" },
+    27: { gold: "70000000",  iron: "88000000",    food: "260000000",   oil: "0" },
+    28: { gold: "98000000",  iron: "120000000",   food: "370000000",   oil: "0" },
+    29: { gold: "140000000", iron: "170000000",   food: "520000000",   oil: "0" },
+    30: { gold: "190000000", iron: "240000000",   food: "720000000",   oil: "0" },
+    32: { gold: "230000000", iron: "290000000",   food: "870000000",   oil: "432000" },
+    34: { gold: "270000000", iron: "340000000",   food: "1000000000",  oil: "1320000" }
   },
   // Source: unverified — data may be approximate
   Hospital: {
-    9:  { gold: "130000",    iron: "470000",      food: "160000",      oil: "0" },
-    17: { gold: "2500000",   iron: "12000000",    food: "4000000",     oil: "0" },
-    25: { gold: "46000000",  iron: "220000000",   food: "72000000",    oil: "0" },
-    32: { gold: "280000000", iron: "1300000000",  food: "440000000",   oil: "900000" },
-    34: { gold: "500000000", iron: "1500000000",  food: "400000000",   oil: "1320000" }
+    2:  { gold: "0",         iron: "75",          food: "230",         oil: "0" },
+    3:  { gold: "0",         iron: "340",         food: "1000",        oil: "0" },
+    4:  { gold: "0",         iron: "840",         food: "2500",        oil: "0" },
+    5:  { gold: "0",         iron: "6800",        food: "20000",       oil: "0" },
+    6:  { gold: "0",         iron: "30000",       food: "91000",       oil: "0" },
+    7:  { gold: "0",         iron: "61000",       food: "180000",      oil: "0" },
+    8:  { gold: "0",         iron: "97000",       food: "290000",      oil: "0" },
+    9:  { gold: "120000",    iron: "160000",      food: "470000",      oil: "0" },
+    10: { gold: "150000",    iron: "190000",      food: "560000",      oil: "0" },
+    11: { gold: "370000",    iron: "470000",      food: "1400000",     oil: "0" },
+    12: { gold: "630000",    iron: "790000",      food: "2400000",     oil: "0" },
+    13: { gold: "700000",    iron: "870000",      food: "2600000",     oil: "0" },
+    14: { gold: "980000",    iron: "1200000",     food: "3700000",     oil: "0" },
+    15: { gold: "1400000",   iron: "1700000",     food: "5100000",     oil: "0" },
+    16: { gold: "2400000",   iron: "3000000",     food: "9100000",     oil: "0" },
+    17: { gold: "3200000",   iron: "4000000",     food: "12000000",    oil: "0" },
+    18: { gold: "5500000",   iron: "6900000",     food: "21000000",    oil: "0" },
+    19: { gold: "6600000",   iron: "8300000",     food: "25000000",    oil: "0" },
+    20: { gold: "12000000",  iron: "15000000",    food: "45000000",    oil: "0" },
+    21: { gold: "17000000",  iron: "21000000",    food: "63000000",    oil: "0" },
+    22: { gold: "22000000",  iron: "27000000",    food: "82000000",    oil: "0" },
+    23: { gold: "27000000",  iron: "34000000",    food: "100000000",   oil: "0" },
+    24: { gold: "34000000",  iron: "43000000",    food: "130000000",   oil: "0" },
+    25: { gold: "58000000",  iron: "72000000",    food: "220000000",   oil: "0" },
+    26: { gold: "81000000",  iron: "100000000",   food: "300000000",   oil: "0" },
+    27: { gold: "110000000", iron: "130000000",   food: "390000000",   oil: "0" },
+    28: { gold: "150000000", iron: "180000000",   food: "550000000",   oil: "0" },
+    29: { gold: "210000000", iron: "260000000",   food: "770000000",   oil: "0" },
+    30: { gold: "290000000", iron: "360000000",   food: "1100000000",  oil: "0" },
+    31: { gold: "320000000", iron: "400000000",   food: "1200000000",  oil: "270000" },
+    32: { gold: "350000000", iron: "440000000",   food: "1300000000",  oil: "432000" },
+    33: { gold: "380000000", iron: "480000000",   food: "1400000000",  oil: "734400" },
+    34: { gold: "400000000", iron: "500000000",   food: "1500000000",  oil: "1320000" },
+    35: { gold: "420000000", iron: "530000000",   food: "1600000000",  oil: "2640000" }
   },
   // Source: simplegameguide.com/last-war-wall-upgrade-requirement/
   Wall: {
@@ -156,55 +216,85 @@ const BUILDING_COSTS = {
     28: { gold: "160000000", iron: "740000000",   food: "250000000",   oil: "0" },
     29: { gold: "220000000", iron: "1000000000",  food: "340000000",   oil: "0" },
     30: { gold: "310000000", iron: "1400000000",  food: "480000000",   oil: "0" },
-    31: { gold: "340000000", iron: "1600000000",  food: "530000000",   oil: "0" },
-    32: { gold: "370000000", iron: "1700000000",  food: "580000000",   oil: "0" },
-    33: { gold: "410000000", iron: "1900000000",  food: "640000000",   oil: "0" },
-    34: { gold: "430000000", iron: "2000000000",  food: "670000000",   oil: "0" },
-    35: { gold: "450000000", iron: "2100000000",  food: "710000000",   oil: "0" }
+    31: { gold: "340000000", iron: "1600000000",  food: "530000000",   oil: "675000" },
+    32: { gold: "370000000", iron: "1700000000",  food: "580000000",   oil: "1080000" },
+    33: { gold: "410000000", iron: "1900000000",  food: "640000000",   oil: "1840000" },
+    34: { gold: "430000000", iron: "2000000000",  food: "670000000",   oil: "3300000" },
+    35: { gold: "450000000", iron: "2100000000",  food: "710000000",   oil: "6610000" }
   },
   // Source: unverified — data may be approximate
   "Alliance Center": {
-    7:  { gold: "0",         iron: "180000",      food: "180000",      oil: "0" },
-    15: { gold: "1500000",   iron: "7600000",     food: "2500000",     oil: "0" },
-    23: { gold: "29000000",  iron: "140000000",   food: "45000000",    oil: "0" },
-    33: { gold: "310000000", iron: "1400000000",  food: "480000000",   oil: "1530000" }
+    2:  { gold: "0",         iron: "75",          food: "230",         oil: "0" },
+    3:  { gold: "0",         iron: "340",         food: "1000",        oil: "0" },
+    4:  { gold: "0",         iron: "840",         food: "2500",        oil: "0" },
+    5:  { gold: "0",         iron: "6800",        food: "20000",       oil: "0" },
+    6:  { gold: "0",         iron: "20000",       food: "61000",       oil: "0" },
+    7:  { gold: "0",         iron: "41000",       food: "120000",      oil: "0" },
+    8:  { gold: "0",         iron: "65000",       food: "190000",      oil: "0" },
+    9:  { gold: "100000",    iron: "100000",      food: "310000",      oil: "0" },
+    10: { gold: "120000",    iron: "120000",      food: "370000",      oil: "0" },
+    11: { gold: "300000",    iron: "310000",      food: "930000",      oil: "0" },
+    12: { gold: "510000",    iron: "530000",      food: "1600000",     oil: "0" },
+    13: { gold: "560000",    iron: "580000",      food: "1700000",     oil: "0" },
+    14: { gold: "780000",    iron: "810000",      food: "2400000",     oil: "0" },
+    15: { gold: "1100000",   iron: "1100000",     food: "3400000",     oil: "0" },
+    16: { gold: "1900000",   iron: "2000000",     food: "6100000",     oil: "0" },
+    17: { gold: "2500000",   iron: "2600000",     food: "7900000",     oil: "0" },
+    18: { gold: "4400000",   iron: "4600000",     food: "14000000",    oil: "0" },
+    19: { gold: "5300000",   iron: "5500000",     food: "17000000",    oil: "0" },
+    20: { gold: "9600000",   iron: "10000000",    food: "30000000",    oil: "0" },
+    21: { gold: "13000000",  iron: "14000000",    food: "42000000",    oil: "0" },
+    22: { gold: "17000000",  iron: "18000000",    food: "54000000",    oil: "0" },
+    23: { gold: "22000000",  iron: "23000000",    food: "68000000",    oil: "0" },
+    24: { gold: "27000000",  iron: "28000000",    food: "85000000",    oil: "0" },
+    25: { gold: "46000000",  iron: "48000000",    food: "140000000",   oil: "0" },
+    26: { gold: "65000000",  iron: "67000000",    food: "200000000",   oil: "0" },
+    27: { gold: "84000000",  iron: "88000000",    food: "260000000",   oil: "0" },
+    28: { gold: "120000000", iron: "120000000",   food: "370000000",   oil: "0" },
+    29: { gold: "170000000", iron: "170000000",   food: "520000000",   oil: "0" },
+    30: { gold: "230000000", iron: "240000000",   food: "720000000",   oil: "0" },
+    31: { gold: "250000000", iron: "260000000",   food: "790000000",   oil: "202500" },
+    32: { gold: "280000000", iron: "290000000",   food: "870000000",   oil: "324000" },
+    33: { gold: "310000000", iron: "320000000",   food: "960000000",   oil: "550800" },
+    34: { gold: "320000000", iron: "340000000",   food: "1000000000",  oil: "991440" },
+    35: { gold: "340000000", iron: "350000000",   food: "1100000000",  oil: "1980000" }
   },
   // Source: simplegameguide.com/last-war-tank-center-upgrade-cost/ (levels 1–32); levels 33–34 unverified
   "Tank/Air/Missile Center": {
-    1:  { gold: "100000",    iron: "90",          food: "30",          oil: "0" },
-    2:  { gold: "120000",    iron: "230",         food: "75",          oil: "0" },
-    3:  { gold: "300000",    iron: "1000",        food: "340",         oil: "0" },
-    4:  { gold: "510000",    iron: "2500",        food: "840",         oil: "0" },
-    5:  { gold: "560000",    iron: "30000",       food: "10000",       oil: "0" },
-    6:  { gold: "780000",    iron: "91000",       food: "30000",       oil: "0" },
-    7:  { gold: "1100000",   iron: "180000",      food: "61000",       oil: "0" },
-    8:  { gold: "1900000",   iron: "290000",      food: "97000",       oil: "0" },
-    9:  { gold: "2500000",   iron: "470000",      food: "160000",      oil: "0" },
-    10: { gold: "4400000",   iron: "560000",      food: "190000",      oil: "0" },
-    11: { gold: "5300000",   iron: "1400000",     food: "470000",      oil: "0" },
-    12: { gold: "9600000",   iron: "2400000",     food: "790000",      oil: "0" },
-    13: { gold: "13000000",  iron: "2600000",     food: "870000",      oil: "0" },
-    14: { gold: "17000000",  iron: "3700000",     food: "1200000",     oil: "0" },
-    15: { gold: "22000000",  iron: "5100000",     food: "1700000",     oil: "0" },
-    16: { gold: "27000000",  iron: "9100000",     food: "3000000",     oil: "0" },
-    17: { gold: "46000000",  iron: "12000000",    food: "4000000",     oil: "0" },
-    18: { gold: "65000000",  iron: "21000000",    food: "6900000",     oil: "0" },
-    19: { gold: "84000000",  iron: "25000000",    food: "8300000",     oil: "0" },
-    20: { gold: "120000000", iron: "45000000",    food: "15000000",    oil: "0" },
-    21: { gold: "170000000", iron: "63000000",    food: "21000000",    oil: "0" },
-    22: { gold: "230000000", iron: "82000000",    food: "27000000",    oil: "0" },
-    23: { gold: "250000000", iron: "100000000",   food: "34000000",    oil: "0" },
-    24: { gold: "280000000", iron: "130000000",   food: "43000000",    oil: "0" },
-    25: { gold: "310000000", iron: "220000000",   food: "72000000",    oil: "0" },
-    26: { gold: "320000000", iron: "300000000",   food: "100000000",   oil: "0" },
-    27: { gold: "340000000", iron: "390000000",   food: "130000000",   oil: "0" },
-    28: { gold: "0",         iron: "550000000",   food: "180000000",   oil: "562500" },
-    29: { gold: "0",         iron: "770000000",   food: "260000000",   oil: "900000" },
-    30: { gold: "0",         iron: "1100000000",  food: "360000000",   oil: "1530000" },
-    31: { gold: "0",         iron: "1200000000",  food: "400000000",   oil: "2754000" },
-    32: { gold: "0",         iron: "1300000000",  food: "440000000",   oil: "5508000" },
+    2:  { gold: "0",         iron: "230",         food: "75",          oil: "0" },
+    3:  { gold: "0",         iron: "1000",        food: "340",         oil: "0" },
+    4:  { gold: "0",         iron: "2500",        food: "840",         oil: "0" },
+    5:  { gold: "0",         iron: "30000",       food: "10000",       oil: "0" },
+    6:  { gold: "0",         iron: "91000",       food: "30000",       oil: "0" },
+    7:  { gold: "0",         iron: "180000",      food: "61000",       oil: "0" },
+    8:  { gold: "0",         iron: "290000",      food: "97000",       oil: "0" },
+    9:  { gold: "100000",    iron: "470000",      food: "160000",      oil: "0" },
+    10: { gold: "120000",    iron: "560000",      food: "190000",      oil: "0" },
+    11: { gold: "300000",    iron: "1400000",     food: "470000",      oil: "0" },
+    12: { gold: "510000",    iron: "2400000",     food: "790000",      oil: "0" },
+    13: { gold: "560000",    iron: "2600000",     food: "870000",      oil: "0" },
+    14: { gold: "780000",    iron: "3700000",     food: "1200000",     oil: "0" },
+    15: { gold: "1100000",   iron: "5100000",     food: "1700000",     oil: "0" },
+    16: { gold: "1900000",   iron: "9100000",     food: "3000000",     oil: "0" },
+    17: { gold: "2500000",   iron: "12000000",    food: "4000000",     oil: "0" },
+    18: { gold: "4400000",   iron: "21000000",    food: "6900000",     oil: "0" },
+    19: { gold: "5300000",   iron: "25000000",    food: "8300000",     oil: "0" },
+    20: { gold: "9600000",   iron: "45000000",    food: "15000000",    oil: "0" },
+    21: { gold: "13000000",  iron: "63000000",    food: "21000000",    oil: "0" },
+    22: { gold: "17000000",  iron: "82000000",    food: "27000000",    oil: "0" },
+    23: { gold: "22000000",  iron: "100000000",   food: "34000000",    oil: "0" },
+    24: { gold: "27000000",  iron: "130000000",   food: "43000000",    oil: "0" },
+    25: { gold: "46000000",  iron: "220000000",   food: "72000000",    oil: "0" },
+    26: { gold: "65000000",  iron: "300000000",   food: "100000000",   oil: "0" },
+    27: { gold: "84000000",  iron: "390000000",   food: "130000000",   oil: "0" },
+    28: { gold: "120000000", iron: "550000000",   food: "180000000",   oil: "0" },
+    29: { gold: "170000000", iron: "770000000",   food: "260000000",   oil: "0" },
+    30: { gold: "230000000", iron: "1100000000",  food: "360000000",   oil: "0" },
+    31: { gold: "250000000", iron: "1200000000",  food: "400000000",   oil: "562500" },
+    32: { gold: "280000000", iron: "1300000000",  food: "440000000",   oil: "900000" },
     33: { gold: "310000000", iron: "1400000000",  food: "480000000",   oil: "1530000" },
-    34: { gold: "320000000", iron: "1500000000",  food: "500000000",   oil: "2750000" }
+    34: { gold: "320000000", iron: "1500000000",  food: "500000000",   oil: "2750000" },
+    35: { gold: "340000000", iron: "1600000000",  food: "530000000",   oil: "5510000" }
   },
   "Recon Plane": {
     1: { gold: "0", iron: "0", food: "0", oil: "0", unavailable: true, note: "DATA NEEDED (level exists, costs unknown)" }
@@ -221,6 +311,11 @@ const DISPLAY_BUILDING_NAMES = {
   "Alliance Center": "Alliance Center",
   "Tank/Air/Missile Center": "Tank / Air / Missile Center",
   "Recon Plane": "Recon Plane"
+};
+
+const BUILDING_NAME_ALIASES = {
+  "Tank or Air or Missile Center": "Tank/Air/Missile Center",
+  "Troop Center": "Tank/Air/Missile Center"
 };
 
 const ADDITIONAL_BUILDING_ORDER = [
@@ -266,6 +361,16 @@ function clampReductionPercent(value) {
   return Math.min(100, Math.max(0, parsed));
 }
 
+function normalizeBuildingName(building) {
+  const trimmed = String(building || "").trim();
+  return BUILDING_NAME_ALIASES[trimmed] || trimmed;
+}
+
+function getDisplayBuildingName(building) {
+  const normalizedBuilding = normalizeBuildingName(building);
+  return DISPLAY_BUILDING_NAMES[normalizedBuilding] || normalizedBuilding;
+}
+
 function normalizeCostEntry(costEntry) {
   return {
     gold: parseCompactAmount(costEntry?.gold),
@@ -290,14 +395,15 @@ function applyReduction(costs, reductionPercent) {
 }
 
 function buildUpgradeEntry(building, targetLevel, reductionPercent, options = {}) {
-  const costEntry = BUILDING_COSTS[building]?.[targetLevel];
+  const normalizedBuilding = normalizeBuildingName(building);
+  const costEntry = BUILDING_COSTS[normalizedBuilding]?.[targetLevel];
   const fromLevel = Math.max(0, targetLevel - 1);
-  const label = options.displayLabel || DISPLAY_BUILDING_NAMES[building] || building;
+  const label = options.displayLabel || getDisplayBuildingName(normalizedBuilding);
 
   if (isUnavailableCostEntry(costEntry)) {
     return {
-      key: `${building}-${targetLevel}`,
-      building,
+      key: `${normalizedBuilding}-${targetLevel}`,
+      building: normalizedBuilding,
       label,
       fromLevel,
       targetLevel,
@@ -310,8 +416,8 @@ function buildUpgradeEntry(building, targetLevel, reductionPercent, options = {}
 
   const baseCosts = normalizeCostEntry(costEntry);
   return {
-    key: `${building}-${targetLevel}`,
-    building,
+    key: `${normalizedBuilding}-${targetLevel}`,
+    building: normalizedBuilding,
     label,
     fromLevel,
     targetLevel,
@@ -342,7 +448,7 @@ function getBuildingOptions() {
 }
 
 function getBuildingTargetLevels(building) {
-  return Object.entries(BUILDING_COSTS[building] || {})
+  return Object.entries(BUILDING_COSTS[normalizeBuildingName(building)] || {})
     .filter(([, costEntry]) => !isUnavailableCostEntry(costEntry))
     .map(([level]) => Number.parseInt(level, 10))
     .filter((value) => Number.isFinite(value))
@@ -358,16 +464,19 @@ function buildRequirementEntriesForHqLevel(level, reductionPercent = 0) {
   const requirement = getHqRequirement(normalizedLevel);
   return [
     buildUpgradeEntry("Headquarters", normalizedLevel, reductionPercent, { source: "hq" }),
-    ...requirement.requirements.map((item) => buildUpgradeEntry(item.costBuilding || item.building, item.requiredLevel, reductionPercent, {
-      optionalChoice: item.building === "Tank or Air or Missile Center",
-      displayLabel: item.building,
-      source: "hq"
-    }))
+    ...requirement.requirements.map((item) => {
+      const normalizedBuilding = normalizeBuildingName(item.costBuilding || item.building);
+      return buildUpgradeEntry(normalizedBuilding, item.requiredLevel, reductionPercent, {
+        optionalChoice: normalizedBuilding === "Tank/Air/Missile Center",
+        displayLabel: getDisplayBuildingName(normalizedBuilding),
+        source: "hq"
+      });
+    })
   ];
 }
 
 function normalizeBuildingSelection(selection) {
-  const building = selection?.building || getBuildingOptions()[0]?.value || "Tech Center";
+  const building = normalizeBuildingName(selection?.building || getBuildingOptions()[0]?.value || "Tech Center");
   const levels = getBuildingTargetLevels(building);
   const targetLevel = levels.includes(Number(selection?.targetLevel))
     ? Number(selection?.targetLevel)

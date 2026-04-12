@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { Text, TextInput, View } from "react-native";
-import { AppCard, SectionHeader, StatusBadge } from "../components/ui/primitives";
+import React, { useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { AppCard, BottomSheetModal, PrimaryButton, SectionHeader, StatusBadge } from "../components/ui/primitives";
+import { clampHqLevel } from "../lib/calculators/hqRequirements";
 
 const HOME_INPUT_PLACEHOLDER_COLOR = "#8fa0b3";
 const HOME_INPUT_SELECTION_COLOR = "#66d08a";
+const WHEEL_ITEM_HEIGHT = 40;
 
 function formatPowerDraftValue(value) {
   const numericValue = Number(value);
@@ -11,6 +13,56 @@ function formatPowerDraftValue(value) {
     return "";
   }
   return String(value);
+}
+
+function StatValue({ children, styles }) {
+  return <Text style={styles.memberStatValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{children}</Text>;
+}
+
+function HqValueWheel({ value, values, onChange, styles }) {
+  const scrollRef = useRef(null);
+  const lastSyncedValueRef = useRef(null);
+
+  useEffect(() => {
+    if (lastSyncedValueRef.current === value) {
+      return;
+    }
+    const optionIndex = Math.max(0, values.findIndex((entry) => entry.value === value));
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: optionIndex * WHEEL_ITEM_HEIGHT, animated: false });
+    });
+    lastSyncedValueRef.current = value;
+  }, [value, values]);
+
+  function commitScrollValue(offsetY) {
+    const index = Math.max(0, Math.min(values.length - 1, Math.round(offsetY / WHEEL_ITEM_HEIGHT)));
+    onChange(values[index].value);
+  }
+
+  return <View style={styles.calendarWheelColumn}>
+    <ScrollView
+      ref={scrollRef}
+      showsVerticalScrollIndicator={false}
+      snapToInterval={WHEEL_ITEM_HEIGHT}
+      decelerationRate="fast"
+      scrollEventThrottle={16}
+      contentContainerStyle={styles.calendarWheelContent}
+      onMomentumScrollEnd={(event) => commitScrollValue(event.nativeEvent.contentOffset.y)}
+    >
+      {values.map((option) => <Pressable key={`${option.value}`} style={styles.calendarWheelItem} onPress={() => onChange(option.value)}>
+        <Text style={[styles.calendarWheelText, option.value === value && styles.calendarWheelTextActive]}>{option.label}</Text>
+      </Pressable>)}
+    </ScrollView>
+    <View pointerEvents="none" style={styles.calendarWheelHighlight} />
+  </View>;
+}
+
+function buildHqOptions(minLevel = 1, maxLevel = 35) {
+  const options = [];
+  for (let level = minLevel; level <= maxLevel; level += 1) {
+    options.push({ value: level, label: `HQ ${level}` });
+  }
+  return options;
 }
 
 export function HomeScreen({
@@ -30,13 +82,18 @@ export function HomeScreen({
   const [powerDraft, setPowerDraft] = useState({
     overallPower: "",
     heroPower: "",
+    hqLevel: "",
     squad1: "",
     squad2: "",
     squad3: "",
     squad4: ""
   });
+  const [hqPickerVisible, setHqPickerVisible] = useState(false);
+  const [hqPickerValue, setHqPickerValue] = useState(1);
   const squadPowers = currentUser?.squadPowers || {};
   const totalSquadPower = Number(currentUser?.totalSquadPower || 0);
+  const displayHqLevel = clampHqLevel(powerDraft.hqLevel || currentUser?.hqLevel || 1);
+  const hqOptions = buildHqOptions(1, 35);
   const desertStormTone = desertStormViewState === "vote_open_not_voted"
     ? "warning"
     : desertStormViewState === "vote_open_voted_waiting"
@@ -65,19 +122,26 @@ export function HomeScreen({
     setPowerDraft({
       overallPower: formatPowerDraftValue(currentUser?.overallPower),
       heroPower: formatPowerDraftValue(currentUser?.heroPower),
+      hqLevel: String(currentUser?.hqLevel ?? 1),
       squad1: formatPowerDraftValue(squadPowers.squad1),
       squad2: formatPowerDraftValue(squadPowers.squad2),
       squad3: formatPowerDraftValue(squadPowers.squad3),
       squad4: formatPowerDraftValue(squadPowers.squad4)
     });
-  }, [currentUser?.overallPower, currentUser?.heroPower, squadPowers.squad1, squadPowers.squad2, squadPowers.squad3, squadPowers.squad4]);
+  }, [currentUser?.overallPower, currentUser?.heroPower, currentUser?.hqLevel, squadPowers.squad1, squadPowers.squad2, squadPowers.squad3, squadPowers.squad4]);
+
+  useEffect(() => {
+    if (!hqPickerVisible) {
+      setHqPickerValue(clampHqLevel(powerDraft.hqLevel));
+    }
+  }, [hqPickerVisible, powerDraft.hqLevel]);
 
   function updateDraft(field, value) {
     setPowerDraft((current) => ({ ...current, [field]: value }));
   }
 
   function commitField(field) {
-    if (field === "overallPower" || field === "heroPower") {
+    if (field === "overallPower" || field === "heroPower" || field === "hqLevel") {
       onChangeField(field, powerDraft[field]);
       return;
     }
@@ -87,6 +151,18 @@ export function HomeScreen({
       squad3: powerDraft.squad3,
       squad4: powerDraft.squad4
     });
+  }
+
+  function commitHqLevel() {
+    const nextHqLevel = String(clampHqLevel(hqPickerValue));
+    updateDraft("hqLevel", nextHqLevel);
+    onChangeField("hqLevel", nextHqLevel);
+    setHqPickerVisible(false);
+  }
+
+  function openHqPicker() {
+    setHqPickerValue(clampHqLevel(powerDraft.hqLevel));
+    setHqPickerVisible(true);
   }
 
   return <View style={styles.section}>
@@ -120,22 +196,47 @@ export function HomeScreen({
     <AppCard styles={styles}>
       <SectionHeader eyebrow={t("home.powerEyebrow")} title={t("home.personalPower")} detail={t("home.personalPowerDetail")} styles={styles} />
       <View style={styles.memberStatGrid}>
-        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.totalPower")}</Text><Text style={styles.memberStatValue}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</Text></View>
-        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.heroPower")}</Text><Text style={styles.memberStatValue}>{Number(currentUser?.heroPower || 0).toFixed(2)}M</Text></View>
-        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadTotal")}</Text><Text style={styles.memberStatValue}>{totalSquadPower.toFixed(2)}M</Text></View>
+        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.hqLevel")}</Text><StatValue styles={styles}>Lvl {displayHqLevel}</StatValue></View>
+        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.totalPower")}</Text><StatValue styles={styles}>{Number(currentUser?.overallPower || 0).toFixed(2)}M</StatValue></View>
+        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.heroPower")}</Text><StatValue styles={styles}>{Number(currentUser?.heroPower || 0).toFixed(2)}M</StatValue></View>
+        <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("home.squadTotal")}</Text><StatValue styles={styles}>{totalSquadPower.toFixed(2)}M</StatValue></View>
       </View>
       <View style={styles.row}>
+        <View style={styles.half}>
+          <Text style={styles.inputLabel}>{t("members.hqLevel")}</Text>
+          <Pressable style={[styles.input, styles.calendarTimeButton]} onPress={openHqPicker}>
+            <Text style={styles.line}>HQ {displayHqLevel}</Text>
+          </Pressable>
+        </View>
         <View style={styles.half}><Text style={styles.inputLabel}>{t("home.totalPower")}</Text><TextInput value={powerDraft.overallPower} onChangeText={(value) => updateDraft("overallPower", value)} onBlur={() => commitField("overallPower")} style={styles.input} placeholder="e.g. 56.79" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
+      </View>
+      <View style={styles.row}>
         <View style={styles.half}><Text style={styles.inputLabel}>{t("home.heroPower")}</Text><TextInput value={powerDraft.heroPower} onChangeText={(value) => updateDraft("heroPower", value)} onBlur={() => commitField("heroPower")} style={styles.input} placeholder="e.g. 67.00" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
-      </View>
-      <View style={styles.row}>
         <View style={styles.half}><Text style={styles.inputLabel}>{t("home.squadPlaceholder", { number: 1 })}</Text><TextInput value={powerDraft.squad1} onChangeText={(value) => updateDraft("squad1", value)} onBlur={() => commitField("squad1")} style={styles.input} placeholder="e.g. 14.00" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
-        <View style={styles.half}><Text style={styles.inputLabel}>{t("home.squadPlaceholder", { number: 2 })}</Text><TextInput value={powerDraft.squad2} onChangeText={(value) => updateDraft("squad2", value)} onBlur={() => commitField("squad2")} style={styles.input} placeholder="e.g. 7.76" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
       </View>
       <View style={styles.row}>
+        <View style={styles.half}><Text style={styles.inputLabel}>{t("home.squadPlaceholder", { number: 2 })}</Text><TextInput value={powerDraft.squad2} onChangeText={(value) => updateDraft("squad2", value)} onBlur={() => commitField("squad2")} style={styles.input} placeholder="e.g. 7.76" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
         <View style={styles.half}><Text style={styles.inputLabel}>{t("home.squadPlaceholder", { number: 3 })}</Text><TextInput value={powerDraft.squad3} onChangeText={(value) => updateDraft("squad3", value)} onBlur={() => commitField("squad3")} style={styles.input} placeholder="e.g. 8.92" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
+      </View>
+      <View style={styles.row}>
         <View style={styles.half}><Text style={styles.inputLabel}>{t("home.squadPlaceholder", { number: 4 })}</Text><TextInput value={powerDraft.squad4} onChangeText={(value) => updateDraft("squad4", value)} onBlur={() => commitField("squad4")} style={styles.input} placeholder="e.g. 10.77" placeholderTextColor={HOME_INPUT_PLACEHOLDER_COLOR} selectionColor={HOME_INPUT_SELECTION_COLOR} keyboardType="decimal-pad" /></View>
       </View>
     </AppCard>
+
+    <BottomSheetModal visible={hqPickerVisible} onClose={() => setHqPickerVisible(false)} styles={styles}>
+      <SectionHeader eyebrow={t("members.hqLevel")} title={t("members.hqLevel")} detail="Scroll to choose your HQ level." styles={styles} />
+      <View style={styles.calendarWheelHeader}>
+        <Text style={styles.hint}>{t("members.hqLevel")}</Text>
+      </View>
+      <View style={styles.calendarWheelRow}>
+        <HqValueWheel
+          value={hqPickerValue}
+          values={hqOptions}
+          onChange={setHqPickerValue}
+          styles={styles}
+        />
+      </View>
+      <PrimaryButton label={t("picker.done")} onPress={commitHqLevel} styles={styles} />
+    </BottomSheetModal>
   </View>;
 }

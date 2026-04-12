@@ -50,10 +50,14 @@ function HqLevelWheel({ value, onChange, styles }) {
   </View>;
 }
 
-export function HqRequirementsCalculatorScreen({ styles, t }) {
-  const [selectedLevel, setSelectedLevel] = useState(35);
+export function HqRequirementsCalculatorScreen({ styles, t, currentUser }) {
+  const [selectedLevel, setSelectedLevel] = useState(clampHqLevel((currentUser?.hqLevel ?? 1) + 1));
   const [pickerVisible, setPickerVisible] = useState(false);
   const requirement = useMemo(() => getHqRequirement(selectedLevel), [selectedLevel]);
+
+  useEffect(() => {
+    setSelectedLevel(clampHqLevel((currentUser?.hqLevel ?? 1) + 1));
+  }, [currentUser?.hqLevel]);
 
   return <View style={styles.section}>
     <AppCard style={styles.settingsHeroCard} styles={styles}>

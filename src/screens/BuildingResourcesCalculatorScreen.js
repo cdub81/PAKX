@@ -68,9 +68,9 @@ function createAdditionalBuildingDraft() {
   };
 }
 
-export function BuildingResourcesCalculatorScreen({ styles, t }) {
-  const [startLevel, setStartLevel] = useState(1);
-  const [targetLevel, setTargetLevel] = useState(35);
+export function BuildingResourcesCalculatorScreen({ styles, t, currentUser }) {
+  const [startLevel, setStartLevel] = useState(clampHqLevel(currentUser?.hqLevel ?? 1));
+  const [targetLevel, setTargetLevel] = useState(clampHqLevel((currentUser?.hqLevel ?? 1) + 1));
   const [reductionPercentInput, setReductionPercentInput] = useState("0");
   const [startPickerVisible, setStartPickerVisible] = useState(false);
   const [targetPickerVisible, setTargetPickerVisible] = useState(false);
@@ -90,6 +90,12 @@ export function BuildingResourcesCalculatorScreen({ styles, t }) {
     reductionPercent,
     additionalBuildings
   }), [additionalBuildings, reductionPercent, startLevel, targetLevel]);
+
+  useEffect(() => {
+    const nextStartLevel = clampHqLevel(currentUser?.hqLevel ?? 1);
+    setStartLevel(nextStartLevel);
+    setTargetLevel(clampHqLevel(nextStartLevel + 1));
+  }, [currentUser?.hqLevel]);
 
   useEffect(() => {
     if (targetLevel <= startLevel) {

@@ -28,7 +28,7 @@ import { addAllianceDocument as addAllianceDocumentRequest, addFeedback as addFe
 import { buildDashboard, buildTaskForceView, createPlayerOptions } from "./src/lib/roster";
 import { getNotificationPermissionStatus, getPushDebugStateForCurrentUser, syncPushTokenForCurrentUser } from "./src/lib/pushRegistration";
 import { buildReminderSchedule, formatReminderDateKey, formatReminderDateTimeDisplay, getReminderDeviceTimeZone, getReminderServerTimeLabel, getReminderServerTimeZone, isValidReminderDateKey, parseReminderTimeValue } from "./src/lib/reminders";
-import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getTimeValueMinutes, isSameLocalDay, isValidDateKey, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
+import { CALENDAR_SERVER_TIME_LABEL, CALENDAR_TIME_INPUT_MODES, CALENDAR_WEEKDAY_OPTIONS, CALENDAR_WHEEL_ITEM_HEIGHT, addLocalDays, buildCalendarTimedPreview, buildDesertStormCalendarLinkSeed, buildZombieSiegeCalendarLinkSeed, expandCalendarEntries, formatCalendarDateButtonLabel, formatLocalDateKey, formatLocalDateTimeInput, getDeviceTimeZone, getLinkableCalendarEvents, getServerTimeLabel, getServerTimeZone, getTimeValueMinutes, isSameLocalDay, isValidDateKey, normalizeCalendarRecurrence, normalizeCalendarTimeZone, parseLocalDateKey, parseTimeValue, resolveCalendarLinkedEventId, startOfLocalDay, toIsoDateTime, toUtcIsoFromTimeZone } from "./src/lib/calendarHelpers";
 import { buildCalendarNotificationCandidates, CALENDAR_NOTIFICATION_CHANNEL_ID, getCalendarNotificationStorageKey } from "./src/lib/calendarNotifications";
 import { findCurrentDesertStormEvent, getAssignedPlayerNames, getDesertStormHistoryEvents, getDesertStormStatusLabel, getDesertStormViewState, getDesertStormVoteOptionLabel } from "./src/lib/desertStormHelpers";
 import { formatReminderCountdown, formatReminderDuration } from "./src/lib/uiFormatters";
@@ -988,7 +988,11 @@ function AppInner() {
       : field === "desertStormVoteNotificationsEnabled"
         ? { desertStormVoteNotificationsEnabled: Boolean(value) }
         : { squadPowers: { [field]: Number.parseFloat(value) || 0 } };
-    run(async () => { await updateMember(session.backendUrl, session.token, currentUser.id, payload); await refresh(); });
+    run(async () => {
+      const updatedPlayer = await updateMember(session.backendUrl, session.token, currentUser.id, payload);
+      applyUpdatedCurrentPlayer(updatedPlayer);
+      await refresh();
+    });
   }
 
   function applyUpdatedCurrentPlayer(updatedPlayer) {
@@ -1687,7 +1691,7 @@ function AppInner() {
                   Alert.alert(t("settings.notifications.enablePush.alertTitle"), t("settings.notifications.enablePush.alertDescription"));
                 }
               })} LanguageSelector={LanguageSelector} hasTranslationKey={(key) => Object.prototype.hasOwnProperty.call(TRANSLATIONS[language] || {}, key)} /> : null}
-              {moreSelection === "calculators" ? <CalculatorsScreen styles={styles} t={t} selectedCalculator={calculatorSelection} onSelectCalculator={setCalculatorSelection} /> : null}
+              {moreSelection === "calculators" ? <CalculatorsScreen styles={styles} t={t} selectedCalculator={calculatorSelection} onSelectCalculator={setCalculatorSelection} currentUser={currentUser} /> : null}
               {moreSelection === "documents" ? <DocumentsScreen styles={styles} documents={documents} currentUserIsLeader={leader} newDocumentTitle={newDocumentTitle} newDocumentDescription={newDocumentDescription} newDocumentUrl={newDocumentUrl} newDocumentKind={newDocumentKind} onChangeNewDocumentTitle={setNewDocumentTitle} onChangeNewDocumentDescription={setNewDocumentDescription} onChangeNewDocumentUrl={setNewDocumentUrl} onChangeNewDocumentKind={setNewDocumentKind} onAddDocument={() => run(async () => { await addAllianceDocumentRequest(session.backendUrl, session.token, { title: newDocumentTitle, description: newDocumentDescription, url: newDocumentUrl, kind: newDocumentKind }); setNewDocumentTitle(""); setNewDocumentDescription(""); setNewDocumentUrl(""); setNewDocumentKind("document"); await refresh(); })} onDeleteDocument={(documentId) => run(async () => { await deleteAllianceDocumentRequest(session.backendUrl, session.token, documentId); await refresh(); })} t={t} /> : null}
               {moreSelection === "feedback" ? <FeedbackScreen styles={styles} feedbackEntries={feedbackEntries} newFeedbackText={newFeedbackText} onChangeNewFeedbackText={setNewFeedbackText} onSubmitFeedback={() => run(async () => { await addFeedbackRequest(session.backendUrl, session.token, newFeedbackText); setNewFeedbackText(""); await refresh(); })} onSubmitFeedbackComment={(feedbackEntryId, message, reset) => run(async () => { await addFeedbackCommentRequest(session.backendUrl, session.token, feedbackEntryId, message); if (typeof reset === "function") reset(); await refresh(); })} appVersion={APP_VERSION} appBuild={APP_BUILD} t={t} /> : null}
             </MoreScreen> : null}

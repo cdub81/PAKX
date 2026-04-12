@@ -17,12 +17,12 @@ const CALCULATOR_CARDS = [
   { key: "weaponShards", titleKey: "calculators.cards.weaponShards.title", descriptionKey: "calculators.cards.weaponShards.description" }
 ];
 
-export function CalculatorsScreen({ styles, t, selectedCalculator, onSelectCalculator }) {
+export function CalculatorsScreen({ styles, t, selectedCalculator, onSelectCalculator, currentUser }) {
   if (selectedCalculator === "hqRequirements") {
-    return <HqRequirementsCalculatorScreen styles={styles} t={t} />;
+    return <HqRequirementsCalculatorScreen styles={styles} t={t} currentUser={currentUser} />;
   }
   if (selectedCalculator === "buildingResources") {
-    return <BuildingResourcesCalculatorScreen styles={styles} t={t} />;
+    return <BuildingResourcesCalculatorScreen styles={styles} t={t} currentUser={currentUser} />;
   }
 
   return <View style={styles.section}>
