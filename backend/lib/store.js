@@ -665,6 +665,7 @@ function normalizeAlliance(alliance) {
       rank: player.rank,
       overallPower: Number(player.overallPower) || 0,
       heroPower: Number(player.heroPower) || 0,
+      hqLevel: Math.min(35, Math.max(1, Number(player.hqLevel) || 1)),
       squadPowers: normalizeSquadPowers(player.squadPowers),
       desertStormStats: normalizeDesertStormStats(player.desertStormStats),
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
@@ -2344,9 +2345,6 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     });
     alliance.calendarEntries.unshift(entry);
     commit();
-    if (payload.sendPushReminder) {
-      queueExpoPushMessages(buildCalendarReminderMessages(alliance, entry));
-    }
     return clone(entry);
   }
 
@@ -2407,9 +2405,6 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     });
     alliance.calendarEntries[index] = updatedEntry;
     commit();
-    if (payload.sendPushReminder) {
-      queueExpoPushMessages(buildCalendarReminderMessages(alliance, updatedEntry));
-    }
     return clone(updatedEntry);
   }
 
