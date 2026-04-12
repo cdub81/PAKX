@@ -71,6 +71,7 @@ export function MembersScreen({
             rank: player.rank || "R1",
             overallPower: String(player.overallPower ?? ""),
             heroPower: String(player.heroPower ?? ""),
+            hqLevel: String(player.hqLevel ?? "1"),
             squad1: String(player.squadPowers?.squad1 ?? ""),
             squad2: String(player.squadPowers?.squad2 ?? ""),
             squad3: String(player.squadPowers?.squad3 ?? ""),
@@ -87,6 +88,7 @@ export function MembersScreen({
     if (draft.rank !== player.rank) onChangeField(player.id, "rank", draft.rank);
     if (String(draft.overallPower) !== String(player.overallPower)) onChangeField(player.id, "overallPower", draft.overallPower);
     if (String(draft.heroPower) !== String(player.heroPower ?? 0)) onChangeField(player.id, "heroPower", draft.heroPower);
+    if (String(draft.hqLevel) !== String(player.hqLevel ?? 1)) onChangeField(player.id, "hqLevel", draft.hqLevel);
     const currentSquads = player.squadPowers || {};
     const nextSquads = { squad1: draft.squad1, squad2: draft.squad2, squad3: draft.squad3, squad4: draft.squad4 };
     if (["squad1", "squad2", "squad3", "squad4"].some((key) => String(nextSquads[key]) !== String(currentSquads[key] ?? 0))) {
@@ -154,7 +156,7 @@ export function MembersScreen({
           <Pressable onPress={() => toggleExpanded(player.id)} style={styles.memberCardSummary}>
             <View style={styles.memberSummaryText}>
               <Text style={styles.memberName}>{player.name}</Text>
-              <Text style={styles.memberSubline}>{player.rank} • {t("members.totalPowerShort", { value: Number(player.overallPower || 0).toFixed(2) })} • {t("members.heroPowerShort", { value: Number(player.heroPower || 0).toFixed(2) })}</Text>
+              <Text style={styles.memberSubline}>{player.rank} • HQ {player.hqLevel ?? 1} • {t("members.totalPowerShort", { value: Number(player.overallPower || 0).toFixed(2) })} • {t("members.heroPowerShort", { value: Number(player.heroPower || 0).toFixed(2) })}</Text>
             </View>
             <View style={styles.memberSummaryRight}>
               <StatusBadge label={t("members.dsCount", { count: desertStormStats.playedCount || 0 })} tone="warning" styles={styles} />
@@ -167,6 +169,7 @@ export function MembersScreen({
               <View style={styles.memberStatGrid}>
                 <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.totalPower")}</Text><Text style={styles.memberStatValue}>{Number(player.overallPower || 0).toFixed(2)}M</Text></View>
                 <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.heroPower")}</Text><Text style={styles.memberStatValue}>{Number(player.heroPower || 0).toFixed(2)}M</Text></View>
+                <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.hqLevel")}</Text><Text style={styles.memberStatValue}>Lvl {player.hqLevel ?? 1}</Text></View>
                 <View style={styles.memberStatCard}><Text style={styles.memberStatLabel}>{t("members.squadTotal")}</Text><Text style={styles.memberStatValue}>{Number(player.totalSquadPower || 0).toFixed(2)}M</Text></View>
               </View>
               <View style={styles.memberStatGrid}>
@@ -192,6 +195,7 @@ export function MembersScreen({
                 <TextInput value={draft.overallPower} onChangeText={(value) => updateDraft(player.id, "overallPower", value)} style={[styles.input, styles.half]} placeholder={t("members.totalPower")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
                 <TextInput value={draft.heroPower} onChangeText={(value) => updateDraft(player.id, "heroPower", value)} style={[styles.input, styles.half]} placeholder={t("members.heroPower")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
               </View>
+              <TextInput value={draft.hqLevel} onChangeText={(value) => updateDraft(player.id, "hqLevel", value)} style={styles.input} placeholder={t("members.hqLevel")} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="number-pad" />
               <View style={styles.row}>
                 <TextInput value={draft.squad1} onChangeText={(value) => updateDraft(player.id, "squad1", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 1 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />
                 <TextInput value={draft.squad2} onChangeText={(value) => updateDraft(player.id, "squad2", value)} style={[styles.input, styles.half]} placeholder={t("home.squadPlaceholder", { number: 2 })} placeholderTextColor={INPUT_PLACEHOLDER_COLOR} selectionColor={INPUT_SELECTION_COLOR} keyboardType="decimal-pad" />

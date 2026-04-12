@@ -966,9 +966,11 @@ function AppInner() {
       ? { overallPower: Number.parseFloat(value) || 0 }
       : field === "heroPower"
         ? { heroPower: Number.parseFloat(value) || 0 }
-        : field === "squadPowers"
-          ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
-          : leader ? { [field]: value } : null;
+        : field === "hqLevel"
+          ? { hqLevel: Math.min(35, Math.max(1, Number.parseInt(value, 10) || 1)) }
+          : field === "squadPowers"
+            ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
+            : leader ? { [field]: value } : null;
     if (!payload) return;
     run(async () => { await updateMember(session.backendUrl, session.token, playerId, payload); await refresh(); });
   }
@@ -979,6 +981,8 @@ function AppInner() {
       ? { overallPower: Number.parseFloat(value) || 0 }
       : field === "heroPower"
         ? { heroPower: Number.parseFloat(value) || 0 }
+      : field === "hqLevel"
+        ? { hqLevel: Math.min(35, Math.max(1, Number.parseInt(value, 10) || 1)) }
       : field === "squadPowers"
         ? { squadPowers: { squad1: Number.parseFloat(value.squad1) || 0, squad2: Number.parseFloat(value.squad2) || 0, squad3: Number.parseFloat(value.squad3) || 0, squad4: Number.parseFloat(value.squad4) || 0 } }
       : field === "desertStormVoteNotificationsEnabled"

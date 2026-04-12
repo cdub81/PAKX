@@ -796,6 +796,9 @@ async function handleRequest(request, response) {
       if (body.calendarNotificationsEnabled !== undefined) {
         updates.calendarNotificationsEnabled = body.calendarNotificationsEnabled;
       }
+      if (body.hqLevel !== undefined) {
+        updates.hqLevel = body.hqLevel;
+      }
       sendJson(response, 200, store.updateMember(context.alliance.id, memberId, updates));
       return;
     }

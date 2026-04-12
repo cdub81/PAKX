@@ -606,6 +606,7 @@ function createPlayer(name, rank, overallPower) {
     desertStormVoteNotificationsEnabled: true,
     digNotificationsEnabled: true,
     calendarNotificationsEnabled: true,
+    hqLevel: 1,
     expoPushTokens: [],
     pushDebug: normalizePushDebug(),
     reminders: []
@@ -832,6 +833,7 @@ function createStore(config = {}) {
       desertStormVoteNotificationsEnabled: normalizeDesertStormVoteNotificationsEnabled(player.desertStormVoteNotificationsEnabled),
       digNotificationsEnabled: normalizeDigNotificationsEnabled(player.digNotificationsEnabled),
       calendarNotificationsEnabled: normalizeCalendarNotificationsEnabled(player.calendarNotificationsEnabled),
+      hqLevel: Math.min(35, Math.max(1, Number(player.hqLevel) || 1)),
       hasExpoPushToken: normalizeExpoPushTokens(player.expoPushTokens).length > 0,
       pushDebug: normalizePushDebug(player.pushDebug),
       desertStormAppearances: [...eventAppearances, ...legacyAppearances].sort((a, b) => String(b.lockedInAt).localeCompare(String(a.lockedInAt)))
@@ -2017,6 +2019,9 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
     }
     if (updates.calendarNotificationsEnabled !== undefined) {
       member.calendarNotificationsEnabled = normalizeCalendarNotificationsEnabled(updates.calendarNotificationsEnabled);
+    }
+    if (updates.hqLevel !== undefined) {
+      member.hqLevel = Math.min(35, Math.max(1, Number(updates.hqLevel) || 1));
     }
 
     const linkedAccount = state.accounts.find((account) => account.playerId === member.id);
