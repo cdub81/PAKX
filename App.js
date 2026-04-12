@@ -630,6 +630,7 @@ function AppInner() {
     setNewCalendarEventTimeZone(getDeviceTimeZone());
     setNewCalendarLeaderNotes(entry.leaderNotes || "");
     setNewCalendarLeaderOnly(Boolean(entry.leaderOnly));
+    setNewCalendarSendPushReminder(Boolean(entry.sendPushReminder));
     setCalendarDatePickerTarget("");
     setCalendarFormError("");
     setActiveTab("calendar");

@@ -441,6 +441,7 @@ function normalizeReminders(value, memberId = "") {
 function normalizeCalendarEntry(value) {
   const entryType = ["manual", "reminder", "linked_desert_storm", "linked_zombie_siege"].includes(value.entryType) ? value.entryType : "manual";
   const allDay = value.allDay !== false;
+  const linkedType = value.linkedType === "zombieSiege" ? "zombieSiege" : value.linkedType === "desertStorm" ? "desertStorm" : "";
   const startDate = String(value.startDate || (typeof value.startsAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.startsAt) ? value.startsAt : value.startsAt ? String(value.startsAt).slice(0, 10) : "")).slice(0, 10);
   const endDate = String(value.endDate || (typeof value.endAt === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.endAt) ? value.endAt : value.endAt ? String(value.endAt).slice(0, 10) : startDate)).slice(0, 10);
   const startTime = allDay ? "" : String(value.startTime || "").slice(0, 5);
@@ -450,6 +451,9 @@ function normalizeCalendarEntry(value) {
   const serverStartTime = allDay ? "" : String(value.serverStartTime || startTime).slice(0, 5);
   const serverEndTime = allDay ? "" : String(value.serverEndTime || endTime).slice(0, 5);
   const recurrence = normalizeCalendarRecurrence(value.recurrence);
+  const sendPushReminder = value.sendPushReminder !== undefined
+    ? Boolean(value.sendPushReminder)
+    : (linkedType === "desertStorm" || linkedType === "zombieSiege");
   return {
     id: value.id || crypto.randomUUID(),
     title: String(value.title || "").trim(),
@@ -462,7 +466,7 @@ function normalizeCalendarEntry(value) {
     startsAt: value.startsAt || new Date().toISOString(),
     endAt: value.endAt || null,
     entryType,
-    linkedType: value.linkedType === "zombieSiege" ? "zombieSiege" : value.linkedType === "desertStorm" ? "desertStorm" : "",
+    linkedType,
     linkedEventId: String(value.linkedEventId || "").trim(),
     allDay,
     eventTimeZone: normalizeCalendarTimeZone(value.eventTimeZone),
@@ -479,6 +483,7 @@ function normalizeCalendarEntry(value) {
     createdAt: value.createdAt || new Date().toISOString(),
     createdByPlayerId: value.createdByPlayerId || "",
     createdByName: value.createdByName || "",
+    sendPushReminder,
     leaderNotes: String(value.leaderNotes || "").trim(),
     leaderOnly: Boolean(value.leaderOnly)
   };
@@ -871,6 +876,7 @@ function createStore(config = {}) {
       createdAt: entry.createdAt,
       createdByPlayerId: entry.createdByPlayerId,
       createdByName: entry.createdByName,
+      sendPushReminder: Boolean(entry.sendPushReminder),
       leaderOnly: Boolean(entry.leaderOnly),
       leaderNotes: viewerIsLeader ? String(entry.leaderNotes || "") : ""
     };
@@ -2340,6 +2346,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       recurrence,
       createdByPlayerId: player.id,
       createdByName: player.name,
+      sendPushReminder: payload.sendPushReminder,
       leaderNotes: payload.leaderNotes || "",
       leaderOnly: payload.leaderOnly
     });
@@ -2397,6 +2404,7 @@ function getDraftedPlayerIdsForEvent(alliance, event) {
       serverEndTime: payload.serverEndTime || payload.endTime || currentEntry.serverEndTime || currentEntry.endTime || "",
       timeInputMode: payload.timeInputMode === "local" ? "local" : (currentEntry.timeInputMode === "local" ? "local" : "server"),
       recurrence,
+      sendPushReminder: payload.sendPushReminder !== undefined ? payload.sendPushReminder : currentEntry.sendPushReminder,
       leaderNotes: payload.leaderNotes || "",
       leaderOnly: payload.leaderOnly,
       updatedAt: new Date().toISOString(),

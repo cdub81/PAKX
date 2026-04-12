@@ -28,7 +28,7 @@ export function buildCalendarNotificationCandidates(entries, now = new Date()) {
   const seen = new Set();
 
   return expandCalendarEntries(entries || [], startDateKey, endDateKey)
-    .filter((entry) => entry && entry.allDay === false && entry.occurrenceId && entry.startsAt)
+    .filter((entry) => entry && entry.sendPushReminder === true && entry.allDay === false && entry.occurrenceId && entry.startsAt)
     .filter((entry) => {
       const startsAtMs = new Date(entry.startsAt).getTime();
       return Number.isFinite(startsAtMs) && startsAtMs > now.getTime() + 5000;
