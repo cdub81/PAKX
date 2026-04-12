@@ -239,15 +239,13 @@ export function CalendarScreen(props) {
         const badgeLabel = entry.linkedType === "desertStorm" ? calendarT("linkedDesertStorm") : entry.linkedType === "zombieSiege" ? calendarT("linkedZombieSiege") : entry.leaderOnly ? calendarT("leaderOnly") : entry.allDay !== false ? calendarT("timeSpecificEntry") : calendarT("allDay");
         const translationView = getEntryTranslationView(entry);
         return <Pressable key={entry.occurrenceId || entry.id} style={styles.calendarEntryCard} disabled={!entry.linkedType} onPress={() => entry.linkedType && onOpenLinkedEntry(entry)}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.listRowContent}>
-              <Text style={styles.cardTitle}>{translationView.primaryTitle}</Text>
-              <Text style={styles.calendarEntryMeta}>{entry.allDay !== false ? calendarT("allDay") : entry.localDisplayDateTime || entry.localDisplayTime || entry.displayTime}</Text>
-            </View>
-            <View style={styles.rankFilterRow}>
-              {entry.sendPushReminder ? <StatusBadge label="Reminder" tone="success" styles={styles} /> : null}
-              <StatusBadge label={badgeLabel} tone={badgeTone} styles={styles} />
-            </View>
+          <View style={styles.listRowContent}>
+            <Text style={styles.cardTitle}>{translationView.primaryTitle}</Text>
+            <Text style={styles.calendarEntryMeta}>{entry.allDay !== false ? calendarT("allDay") : entry.localDisplayDateTime || entry.localDisplayTime || entry.displayTime}</Text>
+          </View>
+          <View style={styles.rankFilterRow}>
+            {entry.sendPushReminder ? <StatusBadge label="Reminder" tone="success" styles={styles} /> : null}
+            <StatusBadge label={badgeLabel} tone={badgeTone} styles={styles} />
           </View>
           {translationView.primaryDescription ? <Text style={styles.line}>{translationView.primaryDescription}</Text> : null}
           {translationView.showPendingState ? <Text style={styles.hint}>{calendarT("translationPending")}</Text> : null}
